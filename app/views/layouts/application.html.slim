@@ -1,0 +1,22 @@
+doctype html
+html
+  head
+    title= "My Space"
+    meta http-equiv="content-language" content="en"
+    = csrf_meta_tags
+    = stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload'    
+  body
+		div.container
+			nav.nav
+				div.nav-left
+					| LEFT
+				div.nav-center
+					| CENTER
+				div.nav-right
+					span.nav-item
+						a.button.is-primary
+							| Login
+		section.section
+			= yield
+
+		= javascript_include_tag 'application', 'data-turbolinks-track': 'reload'
