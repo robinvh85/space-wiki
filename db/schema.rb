@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170403031443) do
+ActiveRecord::Schema.define(version: 20170403044107) do
 
   create_table "tags", force: :cascade do |t|
     t.string   "name"
@@ -32,6 +32,7 @@ ActiveRecord::Schema.define(version: 20170403031443) do
     t.datetime "updated_at",             null: false
     t.integer  "topic_id",   default: 0
     t.integer  "parent_id",  default: 0
+    t.integer  "level",      default: 0
   end
 
 end
