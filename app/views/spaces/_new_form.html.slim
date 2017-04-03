@@ -1,0 +1,17 @@
+div.modal :class="{ 'is-active': mode == 'NEW' }"
+  div.modal-background
+  div.modal-card
+    header.modal-card-head
+      p.modal-card-title
+      	| New topic
+      button.delete @click="cancel"
+    section.modal-card-body
+    	div.content style="min-height: 200px;"
+    		input type="text" v-model="new_topic.title"
+    		br
+				textarea v-model="new_topic.content" style="width: 100%; min-height:100px;"
+    footer.modal-card-foot
+      a.button.is-success @click="save_topic"
+      	| Save
+      a.button @click="cancel"
+      	| Cancel

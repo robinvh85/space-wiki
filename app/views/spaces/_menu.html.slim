@@ -1,0 +1,18 @@
+nav.menu
+	ul.menu-list
+		li
+			a :class="{'is-active': current_menu.id == space.id }" @click="select_menu(space)"
+				| {{ space.title }}
+		li
+			ul.menu-list v-show="space.children.length > 0"
+				li v-for="menu in space.children" 
+					a :class="{'is-active': current_menu.id == menu.id }" @click="select_menu(menu)"
+					 | {{ menu.title }}
+			 		ul.menu-list v.show="menu.children.length > 0"
+			 			li v-for="menu in menu.children" 
+			 				a :class="{'is-active': current_menu.id == menu.id }" @click="select_menu(menu)"
+			 					| {{ menu.title }}
+		 					ul.menu-list v.show="menu.children.length > 0"
+				 				li v-for="menu in menu.children" 
+				 					a :class="{'is-active': current_menu.id == menu.id }" @click="select_menu(menu)"
+				 						| {{ menu.title }}

@@ -1,0 +1,15 @@
+div.modal :class="{ 'is-active': mode == 'EDIT'}"
+  div.modal-background
+  div.modal-card
+    header.modal-card-head
+      p.modal-card-title
+      	input type="text" v-model="current_topic.title"
+      button.delete @click="cancel"
+    section.modal-card-body
+    	div.content style="min-height: 200px;"
+				textarea v-model="current_topic.content" style="width: 100%; min-height:100px;"
+    footer.modal-card-foot
+      a.button.is-success @click="update_topic"
+      	| Save
+      a.button @click="cancel"
+      	| Cancel

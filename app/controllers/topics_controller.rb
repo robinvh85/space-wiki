@@ -24,6 +24,22 @@ class TopicsController < ApplicationController
 		render json: topic
 	end
 
+	def create
+		status = 'OK'
+		message = '';
+		parent 	= Topic.find(params[:parent_topic][:id])
+		topic 	= Topic.new(topic_params)		
+		topic.parent_id = parent.id
+		topic.level = parent.level + 1
+				
+		unless topic.save
+			status = 'NG'
+			message = topic.errors
+		end
+
+		render json: {status: status, message: message}
+	end
+
 	def update
 		topic = Topic.find(params[:id]);
 		status = 'OK'

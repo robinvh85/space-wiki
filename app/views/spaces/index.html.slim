@@ -1,30 +1,13 @@
 div#app.container
 	div.columns
 		div.column.is-3
-			nav.menu
-				ul.menu-list
-					li
-						a :class="{'is-active': current_menu.id == space.id }" @click="select_menu(space)"
-							| {{ space.title }}
-					li
-						ul.menu-list v-show="space.children.length > 0"
-							li v-for="menu in space.children" 
-								a :class="{'is-active': current_menu.id == menu.id }" @click="select_menu(menu)"
-								 | {{ menu.title }}
-						 		ul.menu-list v.show="menu.children.length > 0"
-						 			li v-for="menu in menu.children" 
-						 				a :class="{'is-active': current_menu.id == menu.id }" @click="select_menu(menu)"
-						 					| {{ menu.title }}
-					 					ul.menu-list v.show="menu.children.length > 0"
-							 				li v-for="menu in menu.children" 
-							 					a :class="{'is-active': current_menu.id == menu.id }" @click="select_menu(menu)"
-							 						| {{ menu.title }}
+			= render 'menu'
 
 		div.column.is-9
 			nav.nav
 				div.nav-left
 					a.nav-item
-						a.button.is-info
+						a.button.is-info @click="show_new_topic"
 							| New
 				div.nav-right
 					a.nav-item
@@ -33,18 +16,6 @@ div#app.container
 			div
 				| {{ current_topic.content }}
 
-	div.modal :class="{ 'is-active': mode == 'EDIT' }"
-	  div.modal-background
-	  div.modal-card
-	    header.modal-card-head
-	      p.modal-card-title
-	      	input type="text" v-model="current_topic.title"
-	      button.delete @click="cancel"
-	    section.modal-card-body
-	    	div.content style="min-height: 200px;"
-					textarea v-model="current_topic.content"
-	    footer.modal-card-foot
-	      a.button.is-success @click="update_topic"
-	      	| Save
-	      a.button @click="cancel"
-	      	| Cancel
+	= render 'edit_form'
+	= render 'new_form'
+	
