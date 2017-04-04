@@ -15,4 +15,6 @@
 //= require turbolinks
 //= require vue.min
 //= require axios.min
+//= require showdown.min
+//= require simplemde.min
 //= require_tree .

@@ -1,4 +1,7 @@
 
+showdown.setOption('tasklists', 'true');
+var converter = new showdown.Converter();
+
 var token = document.querySelector("[name='csrf-token']").content
 axios.defaults.headers.common['X-CSRF-Token'] = token;
 
@@ -20,6 +23,7 @@ var app = new Vue({
 			let _this = this;
 			this.$http.get("/topics/" + this.current_menu.id).then(function(res){
 				_this.current_topic = res.data;
+				_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);	
 			});
 		},
 		edit() {
@@ -30,9 +34,12 @@ var app = new Vue({
 		},
 		update_topic() {
 			let params = {topic: this.current_topic};
+			_this = this;
+
 			this.$http.put("/topics/" + this.current_topic.id, params).then(function(res){
-				if(res.data.status == "OK"){
-					alert("OK");
+				if(res.data.status == "OK"){					
+					_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);
+					_this.mode = "";
 				}
 			});
 		},
