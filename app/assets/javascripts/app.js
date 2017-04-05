@@ -28,6 +28,10 @@ var app = new Vue({
 		},
 		edit() {
 			this.mode = "EDIT";
+
+			// Use to fix change value on simplemde
+			this.current_topic.content = this.current_topic.content.trim(); 
+			this.current_topic.content += " ";
 		},
 		cancel() {
 			this.mode = "";
@@ -43,10 +47,12 @@ var app = new Vue({
 				}
 			});
 		},
+
 		show_new_topic() {
 			this.mode = "NEW";
 			this.new_topic = {};
 		},
+
 		save_topic() {
 			let params = {
 				topic: this.new_topic,
@@ -68,7 +74,15 @@ var app = new Vue({
 				_this.space = res.data;
 				_this.select_menu(_this.space);
 			});
-		}
+		},
+
+		change_content(content) {
+			this.current_topic.content = content
+		},
+
+		change_content_new(content) {
+			this.new_topic.content = content
+		},		
 	},
 
 	created() {
