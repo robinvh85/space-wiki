@@ -27,5 +27,7 @@ production:
   encoding: utf8
   database: space_wiki
   pool: 5
+  # username: <%= ENV['APPNAME_DATABASE_USER'] %>
+  # password: <%= ENV['APPNAME_DATABASE_PASSWORD'] %>
   username: robinvh
   password: 123456
