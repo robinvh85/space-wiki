@@ -17,27 +17,27 @@ var app = new Vue({
 		mode: ''
 	},
 	methods: {
-		select_menu(menu){
+		select_menu: function(menu){
 			this.current_menu = menu;
 
-			let _this = this;
+			var _this = this;
 			this.$http.get("/topics/" + this.current_menu.id).then(function(res){
 				_this.current_topic = res.data;
 				_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);	
 			});
 		},
-		edit() {
+		edit: function() {
 			this.mode = "EDIT";
 
 			// Use to fix change value on simplemde
 			this.current_topic.content = this.current_topic.content.trim(); 
 			this.current_topic.content += " ";
 		},
-		cancel() {
+		cancel: function() {
 			this.mode = "";
 		},
-		update_topic() {
-			let params = {topic: this.current_topic};
+		update_topic: function() {
+			var params = {topic: this.current_topic};
 			_this = this;
 
 			this.$http.put("/topics/" + this.current_topic.id, params).then(function(res){
@@ -48,18 +48,18 @@ var app = new Vue({
 			});
 		},
 
-		show_new_topic() {
+		show_new_topic: function() {
 			this.mode = "NEW";
 			this.new_topic = {};
 		},
 
-		save_topic() {
-			let params = {
+		save_topic: function() {
+			var params = {
 				topic: this.new_topic,
 				parent_topic: this.current_topic
 			};
 
-			let _this = this;
+			var _this = this;
 			this.$http.post("/topics", params).then(function(res){
 				if(res.data.status == "OK"){
 					_this.get_menu_list();
@@ -67,8 +67,8 @@ var app = new Vue({
 				}
 			});
 		},
-		get_menu_list() {
-			let _this = this;
+		get_menu_list: function() {
+			var _this = this;
 
 			this.$http.get('/topics').then(function (res){
 				_this.space = res.data;
@@ -76,19 +76,19 @@ var app = new Vue({
 			});
 		},
 
-		change_content(content) {
+		change_content: function(content) {
 			this.current_topic.content = content
 		},
 
-		change_content_new(content) {
+		change_content_new: function(content) {
 			this.new_topic.content = content
 		},		
 	},
 
-	created() {
+	created: function() {
 		console.log("created");
 	},
-	mounted() {
+	mounted: function() {
 		console.log("mounted");
 		this.get_menu_list();
 	}

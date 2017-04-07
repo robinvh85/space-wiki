@@ -1,17 +1,13 @@
 Vue.component('markdown', {
-	template: `
-		<div :style="style">
-		<textarea :id="markdown_id"></textarea>
-		</div>
-	`,
+	template: "<div :style='style'><textarea :id='markdown_id'></textarea></div>",
 	props: ["id", "content", "style"],	
-	data() {
+	data: function() {
 		return {
 			simplemde: null
 		};
 	},
 	methods: {
-		// save() {
+		// save: function() {
 		// 	alert(this.simplemde.value());
 		// 	this.$emit('save', this.simplemde.value());
 		// }
@@ -27,11 +23,11 @@ Vue.component('markdown', {
       }
     }
   },
-	mounted() {
+	mounted: function() {
 		this.simplemde = new SimpleMDE({ element: document.getElementById(this.markdown_id) });
 		this.simplemde.value(this.content);
 
-		let _this = this;
+		var _this = this;
 		this.simplemde.codemirror.on("blur", function(){
 			_this.$emit('change', _this.simplemde.value());
 		});
