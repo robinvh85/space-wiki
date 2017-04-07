@@ -30,7 +30,7 @@ var app = new Vue({
 			this.mode = "EDIT";
 
 			// Use to fix change value on simplemde
-			this.current_topic.content = this.current_topic.content.trim(); 
+			// this.current_topic.content = this.current_topic.content.trim(); 
 			this.current_topic.content += " ";
 		},
 		cancel() {
