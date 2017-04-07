@@ -13,3 +13,7 @@
  *= require_tree .
  *= require_self
  */
+
+.CodeMirror {
+	height: calc(100vh - 310px);
+}

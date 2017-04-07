@@ -9,14 +9,22 @@ html
 		div.container
 			nav.nav
 				div.nav-left
-					| LEFT
+					= root_path
 				div.nav-center
 					| CENTER
 				div.nav-right
 					span.nav-item
-						a.button.is-primary
-							| Login
+						- if user_signed_in?
+							a.button.is-primary href="/users/sign_out" data-method="delete"
+								| Logout
+						- else
+							a.button.is-primary href="/users/sign_in"
+								| Login
 		section.section
+			p.notice
+				= notice
+			p.alert
+				= alert
 			= yield
 
 		= javascript_include_tag 'application', 'data-turbolinks-track': 'reload'

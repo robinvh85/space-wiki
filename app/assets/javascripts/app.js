@@ -1,4 +1,7 @@
 
+showdown.setOption('tasklists', 'true');
+var converter = new showdown.Converter();
+
 var token = document.querySelector("[name='csrf-token']").content
 axios.defaults.headers.common['X-CSRF-Token'] = token;
 
@@ -20,26 +23,36 @@ var app = new Vue({
 			let _this = this;
 			this.$http.get("/topics/" + this.current_menu.id).then(function(res){
 				_this.current_topic = res.data;
+				_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);	
 			});
 		},
 		edit() {
 			this.mode = "EDIT";
+
+			// Use to fix change value on simplemde
+			this.current_topic.content = this.current_topic.content.trim(); 
+			this.current_topic.content += " ";
 		},
 		cancel() {
 			this.mode = "";
 		},
 		update_topic() {
 			let params = {topic: this.current_topic};
+			_this = this;
+
 			this.$http.put("/topics/" + this.current_topic.id, params).then(function(res){
-				if(res.data.status == "OK"){
-					alert("OK");
+				if(res.data.status == "OK"){					
+					_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);
+					_this.mode = "";
 				}
 			});
 		},
+
 		show_new_topic() {
 			this.mode = "NEW";
 			this.new_topic = {};
 		},
+
 		save_topic() {
 			let params = {
 				topic: this.new_topic,
@@ -61,7 +74,15 @@ var app = new Vue({
 				_this.space = res.data;
 				_this.select_menu(_this.space);
 			});
-		}
+		},
+
+		change_content(content) {
+			this.current_topic.content = content
+		},
+
+		change_content_new(content) {
+			this.new_topic.content = content
+		},		
 	},
 
 	created() {
