@@ -163,11 +163,7 @@ var app = new Vue({
 				_this.current_topic = res.data;
 				_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);	
 
-				setTimeout(function(){
-					document.querySelectorAll("pre code").forEach(function(item){ 
-						hljs.highlightBlock(item); 
-					});
-				}, 50);
+				util.renderScriptMarkdown();
 				
 			});
 		},
@@ -189,6 +185,8 @@ var app = new Vue({
 				if(res.data.status == "OK"){					
 					_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);
 					_this.mode = "";
+
+					util.renderScriptMarkdown();
 				}
 			});
 		},
@@ -211,6 +209,8 @@ var app = new Vue({
 				.then(function(){
 					_this.get_menu_list();
 					_this.mode = "";
+
+					util.renderScriptMarkdown();
 				})
 				.catch(function(data){
 					console.log("callback error", data);

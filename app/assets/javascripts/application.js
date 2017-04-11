@@ -18,4 +18,5 @@
 //= require showdown.min
 //= require simplemde.min
 //= require highlight.min
+//= require util
 //= require_tree .
