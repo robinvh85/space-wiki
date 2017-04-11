@@ -7,10 +7,6 @@ Vue.component('markdown', {
 		};
 	},
 	methods: {
-		// save: function() {
-		// 	alert(this.simplemde.value());
-		// 	this.$emit('save', this.simplemde.value());
-		// }
 	},
 	computed: {
     markdown_id: {
@@ -29,13 +25,11 @@ Vue.component('markdown', {
 
 		var _this = this;
 		this.simplemde.codemirror.on("blur", function(){
-			_this.$emit('change', _this.simplemde.value());
+			_this.$emit('input', _this.simplemde.value());	// Auto assign to v-model at parent
 		});
 	},
 	watch: {
     "content": function(new_val, old_val) {
-    	console.log(new_val);
-
       if(new_val != old_val){
         this.simplemde.value(new_val);
       }

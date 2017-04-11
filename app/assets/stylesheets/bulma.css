@@ -3233,7 +3233,7 @@ input[type="submit"].button {
 }
 
 .menu-list {
-  line-height: 1.25;
+  line-height: 1;
 }
 
 .menu-list a {
@@ -3256,7 +3256,7 @@ input[type="submit"].button {
 .menu-list li ul {
   border-left: 1px solid #dbdbdb;
   margin: 0.75em;
-  padding-left: 0.75em;
+  padding-left: 0.5em;
 }
 
 .menu-label {

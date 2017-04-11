@@ -17,4 +17,5 @@
 //= require axios.min
 //= require showdown.min
 //= require simplemde.min
+//= require highlight.min
 //= require_tree .

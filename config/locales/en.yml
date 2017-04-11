@@ -21,3 +21,9 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      topic:
+        title: Title
+    models:
+      topic: Topic
