@@ -8,9 +8,9 @@ div.modal :class="{ 'is-active': mode == 'NEW' }"
       button.delete @click="cancel"
     section.modal-card-body      
 	    div.content style="max-height: calc(100vh - 160px);"        
-		    markdown id="markdown_new" :content="new_topic.content" @change="change_content_new"
+		    markdown id="markdown_new" v-model="current_topic.content" :content="new_topic.content"
     footer.modal-card-foot
-      a.button.is-success @click="save_topic"
+      a.button.is-success @click="save_topic" :disabled="form.errors.any()"
       	| Save
       a.button @click="cancel"
       	| Cancel

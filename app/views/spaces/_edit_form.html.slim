@@ -7,7 +7,7 @@ div.modal :class="{ 'is-active': mode == 'EDIT'}"
       button.delete @click="cancel"
     section.modal-card-body
       div.content style="max-height: calc(100vh - 160px);"
-        markdown id="markdown" :content="current_topic.content" @change="change_content"
+        markdown id="markdown" :content="current_topic.content" v-model="current_topic.content"
     footer.modal-card-foot
       a.button.is-success @click="update_topic"
       	| Save

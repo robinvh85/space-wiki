@@ -17,3 +17,7 @@
 .CodeMirror {
 	height: calc(100vh - 310px);
 }
+
+.menu {
+    font-size: 0.9rem;
+}
