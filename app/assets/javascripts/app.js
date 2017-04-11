@@ -3,7 +3,7 @@ Vue.config.devtools = true;
 showdown.setOption('tasklists', 'true');
 var converter = new showdown.Converter();
 
-var token = document.querySelector("[name='csrf-token']").content
+var token = document.querySelector("[name='csrf-token']").content;
 axios.defaults.headers.common['X-CSRF-Token'] = token;
 
 Vue.prototype.$http = axios;
@@ -12,115 +12,137 @@ hljs.configure({
   languages: ['javascript', 'ruby']
 });
 
-class Errors {
-	constructor(){
-		this.errors = { };
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Errors = function () {
+	function Errors() {
+		_classCallCheck(this, Errors);
+
+		this.errors = {};
 	}
 
-	get(field) {
-		if(this.errors[field]){
-			return this.errors[field][0];
+	_createClass(Errors, [{
+		key: "get",
+		value: function get(field) {
+			if (this.errors[field]) {
+				return this.errors[field][0];
+			}
 		}
-	}
+		}, {
+			key: "has",
+			value: function has(field) {
+				return this.errors.hasOwnProperty(field);
+			}
+		}, {
+			key: "record",
+			value: function record(errors) {
+				this.errors = errors;
+			}
+		}, {
+			key: "clear",
+			value: function clear(field) {
+				if (field) delete this.errors[field];else this.errors = {};
+			}
+		}, {
+			key: "any",
+			value: function any() {
+				return Object.keys(this.errors).length > 0;
+			}
+		}]);
 
-	has(field) {
-		return this.errors.hasOwnProperty(field);
-	}
+	return Errors;
+}();
 
-	record(errors){
-		this.errors = errors;
-	}
+var Form = function () {
+	function Form(data) {
+		_classCallCheck(this, Form);
 
-	clear(field){
-		if(field) 
-			delete this.errors[field];
-		else
-			this.errors = {};
-	}
-
-	any() {
-		return Object.keys(this.errors).length > 0;
-	}
-}
-
-class Form {
-
-	constructor(data) {
 		this.original_data = data;
 
-		for(var field in data){
+		for (var field in data) {
 			this[field] = data[field];
 		}
 
 		this.errors = new Errors();
-
 	}
 
-	data() {
-		// var data = Object.assign({}, this);
+	_createClass(Form, [{
+		key: "data",
+		value: function data() {
+			// var data = Object.assign({}, this);
 
-		// delete data.original_data;
-		// delete data.errors;
+			// delete data.original_data;
+			// delete data.errors;
 
-		var data = {};
-		for(var property in this.original_data){
-			data[property] = this[property];
+			var data = {};
+			for (var property in this.original_data) {
+				data[property] = this[property];
+			}
+
+			return data;
 		}
+	}, {
+		key: "reset",
+		value: function reset() {
+			for (var field in original_data) {
+				this[field] = "";
+			}
 
-		return data;
-	}
-
-	reset() {
-		for( var field in original_data ){
-			this[field] = "";
+			this.errors.clear();
 		}
+	}, {
+		key: "submit",
+		value: function submit(request_type, url) {
+			var _this = this;
 
-		this.errors.clear();
-	}
+			return new Promise(function (resolve, reject) {
 
-	submit(request_type, url) {
-		var _this = this;
+				axios[request_type.toLowerCase()](url, _this.data()).then(function (response) {
+					_this.onSuccess(response.data);
 
-		return new Promise(function(resolve, reject){
-			
-			axios[request_type.toLowerCase()](url, _this.data())
-			.then(function(response){
-				_this.onSuccess(response.data);
+					resolve(response.data); // Callback on success
+				}).catch(function (error) {
+					_this.onFail(error.response.data.errors);
 
-				resolve(response.data);	// Callback on success
-			})
-			.catch(function(error){
-				_this.onFail(error.response.data.errors);
-
-				reject(error.response.data); // Callback on fail
+					reject(error.response.data); // Callback on fail
+				});
 			});
-		});
-	}
-
-	/**
-	* Handle a successful form submission
-	*
-	* @param {object} data
-	*/
-	onSuccess(data) {
-		if(data.status == "OK"){
-			console.log("Save success!");
 		}
-	}
 
-	onFail(errors) {
-		this.errors.record(errors);
-	}
+		/**
+  * Handle a successful form submission
+  *
+  * @param {object} data
+  */
 
-	post(url) {
-		return this.submit('POST', url);
-	}
+	}, {
+		key: "onSuccess",
+		value: function onSuccess(data) {
+			if (data.status == "OK") {
+				console.log("Save success!");
+			}
+		}
+	}, {
+		key: "onFail",
+		value: function onFail(errors) {
+			this.errors.record(errors);
+		}
+	}, {
+		key: "post",
+		value: function post(url) {
+			return this.submit('POST', url);
+		}
+	}, {
+		key: "delete",
+		value: function _delete(url) {
+			this.submit('DELETE', url);
+		}
+	}]);
 
-	delete(url) {
-		this.submit('DELETE', url);
-	}
-
-}
+	return Form;
+}();
 
 var app = new Vue({
 	el: '#app',

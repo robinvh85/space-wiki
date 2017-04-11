@@ -8,6 +8,10 @@ axios.defaults.headers.common['X-CSRF-Token'] = token;
 
 Vue.prototype.$http = axios;
 
+hljs.configure({
+  languages: ['javascript', 'ruby']
+});
+
 class Errors {
 	constructor(){
 		this.errors = { };
@@ -53,10 +57,15 @@ class Form {
 	}
 
 	data() {
-		var data = Object.assign({}, this);
+		// var data = Object.assign({}, this);
 
-		delete data.original_data;
-		delete data.errors;
+		// delete data.original_data;
+		// delete data.errors;
+
+		var data = {};
+		for(var property in this.original_data){
+			data[property] = this[property];
+		}
 
 		return data;
 	}
@@ -69,22 +78,46 @@ class Form {
 		this.errors.clear();
 	}
 
-	submit(request_type, url, callback) {
-		this.callback = callback;
-		axios[request_type](url, this.data())
-			.then(this.onSuccess.bind(this))
-			.catch(this.onFail.bind(this));
+	submit(request_type, url) {
+		var _this = this;
+
+		return new Promise(function(resolve, reject){
+			
+			axios[request_type.toLowerCase()](url, _this.data())
+			.then(function(response){
+				_this.onSuccess(response.data);
+
+				resolve(response.data);	// Callback on success
+			})
+			.catch(function(error){
+				_this.onFail(error.response.data.errors);
+
+				reject(error.response.data); // Callback on fail
+			});
+		});
 	}
 
-	onSuccess(res) {
-		if(res.data.status == "OK"){
-			if(this.callback)
-				this.callback();
+	/**
+	* Handle a successful form submission
+	*
+	* @param {object} data
+	*/
+	onSuccess(data) {
+		if(data.status == "OK"){
+			console.log("Save success!");
 		}
 	}
 
-	onFail(error) {
-		this.errors.record(error.response.data.errors);
+	onFail(errors) {
+		this.errors.record(errors);
+	}
+
+	post(url) {
+		return this.submit('POST', url);
+	}
+
+	delete(url) {
+		this.submit('DELETE', url);
 	}
 
 }
@@ -107,6 +140,13 @@ var app = new Vue({
 			this.$http.get("/topics/" + this.current_menu.id).then(function(res){
 				_this.current_topic = res.data;
 				_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);	
+
+				setTimeout(function(){
+					document.querySelectorAll("pre code").forEach(function(item){ 
+						hljs.highlightBlock(item); 
+					});
+				}, 50);
+				
 			});
 		},
 		edit: function() {
@@ -145,12 +185,14 @@ var app = new Vue({
 		save_topic: function() {
 			var _this = this;
 
-			var callback = function(){
-				_this.get_menu_list();
-				_this.mode = "";
-			}
-
-			this.form.submit('post', '/topics', callback);
+			this.form.post('/topics')
+				.then(function(){
+					_this.get_menu_list();
+					_this.mode = "";
+				})
+				.catch(function(data){
+					console.log("callback error", data);
+				});
 		},
 
 		get_menu_list: function() {
@@ -161,14 +203,6 @@ var app = new Vue({
 				_this.select_menu(_this.space);
 			});
 		},
-
-		change_content: function(content) {
-			this.current_topic.content = content
-		},
-
-		change_content_new: function(content) {
-			this.new_topic.content = content
-		},		
 	},
 
 	created: function() {
