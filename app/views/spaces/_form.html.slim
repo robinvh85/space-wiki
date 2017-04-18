@@ -1,0 +1,16 @@
+div.modal :class="{ 'is-active': mode == 'NEW' || mode == 'EDIT' }"
+  div.modal-background
+  div.modal-card @keydown="form.errors.clear($event.target.name)"
+    header.modal-card-head
+      p.modal-card-title.control
+        input.input :class="{'is-danger': form.errors.has('title')}" type="text" style="width: 80%" name="title" placeholder="Title" v-model="form.title"
+        span.help.is-danger v-if="form.errors.has('title')" v-text="form.errors.get('title')"
+      button.delete @click="cancel"
+    section.modal-card-body      
+	    div.content style="max-height: calc(100vh - 160px);"        
+		    markdown id="markdown_new" :content="form.content" v-model="form.modify_content"
+    footer.modal-card-foot
+      a.button.is-success @click="save_form" :disabled="form.errors.any()"
+      	| Save
+      a.button @click="cancel"
+      	| Cancel
