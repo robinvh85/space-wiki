@@ -62,6 +62,26 @@ class TopicsController < ApplicationController
 		end
 	end
 
+	def list_topic
+		topics = Topic.find(params['id'])
+
+		# Render max 3 level
+		render json: topics.to_json(
+			:include => { 
+				:children => { 
+					:only => [:id, :title],
+					:include => { 
+						:children => { 
+							:only => [:id, :title],
+							:include => { :children => { :only => [:id, :title] }}
+						} 
+					}
+				} 
+			}, 
+			:only => [:id, :title] )
+	end
+
+	private
 	def topic_params
 		params.require(:topic).permit(:title, :content)
 	end
