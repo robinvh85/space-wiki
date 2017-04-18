@@ -18,12 +18,23 @@
 	height: calc(100vh - 310px);
 }
 
-.menu {
-    font-size: 0.9rem;
-}
-
 .markdown-body .highlight pre,
 .markdown-body pre {
   padding-top: 16px;
   padding-left: 16px;
+  background-color: #000000;
+}
+
+
+/* Edit bulma */
+.menu-list {
+  line-height: 1;
+}
+
+.menu {
+    font-size: 0.9rem;
+}
+
+.menu-list li ul {
+  padding-left: 0.5em;
 }

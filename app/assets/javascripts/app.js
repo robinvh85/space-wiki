@@ -9,7 +9,7 @@ axios.defaults.headers.common['X-CSRF-Token'] = token;
 Vue.prototype.$http = axios;
 
 hljs.configure({
-  languages: ['javascript', 'ruby']
+  languages: ['javascript', 'ruby', 'css', 'html']
 });
 
 var app = new Vue({
@@ -23,7 +23,7 @@ var app = new Vue({
 		form: new Form()
 	},
 	methods: {
-		select_menu: function(menu){
+		selectMenu: function(menu){
 			this.current_menu = menu;
 
 			var _this = this;
@@ -43,27 +43,24 @@ var app = new Vue({
 			// Use to fix change value on simplemde
 			// this.current_topic.content = this.current_topic.content.trim(); 
 			this.current_topic.content += " ";
+			this.form = new Form(this.current_topic);
 		},
 		cancel: function() {
 			this.mode = "";
 		},
 		update_topic: function() {
-			this.current_topic.content = this.current_topic.modify_content;
-			var params = {topic: this.current_topic};
+			this.form.content = this.form.modify_content;
 			_this = this;
 
-			this.$http.put("/topics/" + this.current_topic.id, params)
-			.then(function(res){
-				if(res.data.status == "OK"){										
-					_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);
+			this.form.put('/topics/'+ this.current_topic.id)
+				.then(function(){
+					_this.current_topic.markdown_content = converter.makeHtml(_this.form.content);
 					_this.mode = "";
-
-					util.renderScriptMarkdown();
-				}
-			})
-			.catch(function(error){
-				//console.log(error);
-			});
+					_this.selectMenu(_this.current_menu);
+				})
+				.catch(function(data){
+					console.log("callback error", data);
+				});
 		},
 
 		show_new_topic: function() {
@@ -78,16 +75,23 @@ var app = new Vue({
 			this.form = new Form(this.new_topic);
 		},
 
+		save_form: function(){
+			if(this.mode == "EDIT"){
+				this.update_topic();
+			} else {
+				this.save_topic();
+			}
+		},
+
 		save_topic: function() {
 			var _this = this;
 			this.form.content = this.form.modify_content;
 
 			this.form.post('/topics')
-				.then(function(){
+				.then(function(res){
+					_this.current_topic = res.topic;
 					_this.get_menu_list();
 					_this.mode = "";
-
-					util.renderScriptMarkdown();
 				})
 				.catch(function(data){
 					console.log("callback error", data);
@@ -99,7 +103,12 @@ var app = new Vue({
 
 			this.$http.get('/topics').then(function (res){
 				_this.space = res.data;
-				_this.select_menu(_this.space);
+
+				if(Object.keys(_this.current_topic).length > 0){
+					_this.selectMenu(_this.current_topic);
+				} else {
+					_this.selectMenu(_this.space);
+				}
 			});
 		},
 	},

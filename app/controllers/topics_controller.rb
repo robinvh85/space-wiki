@@ -41,7 +41,7 @@ class TopicsController < ApplicationController
 		if status == "NG"
 			render json: {status: status, errors: errors}, status: 422
 		else
-			render json: {status: status}
+			render json: {status: status, topic: topic}
 		end
 	end
 
