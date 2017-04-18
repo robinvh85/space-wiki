@@ -111,6 +111,19 @@ var app = new Vue({
 				}
 			});
 		},
+
+		changeRoot: function(topic) {
+			var self = this;
+
+			this.$http.get('/topics/list_topic/' + topic.id).then(function (res){
+				self.space = res.data;
+				self.selectMenu(self.space);
+			});
+		},
+
+		backToRoot: function(topic) {
+			this.get_menu_list()
+		}
 	},
 
 	created: function() {
