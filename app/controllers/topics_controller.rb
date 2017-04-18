@@ -55,7 +55,11 @@ class TopicsController < ApplicationController
 			message = topic.errors
 		end
 
-		render json: {status: status, message: message}
+		if status == "NG"
+			render json: {status: status, message: message}, status: 422
+		else
+			render json: {status: status}
+		end
 	end
 
 	def topic_params
