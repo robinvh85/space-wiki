@@ -1,0 +1,14 @@
+div.modal :class="{ 'is-active': is_upload }"
+  div.modal-background
+  div.modal-card 
+    header.modal-card-head
+      p.modal-card-title.control
+        | TITLE
+      button.delete 
+    section.modal-card-body      
+	    | CONTENT
+    footer.modal-card-foot
+      a.button.is-success
+      	| Save
+      a.button @click="cancel"
+      	| Cancel
