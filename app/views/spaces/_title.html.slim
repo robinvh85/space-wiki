@@ -1,0 +1,8 @@
+div#section-title
+	a.is-info @click="show_new_topic"
+		<i class="fa fa-plus-square fa-2x" aria-hidden="true"></i>
+	a.is-info @click="edit" style="margin-left: 10px;"
+		<i class="fa fa-pencil-square-o fa-2x" aria-hidden="true"></i>
+	ul v-for="header in headers"
+		li
+			| <a @click="scrollTo(header)">{{ header.text }}</a>
