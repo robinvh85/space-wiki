@@ -20,7 +20,8 @@ var app = new Vue({
 		current_topic: {},
 		new_topic: {},
 		mode: '',
-		form: new Form()
+		form: new Form(),
+		headers: []
 	},
 	methods: {
 		selectMenu: function(menu){
@@ -33,7 +34,7 @@ var app = new Vue({
 
 				_this.current_topic.markdown_content = converter.makeHtml(_this.current_topic.content);	
 
-				util.renderScriptMarkdown();
+				util.renderScriptMarkdown(_this.getHeaders);
 				
 			});
 		},
@@ -123,6 +124,22 @@ var app = new Vue({
 
 		backToRoot: function(topic) {
 			this.get_menu_list()
+		},
+
+		getHeaders: function() {
+			this.headers = [];
+			h1_list = document.getElementsByTagName("h1");
+			for(var i=0; i<h1_list.length; i++){
+				this.headers.push({
+					id: h1_list[i].id,
+					text: h1_list[i].innerText
+				});
+			}
+		},
+
+		scrollTo: function(header){
+			var offset = document.getElementById(header.id).offsetTop
+			window.scrollTo(0, offset);
 		}
 	},
 

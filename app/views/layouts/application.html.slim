@@ -8,7 +8,7 @@ html
     script src="/lib/form.js"
     script src="/lib/error.js"
   body
-		div.container
+		div#top-menu.container
 			nav.nav
 				div.nav-left
 					= root_path
@@ -23,7 +23,7 @@ html
 						- else
 							a.button.is-primary href="/users/sign_in"
 								| Login
-		section.section
+		section#main-content.section
 			p.notice
 				= notice
 			p.alert

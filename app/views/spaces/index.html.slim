@@ -3,16 +3,8 @@ div#app.container
 		div.column.is-3
 			= render 'menu'
 
-		div.column.is-9
-			nav.nav
-				div.nav-left
-					a.nav-item
-						a.button.is-info @click="show_new_topic"
-							| New
-				div.nav-right
-					a.nav-item
-						a.button.is-info @click="edit"
-							| Edit
+		div#topic-detail.column.is-9			
 			div.markdown-body v-html="current_topic.markdown_content"
 
 	= render 'form'
+	= render 'title'
