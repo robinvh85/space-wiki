@@ -1,8 +1,14 @@
 div#section-title
-	a.is-info @click="show_new_topic"
-		<i class="fa fa-plus-square fa-2x" aria-hidden="true"></i>
-	a.is-info @click="edit" style="margin-left: 10px;"
-		<i class="fa fa-pencil-square-o fa-2x" aria-hidden="true"></i>
-	ul v-for="header in headers"
+	div v-show="mode == ''"
+		a.is-info @click="show_new_topic"
+			<i class="fa fa-plus-square fa-2x" aria-hidden="true"></i>
+		a.is-info @click="edit" style="margin-left: 10px;"
+			<i class="fa fa-pencil-square-o fa-2x" aria-hidden="true"></i>
+	div v-show="mode == 'NEW' || mode == 'EDIT'"
+		a.is-info @click="save_form"
+			<i class="fa fa-floppy-o fa-2x" aria-hidden="true"></i>
+		a.is-info @click="cancel" style="margin-left: 10px;"
+			<i class="fa fa-times fa-2x" aria-hidden="true"></i>
+	ul v-for="header in headers" v-show="mode == ''"
 		li
 			| <a @click="scrollTo(header)">{{ header.text }}</a>
