@@ -37,6 +37,10 @@
 	position: relative;
 }
 
+img.selected {
+  border: 5px solid #22c65b;
+}
+
 #section-title {
 	position: fixed;
   width: 240px;
