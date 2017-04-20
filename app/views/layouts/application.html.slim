@@ -6,7 +6,7 @@ html
     = csrf_meta_tags
     = stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload'
     script src="/lib/form.js"
-    script src="/lib/error.js"
+    script src="/lib/error.js"    
   body
 		div#top-menu.container
 			nav.nav
@@ -31,3 +31,4 @@ html
 			= yield
 
 		= javascript_include_tag 'application', 'data-turbolinks-track': 'reload'
+		script src="/lib/components/markdown.js"

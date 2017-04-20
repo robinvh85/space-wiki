@@ -4,7 +4,7 @@ div#app.container
 			= render 'menu'
 
 		div#topic-detail.column.is-9			
-			div.markdown-body v-html="current_topic.markdown_content"
+			div.markdown-body v-html="current_topic.markdown_content" v-show="mode == ''"
+			= render 'form_new'
 
-	= render 'form'
 	= render 'title'

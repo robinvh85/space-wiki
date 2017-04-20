@@ -21,10 +21,13 @@ var app = new Vue({
 		new_topic: {},
 		mode: '',
 		form: new Form(),
-		headers: []
+		headers: [],
+		is_upload: false
 	},
 	methods: {
 		selectMenu: function(menu){
+			if(this.mode == "EDIT" || this.mode == "NEW") return;
+
 			this.current_menu = menu;
 
 			var _this = this;

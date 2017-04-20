@@ -4,7 +4,16 @@ Rails.application.routes.draw do
   root to: 'spaces#index'
 
   resources :spaces
-  resources :topics
+
   get 'topics/list_topic/:id' => 'topics#list_topic'
+  resources :topics
+
+  get 'galleries/list/:topic_id'	=> 'galleries#list'
+  resources :galleries
+  
+  get 'test/list'	=> 'test#list'
+  resources :test
+
+
 
 end
