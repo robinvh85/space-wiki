@@ -8,27 +8,31 @@ html
     script src="/lib/form.js"
     script src="/lib/error.js"    
   body
-		div#top-menu.container
-			nav.nav
-				div.nav-left
-					= root_path
-				div.nav-center
-					| CENTER
-					= t('hello')
-				div.nav-right
-					span.nav-item
-						- if user_signed_in?
-							a.button.is-primary href="/users/sign_out" data-method="delete"
-								| Logout
-						- else
-							a.button.is-primary href="/users/sign_in"
-								| Login
-		section#main-content.section
-			p.notice
-				= notice
-			p.alert
-				= alert
-			= yield
+    div#app
+      div#top-menu.container
+        nav.nav
+          div.nav-left
+            = root_path
+          div.nav-center
+            | CENTER
+            select v-model="current_subject_id" @change="changeSubject"
+              option v-for="subject in subject_list" :value="subject.id"
+                | {{ subject.title }}
+          div.nav-right
+            span.nav-item
+              - if user_signed_in?
+                a.button.is-primary href="/users/sign_out" data-method="delete"
+                  | Logout
+              - else
+                a.button.is-primary href="/users/sign_in"
+                  | Login
+      section#main-content.section
+        p.notice
+          = notice
+        p.alert
+          = alert
+        = yield
+    
 
-		= javascript_include_tag 'application', 'data-turbolinks-track': 'reload'
-		script src="/lib/components/markdown.js"
+    = javascript_include_tag 'application', 'data-turbolinks-track': 'reload'
+    script src="/lib/components/markdown.js"

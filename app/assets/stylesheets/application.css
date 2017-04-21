@@ -48,6 +48,7 @@ img.selected {
   right: 30px;
   border: 1px solid #dbdbdb;
   padding: 10px;
+  background-color: white;
 }
 
 .CodeMirror {

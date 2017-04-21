@@ -10,10 +10,16 @@ Rails.application.routes.draw do
 
   get 'galleries/list/:topic_id'	=> 'galleries#list'
   resources :galleries
-  
+
+  get 'subjects/list' => 'subjects#list'  
+  resources :subjects
+
   get 'test/list'	=> 'test#list'
   resources :test
 
+  get 'change_subject/:id' => 'application#change_subject'
+  get 'change_root_topic/:id' => 'application#change_root_topic'
+  get 'default_values' => 'application#default_values'
 
 
 end

@@ -1,0 +1,19 @@
+div.container
+	div.panel
+		div.panel-heading
+			| Subject list
+		div.panel-block
+			= link_to "New", new_subject_path, class: "button is-primary"
+		div.panel-block
+			table.table
+				tr
+					th ID
+					th Title
+					th 
+				- @subjects.each do |subject|
+					tr
+						td = subject.id
+						td = subject.title
+						td 
+							= link_to "Edit", edit_subject_path(subject), class: 'button is-primary'
+							= link_to "Delete", subject_path(subject), method: :delete, data: {confirm: "Do you want to delete?"}, class: 'button is-danger'

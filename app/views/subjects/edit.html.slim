@@ -1,0 +1,10 @@
+= form_for @subject, url: subject_path, method: "patch" do |f|
+  .container
+    .box
+      .field      
+        label.label Title
+        p.control
+          = f.text_field :title, class: 'input'
+      .field      
+        p.control
+          = f.submit "Update", class: 'button is-primary'

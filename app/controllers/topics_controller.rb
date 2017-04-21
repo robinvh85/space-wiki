@@ -2,7 +2,11 @@ class TopicsController < ApplicationController
 	before_action :authenticate_user!
 	
 	def index
-		topics = Topic.first
+		if session[:current_subject_id].nil?
+			topics = Topic.first
+		else
+			topics = Topic.find(session[:current_subject_id])
+		end
 
 		# Render max 3 level
 		render json: topics.to_json(
