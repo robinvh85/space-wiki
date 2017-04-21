@@ -1,0 +1,10 @@
+= form_for @subject, url: subjects_path do |f|
+  .container
+    .box
+      .field      
+        label.label Title
+        p.control
+          = f.text_field :title, class: 'input'
+      .field      
+        p.control
+          = f.submit "Create", class: 'button is-primary'

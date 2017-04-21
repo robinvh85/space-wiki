@@ -15,6 +15,9 @@ hljs.configure({
 var app = new Vue({
 	el: '#app',
 	data: {
+		subject_list: [],
+		current_subject_id: null,
+		current_root_id: null,
 		space: { children: [] },
 		current_menu: {},
 		current_topic: {},
@@ -103,29 +106,63 @@ var app = new Vue({
 		},
 
 		get_menu_list: function() {
-			var _this = this;
+			var self = this;
 
-			this.$http.get('/topics').then(function (res){
-				_this.space = res.data;
+			// TODO: need to improve, use only one method
+			if(this.current_root_id == null){
+				this.$http.get('/topics').then(function (res){
+					self.space = res.data;
+ 
+					if(Object.keys(self.current_topic).length > 0){
+						self.selectMenu(self.current_topic);
+					} else {
+						self.selectMenu(self.space);
+					}
+				});
+			} else {
+				this.$http.get('/topics/list_topic/' + self.current_root_id).then(function (res){
+					self.space = res.data;
+					self.selectMenu(self.space);
 
-				if(Object.keys(_this.current_topic).length > 0){
-					_this.selectMenu(_this.current_topic);
-				} else {
-					_this.selectMenu(_this.space);
-				}
+					if(Object.keys(self.current_topic).length > 0){
+						self.selectMenu(self.current_topic);
+					} else {
+						self.selectMenu(self.space);
+					}
+				});
+			}
+		},
+
+		changeSubject: function() {
+			var self = this;
+
+			if(this.current_subject_id == undefined) return;
+
+			this.$http.get('/change_subject/' + this.current_subject_id).then(function (res){
+				self.get_menu_list();
 			});
 		},
 
 		changeRoot: function(topic) {
 			var self = this;
+			this.current_root_id = topic.id
 
 			this.$http.get('/topics/list_topic/' + topic.id).then(function (res){
 				self.space = res.data;
 				self.selectMenu(self.space);
 			});
+
+			this.setRootTopic();
+		},
+
+		setRootTopic: function(){
+			this.$http.get('/change_root_topic/' + this.current_root_id).then(function (res){				
+			});
 		},
 
 		backToRoot: function(topic) {
+			this.current_root_id = null;
+			this.setRootTopic();
 			this.get_menu_list()
 		},
 
@@ -143,6 +180,18 @@ var app = new Vue({
 		scrollTo: function(header){
 			var offset = document.getElementById(header.id).offsetTop
 			window.scrollTo(0, offset);
+		},
+
+		init: function(){
+			var self = this;
+			this.$http.get('/default_values').then(function (res){
+				console.log(res.data);
+				self.subject_list = res.data.subject_list;
+				self.current_subject_id = res.data.current_subject_id;
+				self.current_root_id = res.data.current_root_id;
+
+				self.get_menu_list();
+			});
 		}
 	},
 
@@ -151,6 +200,6 @@ var app = new Vue({
 	},
 	mounted: function() {
 		console.log("mounted");
-		this.get_menu_list();
+		this.init();		
 	}
 });
