@@ -138,6 +138,7 @@ var app = new Vue({
 
 			if(this.current_subject_id == undefined) return;
 
+			this.current_root_id = null;
 			this.$http.get('/change_subject/' + this.current_subject_id).then(function (res){
 				self.get_menu_list();
 			});
@@ -156,7 +157,8 @@ var app = new Vue({
 		},
 
 		setRootTopic: function(){
-			this.$http.get('/change_root_topic/' + this.current_root_id).then(function (res){				
+			this.$http.get('/change_root_topic/' + this.current_root_id).then(function (res){
+				console.log(res.data)
 			});
 		},
 

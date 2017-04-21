@@ -13,6 +13,7 @@ class ApplicationController < ActionController::Base
 			session[:topic_root_id] = params[:id]
 		end
 
+		sleep(0.2)
 		render json: {status: 'OK'}
   end
 
