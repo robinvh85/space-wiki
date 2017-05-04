@@ -44,6 +44,11 @@ group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platform: :mri
   gem "rspec-rails"
+  gem 'rails-controller-testing'
+  gem 'database_rewinder'
+  gem 'factory_girl_rails', '~> 4.8'
+  gem 'simplecov', '~> 0.12.0'
+  gem 'httparty', '~> 0.13.7'
 end
 
 group :development do
