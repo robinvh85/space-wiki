@@ -25,10 +25,12 @@ var app = new Vue({
     mode: '',
     form: new Form(),
     headers: [],
-    is_upload: false
+    is_upload: false,
+    text_search: ""
   },
   methods: {
     selectMenu: function(menu){
+      window.history.pushState(null, null, window.location.pathname);
       if(this.mode == "EDIT" || this.mode == "NEW") return;
 
       this.current_menu = menu;
@@ -122,7 +124,6 @@ var app = new Vue({
       } else {
         this.$http.get('/topics/list_topic/' + self.current_root_id).then(function (res){
           self.space = res.data;
-          self.selectMenu(self.space);
 
           if(Object.keys(self.current_topic).length > 0){
             self.selectMenu(self.current_topic);
@@ -190,16 +191,45 @@ var app = new Vue({
       this.current_topic = {};
     },
 
+    search: function(){
+      document.location = "/search?q=" + this.text_search;
+    },
+
+    pressSearch: function(event){
+      if(event.key == "Enter"){
+        this.search();
+      }
+    },
+
     init: function(){
       var self = this;
+
+      current_root_id = $("#current_root_id").val();
+      if(current_root_id != ""){
+        this.current_root_id = current_root_id;
+      }
+      
+      current_menu_id = $("#current_menu_id").val();
+      if(current_menu_id){
+        this.current_menu.id = current_menu_id;
+        this.current_topic.id = current_menu_id;
+      }
+
       this.$http.get('/default_values').then(function (res){
         console.log(res.data);
         self.subject_list = res.data.subject_list;
         self.current_subject_id = res.data.current_subject_id;
-        self.current_root_id = res.data.current_root_id;
+
+        if(self.current_root_id == null){
+          self.current_root_id = res.data.current_root_id;
+        }
 
         self.get_menu_list();
       });
+    },
+
+    initSearch: function(){
+      this.text_search = $("#hdf_text_search").val();
     }
   },
 
@@ -208,6 +238,7 @@ var app = new Vue({
   },
   mounted: function() {
     console.log("mounted");
-    this.init();    
+    this.init();
+    this.initSearch();
   }
 });

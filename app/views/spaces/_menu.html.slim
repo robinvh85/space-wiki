@@ -1,22 +1,22 @@
 nav#topic-list.menu
-	ul.menu-list
-		li
-			a :class="{'is-active': current_menu.id == space.id }" @click="selectMenu(space)"
-				| {{ space.title }}
-			a style="float:right; margin-top:-28px;" @click="backToRoot()" v-if="current_root_id != null"
-				<i class="fa fa-reply-all" aria-hidden="true"></i>
-		li
-			ul.menu-list v-show="space.children.length > 0"
-				li v-for="menu in space.children" 
-					a :class="{'is-active': current_menu.id == menu.id }" @click="selectMenu(menu)"
-					  | {{ menu.title }}
-				 	a style="float:right; margin-top:-28px;" @click="changeRoot(menu)" v-if="current_root_id == null"
-				 	  <i class="fa fa-caret-square-o-right" aria-hidden="true"></i>
-			 		ul.menu-list v-if="menu.children" v.show="menu.children.length > 0"
-			 			li v-for="menu in menu.children" 
-			 				a :class="{'is-active': current_menu.id == menu.id }" @click="selectMenu(menu)"
-			 					| {{ menu.title }}
-		 					ul.menu-list v-if="menu.children" v.show="menu.children.length > 0"
-				 				li v-for="menu in menu.children" 
-				 					a :class="{'is-active': current_menu.id == menu.id }" @click="selectMenu(menu)"
-				 						| {{ menu.title }}
+  ul.menu-list
+    li
+      a :class="{'is-active': current_menu.id == space.id }" @click="selectMenu(space)"
+        | {{ space.title }}
+      a style="float:right; margin-top:-28px;" @click="backToRoot()" v-if="current_root_id != null"
+        <i class="fa fa-reply-all" aria-hidden="true"></i>
+    li
+      ul.menu-list v-show="space.children.length > 0"
+        li v-for="menu in space.children" 
+          a :class="{'is-active': current_menu.id == menu.id }" @click="selectMenu(menu)"
+            | {{ menu.title }}
+          a style="float:right; margin-top:-28px;" @click="changeRoot(menu)" v-if="current_root_id == null"
+            <i class="fa fa-caret-square-o-right" aria-hidden="true"></i>
+          ul.menu-list v-if="menu.children" v.show="menu.children.length > 0"
+            li v-for="menu in menu.children" 
+              a :class="{'is-active': current_menu.id == menu.id }" @click="selectMenu(menu)"
+                | {{ menu.title }}
+              ul.menu-list v-if="menu.children" v.show="menu.children.length > 0"
+                li v-for="menu in menu.children" 
+                  a :class="{'is-active': current_menu.id == menu.id }" @click="selectMenu(menu)"
+                    | {{ menu.title }}

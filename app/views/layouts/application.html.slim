@@ -8,7 +8,7 @@ html
     script src="/lib/form.js"
     script src="/lib/error.js"    
   body
-    div#app
+    div#app v-cloak=""
       div#top-menu.container
         nav.nav
           div.nav-left
@@ -19,6 +19,15 @@ html
               option v-for="subject in subject_list" :value="subject.id"
                 | {{ subject.title }}
           div.nav-right
+
+            div.field.has-addons
+              p.control
+                input.input id="text_search" placeholder="Find a topic" v-model="text_search" v-on:keypress="pressSearch"
+                input type="hidden" id="hdf_text_search" value=@query            
+              p.control
+                a.button.is-info @click="search"
+                 | Search
+
             span.nav-item
               - if user_signed_in?
                 a.button.is-primary href="/users/sign_out" data-method="delete"
