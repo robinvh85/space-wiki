@@ -7,27 +7,28 @@ class ApplicationController < ActionController::Base
   end
 
   def change_root_topic
+    sleep(0.5)
   	if params[:id] == "null"
 			session[:topic_root_id] = nil
 		else
 			session[:topic_root_id] = params[:id]
 		end
-
-		sleep(0.2)
+		
 		render json: {status: 'OK'}
   end
 
   def default_values
-  	@subject_list = @subjects = Topic.where(level: 0).select(:id, :title)
+  	@subject_list = Topic.where(level: 0).select(:id, :title)
 
-  	# binding.pry
+    # Get current_subject_id
+    current_subject_id = @subject_list.first.id
+    current_subject_id = session[:current_subject_id] unless session[:current_subject_id].nil?
 
   	render json: {
-  		current_subject_id: session[:current_subject_id],
-  		current_root_id: session[:topic_root_id],
-  		subject_list: @subject_list,
-  		test_2: session[:test_2],
-  		test_3: session[:test_3]
+  		current_subject_id: current_subject_id,
+  		# current_root_id: session[:current_root_id],
+      current_root_id: nil,
+  		subject_list: @subject_list
   	}
   end
 end

@@ -1,0 +1,18 @@
+div.container
+  div.panel
+    div.panel-heading
+      | Topic list
+    div.panel-block
+      table.table
+        tr
+          th Tiltle
+        - @topics.each do |topic|
+          tr
+            td 
+              a href='/?topic_id=#{topic.id}'
+                = topic.title
+
+javascript:
+  window.onload = function(){
+    $("#text_search").focus();
+  }

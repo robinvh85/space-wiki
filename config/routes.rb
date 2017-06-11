@@ -5,6 +5,7 @@ Rails.application.routes.draw do
 
   resources :spaces
 
+  get 'search' => 'topics#search'
   get 'topics/list_topic/:id' => 'topics#list_topic'
   resources :topics
 

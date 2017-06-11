@@ -1,10 +1,12 @@
+input type="hidden" id="current_menu_id" value=@current_menu_id
+input type="hidden" id="current_root_id" value=@root_topic_id
 div.container
-	div.columns
-		div.column.is-3
-			= render 'menu'
+  div.columns
+    div.column.is-3
+      = render 'menu'
 
-		div#topic-detail.column.is-9			
-			div.markdown-body v-html="current_topic.markdown_content" v-show="mode == ''"
-			= render 'form_new'
+    div#topic-detail.column.is-9      
+      div.markdown-body v-html="current_topic.markdown_content" v-show="mode == ''"
+      = render 'form_new'
 
-	= render 'title'
+  = render 'title'

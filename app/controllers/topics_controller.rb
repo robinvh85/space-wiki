@@ -93,6 +93,12 @@ class TopicsController < ApplicationController
       :only => [:id, :title] )
   end
 
+  def search
+    @topics = []
+    @query = params[:q]
+    @topics = Topic.where('content LIKE ?', "%#{ params[:q] }%") unless @query.empty?
+  end
+
   private
   def topic_params
     params.require(:topic).permit(:title, :content)
