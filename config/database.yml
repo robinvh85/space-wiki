@@ -24,4 +24,5 @@ production:
   username: root
   password:
   database: 'space_wiki'
+  host: localhost
   
