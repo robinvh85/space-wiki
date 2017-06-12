@@ -1,33 +1,27 @@
-# SQLite version 3.x
-#   gem install sqlite3
-#
-#   Ensure the SQLite 3 gem is defined in your Gemfile
-#   gem 'sqlite3'
-#
+
 default: &default
-  adapter: sqlite3
+  adapter: mysql2
+  encoding: utf8
+  charset: utf8
+  collation: utf8_general_ci
   pool: 5
-  timeout: 5000
+  database: 'space_wiki'
+  username: root
+  password: 123456
+  host: vh-mysql
+  port: 3306
 
 development:
   <<: *default
-  database: db/development.sqlite3
+  database: 'space_wiki'
 
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: db/test.sqlite3
+  database: 'space_wiki_test'
 
 production:
   <<: *default
-  host: localhost
-  adapter: postgresql
-  encoding: utf8
-  database: space_wiki
-  pool: 5
-  # username: <%= ENV['APPNAME_DATABASE_USER'] %>
-  # password: <%= ENV['APPNAME_DATABASE_PASSWORD'] %>
-  username: robinvh
-  password: 123456
+  username: root
+  password:
+  database: 'space_wiki'
+  
