@@ -1,0 +1,2 @@
+class CurrencyPair < ApplicationRecord
+end
