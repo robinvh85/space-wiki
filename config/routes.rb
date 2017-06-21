@@ -22,5 +22,6 @@ Rails.application.routes.draw do
   get 'change_root_topic/:id' => 'application#change_root_topic'
   get 'default_values' => 'application#default_values'
 
+  resources :current_orders
 
 end
