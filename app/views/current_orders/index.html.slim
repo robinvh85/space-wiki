@@ -1,33 +1,33 @@
 div.container
-	div.panel
-		div.panel-heading
-			| Bid orders
-		div.panel-block
-			table.table
-				tr
-					th Price
-					th Amount
-					th Total
-					th Accumulate price
-				- @bid_orders.each do |item|
-					tr
-						td = item.price
-						td = item.amount
-						td = item.total_price
-						td = item.accumulate_price
-	div.panel
-		div.panel-heading
-			| Ask orders
-		div.panel-block
-			table.table
-				tr
-					th Price
-					th Amount
-					th Total
-					th Accumulate price
-				- @ask_orders.each do |item|
-					tr
-						td = item.price
-						td = item.amount
-						td = item.total_price
-						td = item.accumulate_price
+  div.panel
+    div.panel-heading
+      | Bid orders
+    div.panel-block
+      table.table
+        tr
+          th Price
+          th Amount
+          th Total
+          th Accumulate price
+        - @bid_orders.each do |item|
+          tr
+            td = item.price
+            td = item.amount
+            td = item.total_price
+            td = item.accumulate_price
+  div.panel
+    div.panel-heading
+      | Ask orders
+    div.panel-block
+      table.table
+        tr
+          th Price
+          th Amount
+          th Total
+          th Accumulate price
+        - @ask_orders.each do |item|
+          tr
+            td = item.price
+            td = item.amount
+            td = item.total_price
+            td = item.accumulate_price

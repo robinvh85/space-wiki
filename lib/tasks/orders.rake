@@ -12,14 +12,16 @@ namespace :orders do
 
     currency_pair = 'USDT_LTC'
     response = Poloniex.order_book(currency_pair)
-    data = JSON.parase(response.body)
+    data = JSON.parse(response.body)
 
-    save_current_orders(currency_pair, data['bids'])
-    save_current_orders(currency_pair, data['asks'])
+    CurrentOrder.delete_all
+
+    save_current_orders(currency_pair, data['bids'], 'bid')
+    save_current_orders(currency_pair, data['asks'], 'ask')
   end
 end
 
-def save_current_orders(currency_pair, list)
+def save_current_orders(currency_pair, list, method)
   accumulate_price = 0.0
   list.each do |item|
     total_price = item[0].to_f * item[1].to_f
@@ -27,7 +29,7 @@ def save_current_orders(currency_pair, list)
 
     CurrentOrder.create({
       currency_pair: currency_pair,
-      method: 'bid',
+      method: method,
       price: item[0].to_f,
       amount: item[1].to_f,
       total_price: total_price,
