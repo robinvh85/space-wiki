@@ -77,3 +77,7 @@ img.selected {
 .menu-list li ul {
   padding-left: 0.5em;
 }
+
+#orders table td {
+  text-align: right;
+}
