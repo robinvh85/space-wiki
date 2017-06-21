@@ -1,33 +1,34 @@
 div.container
-  div.panel
-    div.panel-heading
-      | Bid orders
-    div.panel-block
-      table.table
-        tr
-          th Price
-          th Amount
-          th Total
-          th Accumulate price
-        - @bid_orders.each do |item|
+  div#orders.columns
+    div.panel.column.is-half
+      div.panel-heading
+        | Bid orders
+      div.panel-block
+        table.table
           tr
-            td = item.price
-            td = item.amount
-            td = item.total_price
-            td = item.accumulate_price
-  div.panel
-    div.panel-heading
-      | Ask orders
-    div.panel-block
-      table.table
-        tr
-          th Price
-          th Amount
-          th Total
-          th Accumulate price
-        - @ask_orders.each do |item|
+            th Price
+            th Amount
+            th Total
+            th Accumulate price
+          - @bid_orders.each do |item|
+            tr
+              td = number_with_precision(item.price, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
+    div.panel.column.is-half
+      div.panel-heading
+        | Ask orders
+      div.panel-block
+        table.table
           tr
-            td = item.price
-            td = item.amount
-            td = item.total_price
-            td = item.accumulate_price
+            th Price
+            th Amount
+            th Total
+            th Accumulate price
+          - @ask_orders.each do |item|
+            tr
+              td = number_with_precision(item.price, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
