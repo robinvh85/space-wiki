@@ -1,24 +1,9 @@
 div.container
+  = select_tag "currency_pairs", options_from_collection_for_select(@currency_pairs, "name", "name", @pair), class: 'input', onChange: 'currency_pair_changed(this)'
   div#orders.columns
     div.panel.column.is-half
       div.panel-heading
-        | Bid orders
-      div.panel-block
-        table.table
-          tr
-            th Price
-            th Amount
-            th Total
-            th Accumulate price
-          - @bid_orders.each do |item|
-            tr
-              td = number_with_precision(item.price, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
-    div.panel.column.is-half
-      div.panel-heading
-        | Ask orders
+        | Sell orders
       div.panel-block
         table.table
           tr
@@ -32,3 +17,23 @@ div.container
               td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
               td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
               td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
+    div.panel.column.is-half
+      div.panel-heading
+        | Buy orders
+      div.panel-block
+        table.table
+          tr
+            th Price
+            th Amount
+            th Total
+            th Accumulate price
+          - @bid_orders.each do |item|
+            tr
+              td = number_with_precision(item.price, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
+              td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
+javascript:
+  function currency_pair_changed(obj){
+    document.location = "/current_orders?pair=" + obj.value
+  }    

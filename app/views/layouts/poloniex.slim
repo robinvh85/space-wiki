@@ -1,0 +1,34 @@
+doctype html
+html
+  head
+    title= "Poloniex"
+    meta http-equiv="content-language" content="en"
+    = csrf_meta_tags
+    = stylesheet_link_tag 'poloniex', media: 'all', 'data-turbolinks-track': 'reload'
+  body
+    div#app
+      div#top-menu.container
+        nav.nav
+          div.nav-left
+            = link_to "Orders", current_orders_path
+            = link_to "Orders", current_orders_path
+            = link_to "Orders", current_orders_path
+          div.nav-center
+            | CENTER
+          div.nav-right
+            span.nav-item
+              - if user_signed_in?
+                a.button.is-primary href="/users/sign_out" data-method="delete"
+                  | Logout
+              - else
+                a.button.is-primary href="/users/sign_in"
+                  | Login
+      section#main-content.section
+        p.notice
+          = notice
+        p.alert
+          = alert
+        = yield
+    
+
+    = javascript_include_tag 'poloniex', 'data-turbolinks-track': 'reload'
