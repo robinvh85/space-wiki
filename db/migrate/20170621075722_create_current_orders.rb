@@ -7,6 +7,8 @@ class CreateCurrentOrders < ActiveRecord::Migration[5.0]
       t.float     :amount
       t.float     :total_price
       t.float     :accumulate_price
+
+      t.timestamps
     end
   end
 end
