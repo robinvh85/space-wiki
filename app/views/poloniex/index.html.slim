@@ -1,0 +1,45 @@
+div.container  
+  select v-model="current_pair" @change="changeCurrencyPair" class='input'
+    option v-for="currency_pair in currency_pairs" :value="currency_pair.name"
+      | {{ currency_pair.name }}
+  div#orders.columns
+    div.panel.column.is-half
+      div.panel-heading
+        | Sell orders
+      div.panel-block
+        table.table.scroll
+          thead.columns
+            tr
+              th.column.is-3 Price
+              th.column.is-3 Amount
+              th.column.is-3 Total
+              th.column.is-3 Accumulate price          
+          tbody
+            tr v-for="item in ask_orders"
+              td.column.is-3
+                | {{ item.price }} 
+              td.column.is-3
+                | {{ item.amount }} 
+              td.column.is-3
+                | {{ item.total_price }} 
+              td.column.is-3
+                | {{ item.accumulate_price }}
+    div.panel.column.is-half
+      div.panel-heading
+        | Buy orders
+      div.panel-block
+        table.table
+          tr
+            th Price
+            th Amount
+            th Total
+            th Accumulate price          
+          tr v-for="item in bid_orders"
+            td 
+              | {{ item.price }} 
+            td 
+              | {{ item.amount }} 
+            td 
+              | {{ item.total_price }} 
+            td 
+              | {{ item.accumulate_price }} 
