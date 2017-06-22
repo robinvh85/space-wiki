@@ -31,10 +31,10 @@ def save_current_orders(currency_pair, list, method)
     CurrentOrder.create({
       currency_pair: currency_pair,
       method: method,
-      price: item[0].to_f,
-      amount: item[1].to_f,
-      total_price: total_price,
-      accumulate_price: accumulate_price
+      price: "%.8f" % item[0].to_f,
+      amount: "%.8f" % item[1].to_f,
+      total_price: "%.8f" % total_price,
+      accumulate_price: "%.8f" % accumulate_price
     })
   end
 end
