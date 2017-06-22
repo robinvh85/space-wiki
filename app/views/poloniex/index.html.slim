@@ -2,44 +2,22 @@ div.container
   select v-model="current_pair" @change="changeCurrencyPair" class='input'
     option v-for="currency_pair in currency_pairs" :value="currency_pair.name"
       | {{ currency_pair.name }}
-  div#orders.columns
+  = render 'orders'
+  div#percent.columns
     div.panel.column.is-half
       div.panel-heading
-        | Sell orders
+        | Sell percent
+        input.input v-model="sell_value" style="width:200px; float:right; text-align:right;" maxlength="16"
+        div.clear
       div.panel-block
         table.table.scroll
           thead.columns
             tr
-              th.column.is-3 Price
-              th.column.is-3 Amount
-              th.column.is-3 Total
-              th.column.is-3 Accumulate price          
-          tbody
-            tr v-for="item in ask_orders"
-              td.column.is-3
-                | {{ item.price }} 
-              td.column.is-3
-                | {{ item.amount }} 
-              td.column.is-3
-                | {{ item.total_price }} 
-              td.column.is-3
-                | {{ item.accumulate_price }}
-    div.panel.column.is-half
-      div.panel-heading
-        | Buy orders
-      div.panel-block
-        table.table
-          tr
-            th Price
-            th Amount
-            th Total
-            th Accumulate price          
-          tr v-for="item in bid_orders"
-            td 
-              | {{ item.price }} 
-            td 
-              | {{ item.amount }} 
-            td 
-              | {{ item.total_price }} 
-            td 
-              | {{ item.accumulate_price }} 
+              th.column.is-6 Percent
+              th.column.is-6 Value
+          tbody style="height: 160px;"
+            tr v-for="item in sell_percent_values"
+              td.column.is-6
+                | {{ item.percent }} 
+              td.column.is-6
+                | {{ item.value }} 

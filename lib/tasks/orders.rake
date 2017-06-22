@@ -10,15 +10,14 @@ namespace :orders do
       config.secret = '0c4496e534e874a8533756ff5121f3e5be4add3c60b985157d9cf325a742c5c74fac18b1262667577c079809b084fa279110563911bcfdf75439588b858f8a59'
     end
 
+    CurrentOrder.delete_all
     currency_pairs = CurrencyPair.all
     currency_pairs.each do |currency_pair|
-      response = Poloniex.order_book(currency_pair)
+      currency_pair_name = currency_pair.name
+      response = Poloniex.order_book(currency_pair_name)
       data = JSON.parse(response.body)
-
-      CurrentOrder.delete_all
-
-      save_current_orders(currency_pair, data['bids'], 'bid')
-      save_current_orders(currency_pair, data['asks'], 'ask')
+      save_current_orders(currency_pair_name, data['bids'], 'bid')
+      save_current_orders(currency_pair_name, data['asks'], 'ask')
     end
   end
 end

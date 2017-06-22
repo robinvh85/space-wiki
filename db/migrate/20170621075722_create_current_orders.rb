@@ -3,10 +3,10 @@ class CreateCurrentOrders < ActiveRecord::Migration[5.0]
     create_table :current_orders do |t|
       t.string 		:currency_pair
       t.string    :method
-      t.float     :price
-      t.float     :amount
-      t.float     :total_price
-      t.float     :accumulate_price
+      t.string     :price
+      t.string     :amount
+      t.string     :total_price
+      t.string     :accumulate_price
 
       t.timestamps
     end

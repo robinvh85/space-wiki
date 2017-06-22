@@ -104,3 +104,25 @@ table.scroll thead, .scroll tbody, .scroll tr, .scroll td, .scroll th {
 table.scroll tbody td, table.scroll thead > tr> th {
   float: left;
 }
+
+#poloniex table td {
+  font-size: 0.9rem;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+#poloniex .table{
+  margin-bottom: 0px;
+}
+
+/*#poloniex .table td:nth-child(8n + 1){
+  background-color:#fafafa;
+}*/
+
+#poloniex .table td .hand{
+  cursor: pointer;
+}
+
+.clear {
+  clear: both;
+}
