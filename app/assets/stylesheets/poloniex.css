@@ -73,3 +73,56 @@ img.selected {
 #top-menu a {
   margin: 10px;
 }
+
+/* For table */
+table.scroll thead {
+  margin-left: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+table.scroll thead tr {
+  width: 97%;
+}
+
+table.scroll thead th {
+  border-width: 0px 0px 1px;
+  color: #363636;
+}
+
+table.scroll tbody {
+  width: 100%;
+  height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+table.scroll thead, .scroll tbody, .scroll tr, .scroll td, .scroll th {
+  display: block;
+}
+
+table.scroll tbody td, table.scroll thead > tr> th {
+  float: left;
+}
+
+#poloniex table td {
+  font-size: 0.9rem;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+#poloniex .table{
+  margin-bottom: 0px;
+}
+
+/*#poloniex .table td:nth-child(8n + 1){
+  background-color:#fafafa;
+}*/
+
+#poloniex .table td .hand{
+  cursor: pointer;
+}
+
+.clear {
+  clear: both;
+}

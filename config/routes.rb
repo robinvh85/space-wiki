@@ -23,5 +23,11 @@ Rails.application.routes.draw do
   get 'default_values' => 'application#default_values'
 
   resources :current_orders
+  resources :poloniex
+
+  namespace :ajax do
+    resources :orders
+    resources :currency_pairs
+  end
 
 end

@@ -13,10 +13,10 @@ div.container
             th Accumulate price
           - @ask_orders.each do |item|
             tr
-              td = number_with_precision(item.price, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
+              td = item.price
+              td = item.amount
+              td = item.total_price
+              td = item.accumulate_price
     div.panel.column.is-half
       div.panel-heading
         | Buy orders
@@ -29,10 +29,10 @@ div.container
             th Accumulate price
           - @bid_orders.each do |item|
             tr
-              td = number_with_precision(item.price, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.amount, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.total_price, :precision => 8, :delimiter => ',')
-              td = number_with_precision(item.accumulate_price, :precision => 8, :delimiter => ',')
+              td = item.price
+              td = item.amount
+              td = item.total_price
+              td = item.accumulate_price
 javascript:
   function currency_pair_changed(obj){
     document.location = "/current_orders?pair=" + obj.value

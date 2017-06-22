@@ -6,7 +6,7 @@ html
     = csrf_meta_tags
     = stylesheet_link_tag 'poloniex', media: 'all', 'data-turbolinks-track': 'reload'
   body
-    div#app
+    div#poloniex
       div#top-menu.container
         nav.nav
           div.nav-left
@@ -31,4 +31,4 @@ html
         = yield
     
 
-    = javascript_include_tag 'poloniex', 'data-turbolinks-track': 'reload'
+    = javascript_include_tag 'poloniex_base', 'data-turbolinks-track': 'reload'
