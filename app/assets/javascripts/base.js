@@ -1,3 +1,9 @@
 //= require jquery
 //= require jquery_ujs
 //= require turbolinks
+//= require axios.min
+//= require vue.min
+//= require poloniex/highstock
+//= require poloniex/exporting
+//= require poloniex/sand-signika
+//= require util

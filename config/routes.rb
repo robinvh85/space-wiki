@@ -30,6 +30,8 @@ Rails.application.routes.draw do
   namespace :ajax do
     resources :orders
     resources :currency_pairs
+
+    resources :charts
   end
 
 end

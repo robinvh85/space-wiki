@@ -33,7 +33,7 @@ var app = new Vue({
     },
     get_orders: function(){
       _this = this;
-      this.$http.get('/ajax/orders?pair=', {params: {pair: this.current_pair} }).then(function (res){
+      this.$http.get('/ajax/orders', {params: {pair: this.current_pair} }).then(function (res){
         _this.bid_orders = res.data['bid_orders'];
         _this.ask_orders = res.data['ask_orders'];
 
