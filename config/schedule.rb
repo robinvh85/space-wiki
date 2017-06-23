@@ -22,3 +22,7 @@
 every 1.minute do
   rake "orders:get_current"
 end
+
+every 5.minute do
+  rake "chart_data:get"
+end

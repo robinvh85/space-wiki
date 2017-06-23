@@ -4,6 +4,7 @@ class PoloniexController < PoloniexBaseController
 	end	
 
 	def chart
+		@currency_pairs = CurrencyPair.all
 	end
 
 end

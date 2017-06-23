@@ -1,14 +1,84 @@
-div.container  
+div.container
+  = select_tag "currency_pairs", options_from_collection_for_select(@currency_pairs, "id", "name", @pair), class: 'input', onChange: 'currency_pair_changed(this)'
   div.panel
     div.panel-heading
-      | Sell percent
-    div.panel-block        
+      | Chart 5m
+    div.panel-block      
       div#myChart style="width:100%;"
 
 javascript:
   // create the chart
+
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+
+  var createChart5m = function(data){
+    Highcharts.stockChart('myChart', {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'hour',
+          count: 12,
+          text: '12h'
+        }, {
+          type: 'hour',
+          count: 24,
+          text: '24h'
+        }, {
+          type: 'hour',
+          count: 48,
+          text: '48h'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 5m'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '5m candle',
+        data: data,
+        /*
+        dataGrouping: {
+            units: [
+                [
+                  'week', // unit name
+                  [1] // allowed multiples
+                ], [
+                  'month',
+                  [1, 2, 3, 4, 6]
+                ]
+            ]
+        }*/
+       }
+      ]
+    });
+  }
+
+  var currency_pair_changed = function(item){
+    refresh_charts(item.value);
+  }
+
+  var refresh_charts = function(pair_id){
+    axios.get('/ajax/charts', {params: { pair_id: pair_id }}).then(function (res){
+      createChart5m(res.data)
+    });
+  }
+
   $(function(){
 
+    refresh_charts();
+
+    /*
     var data = [[1496275200000,38.58,38.61,37.97,38.10],
       [1496275260000,38.13,38.54,37.79,38.33],
       [1496275320000,37.73,37.77,36.33,36.60],
@@ -26,48 +96,7 @@ javascript:
       [1496276040000,36.17,36.42,35.49,35.70],
       [1496276100000,35.70,35.70,34.23,35.08],
       [1496276160000,34.70,36.13,34.29,35.98]];
-
-    Highcharts.stockChart('myChart', {
-      rangeSelector: {
-          selected: 1,
-          buttons: [{
-          type: 'minute',
-          count: 6,
-          text: '6m'
-        }, {
-          type: 'minute',
-          count: 9,
-          text: '9m'
-        }, {
-          type: 'minute',
-          count: 12,
-          text: '12m'
-        },{
-          type: 'all',
-          text: 'All'
-        }]
-      },
-
-      title: {
-          text: 'AAPL Stock Price'
-      },
-
-      series: [{
-          type: 'candlestick',
-          name: 'AAPL Stock Price',
-          data: data,
-          dataGrouping: {
-              units: [
-                  [
-                      'week', // unit name
-                      [1] // allowed multiples
-                  ], [
-                      'month',
-                      [1, 2, 3, 4, 6]
-                  ]
-              ]
-          }
-      }]
-    });
+      */
+  
   });
 

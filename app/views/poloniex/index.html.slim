@@ -1,3 +1,6 @@
+= content_for :javascripts
+  = javascript_include_tag 'poloniex/app'
+
 div.container  
   select v-model="current_pair" @change="changeCurrencyPair" class='input'
     option v-for="currency_pair in currency_pairs" :value="currency_pair.name"
