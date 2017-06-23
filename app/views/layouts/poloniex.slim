@@ -5,6 +5,7 @@ html
     meta http-equiv="content-language" content="en"
     = csrf_meta_tags
     = stylesheet_link_tag 'poloniex', media: 'all', 'data-turbolinks-track': 'reload'
+    = javascript_include_tag 'base', 'data-turbolinks-track': 'reload'
   body
     div#poloniex
       div#top-menu.container
@@ -30,5 +31,4 @@ html
           = alert
         = yield
     
-
     = javascript_include_tag 'poloniex_base', 'data-turbolinks-track': 'reload'

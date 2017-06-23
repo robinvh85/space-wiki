@@ -1,11 +1,10 @@
-# require 'poloniex'
-# require 'json'
+require 'poloniex_vh'
 
 namespace :orders do
   task get_current: :environment do
     puts "Run rake orders:get_current"
 
-    Poloniex.setup do | config |
+    PoloniexVh.setup do | config |
       config.key = 'KeyVVGCGL9G-5YV2M7RC-TCTCYIFX-QBHGLPX6'
       config.secret = '0c4496e534e874a8533756ff5121f3e5be4add3c60b985157d9cf325a742c5c74fac18b1262667577c079809b084fa279110563911bcfdf75439588b858f8a59'
     end
@@ -14,7 +13,7 @@ namespace :orders do
     currency_pairs = CurrencyPair.all
     currency_pairs.each do |currency_pair|
       currency_pair_name = currency_pair.name
-      response = Poloniex.order_book(currency_pair_name)
+      response = PoloniexVh.order_book(currency_pair_name)
       data = JSON.parse(response.body)
       save_current_orders(currency_pair_name, data['bids'], 'bid')
       save_current_orders(currency_pair_name, data['asks'], 'ask')
