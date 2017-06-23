@@ -27,6 +27,10 @@ module PoloniexVh
     res = get 'returnChartData', currencyPair: currency_pair, period: period,  start: 0, :end => Time.now.to_i
   end
 
+  def self.get_daily_exchange_rates( currency_pair, period, start, end_time )
+    res = get 'returnChartData', currencyPair: currency_pair, period: period,  start: start, end: end_time
+  end
+
   def self.ticker
     get 'returnTicker'
   end
