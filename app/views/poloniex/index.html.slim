@@ -20,4 +20,21 @@ div.container
               td.column.is-6
                 | {{ item.percent }} 
               td.column.is-6
+                | {{ item.value }}
+    div.panel.column.is-half
+      div.panel-heading
+        | Buy percent
+        input.input v-model="buy_value" style="width:200px; float:right; text-align:right;" maxlength="16"
+        div.clear
+      div.panel-block
+        table.table.scroll
+          thead.columns
+            tr
+              th.column.is-6 Percent
+              th.column.is-6 Value
+          tbody style="height: 160px;"
+            tr v-for="item in buy_percent_values"
+              td.column.is-6
+                | {{ item.percent }} 
+              td.column.is-6
                 | {{ item.value }} 
