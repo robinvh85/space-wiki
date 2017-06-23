@@ -19,4 +19,6 @@
 //= require simplemde.min
 //= require highlight.min
 //= require util
-//= require_tree .
+//= require app
+
+// require_tree .

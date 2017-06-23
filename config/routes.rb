@@ -23,6 +23,8 @@ Rails.application.routes.draw do
   get 'default_values' => 'application#default_values'
 
   resources :current_orders
+  
+  get 'poloniex/chart' => 'poloniex#chart'
   resources :poloniex
 
   namespace :ajax do
