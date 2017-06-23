@@ -15,7 +15,9 @@ var app = new Vue({
     sell_value: 0,
     buy_value: 0,
     sell_percent_values: [],
-    buy_percent_values: []
+    buy_percent_values: [],
+    trading: true,
+    PRICE_MARK: '52508'
   },
   methods: {
     changeCurrencyPair: function(){
@@ -34,6 +36,8 @@ var app = new Vue({
       this.$http.get('/ajax/orders?pair=', {params: {pair: this.current_pair} }).then(function (res){
         _this.bid_orders = res.data['bid_orders'];
         _this.ask_orders = res.data['ask_orders'];
+
+        _this.check_trading_data();
       });
     },
     get_currency_pairs: function(){
@@ -43,14 +47,40 @@ var app = new Vue({
         _this.current_pair = _this.currency_pairs[0].name;
       });
     },
-    cal_value_percent: function(value, percent){
+    cal_value_percent: function(value, percent, type){
       value = parseFloat(value);
       percent = parseFloat(percent);
+      var result = 0;
 
-      return (value + (value * percent / 100)).toFixed(8);
+      if(type == "increase"){
+        result = (value + (value * percent / 100)).toFixed(8);
+      } else {
+        result = (value - (value * percent / 100)).toFixed(8);
+      }
+      
+      return result.toString().replace(/\d\d\d\d\d$/, this.PRICE_MARK);
     },
     sell_price_click: function(value){
       this.sell_value = value;
+    },
+    buy_price_click: function(value){
+      this.buy_value = value;
+    },
+    // Find and mark trading records
+    check_trading_data: function(){
+      for(var i=0; i<this.bid_orders.length; i++){
+        var reg = new RegExp(this.PRICE_MARK);
+        if(this.bid_orders[i].price.match(reg) != null){
+          this.bid_orders[i].trading = true;
+        }
+      }
+
+      for(var i=0; i<this.ask_orders.length; i++){
+        var reg = new RegExp(this.PRICE_MARK);
+        if(this.ask_orders[i].price.match(reg) != null){
+          this.ask_orders[i].trading = true;
+        }
+      }
     }
   },
   watch: {
@@ -59,7 +89,15 @@ var app = new Vue({
       var percents = ['0.75', '1.00', '1.25', '1.50', '2.00']
 
       for(var i=0; i<percents.length; i++){
-        this.sell_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i])});
+        this.sell_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'increase')});
+      }
+    },
+    buy_value: function (value) {
+      this.buy_percent_values = [];
+      var percents = ['0.25', '0.50', '0.75', '1.00', '1.50']
+
+      for(var i=0; i<percents.length; i++){
+        this.buy_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'descrease')});
       }
     },
   },

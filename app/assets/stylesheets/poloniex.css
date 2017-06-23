@@ -126,3 +126,8 @@ table.scroll tbody td, table.scroll thead > tr> th {
 .clear {
   clear: both;
 }
+
+#poloniex .table tr.trading {
+  font-weight: bold;
+  color: green;
+}
