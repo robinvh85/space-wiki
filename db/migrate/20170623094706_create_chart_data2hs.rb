@@ -1,6 +1,6 @@
-class CreateChartData1hs < ActiveRecord::Migration[5.0]
+class CreateChartData2hs < ActiveRecord::Migration[5.0]
   def change
-    create_table :chart_data1hs do |t|
+    create_table :chart_data2hs do |t|
       t.integer :currency_pair_id
       t.timestamp :date_time
       t.bigint    :time_at

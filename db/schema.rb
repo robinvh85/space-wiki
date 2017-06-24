@@ -10,7 +10,91 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170621155219) do
+ActiveRecord::Schema.define(version: 20170623094714) do
+
+  create_table "chart_data15ms", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.integer  "currency_pair_id"
+    t.datetime "date_time"
+    t.bigint   "time_at"
+    t.decimal  "high",             precision: 16, scale: 8
+    t.decimal  "low",              precision: 16, scale: 8
+    t.decimal  "open",             precision: 16, scale: 8
+    t.decimal  "close",            precision: 16, scale: 8
+    t.decimal  "volume",           precision: 16, scale: 8
+    t.decimal  "quote_volume",     precision: 16, scale: 8
+    t.decimal  "weighted_average", precision: 16, scale: 8
+    t.index ["currency_pair_id", "time_at"], name: "idx_pair_time_at", unique: true, using: :btree
+  end
+
+  create_table "chart_data1ds", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.integer  "currency_pair_id"
+    t.datetime "date_time"
+    t.bigint   "time_at"
+    t.decimal  "high",             precision: 16, scale: 8
+    t.decimal  "low",              precision: 16, scale: 8
+    t.decimal  "open",             precision: 16, scale: 8
+    t.decimal  "close",            precision: 16, scale: 8
+    t.decimal  "volume",           precision: 16, scale: 8
+    t.decimal  "quote_volume",     precision: 16, scale: 8
+    t.decimal  "weighted_average", precision: 16, scale: 8
+    t.index ["currency_pair_id", "time_at"], name: "idx_pair_time_at", unique: true, using: :btree
+  end
+
+  create_table "chart_data2hs", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.integer  "currency_pair_id"
+    t.datetime "date_time"
+    t.bigint   "time_at"
+    t.decimal  "high",             precision: 16, scale: 8
+    t.decimal  "low",              precision: 16, scale: 8
+    t.decimal  "open",             precision: 16, scale: 8
+    t.decimal  "close",            precision: 16, scale: 8
+    t.decimal  "volume",           precision: 16, scale: 8
+    t.decimal  "quote_volume",     precision: 16, scale: 8
+    t.decimal  "weighted_average", precision: 16, scale: 8
+    t.index ["currency_pair_id", "time_at"], name: "idx_pair_time_at", unique: true, using: :btree
+  end
+
+  create_table "chart_data30ms", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.integer  "currency_pair_id"
+    t.datetime "date_time"
+    t.bigint   "time_at"
+    t.decimal  "high",             precision: 16, scale: 8
+    t.decimal  "low",              precision: 16, scale: 8
+    t.decimal  "open",             precision: 16, scale: 8
+    t.decimal  "close",            precision: 16, scale: 8
+    t.decimal  "volume",           precision: 16, scale: 8
+    t.decimal  "quote_volume",     precision: 16, scale: 8
+    t.decimal  "weighted_average", precision: 16, scale: 8
+    t.index ["currency_pair_id", "time_at"], name: "idx_pair_time_at", unique: true, using: :btree
+  end
+
+  create_table "chart_data4hs", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.integer  "currency_pair_id"
+    t.datetime "date_time"
+    t.bigint   "time_at"
+    t.decimal  "high",             precision: 16, scale: 8
+    t.decimal  "low",              precision: 16, scale: 8
+    t.decimal  "open",             precision: 16, scale: 8
+    t.decimal  "close",            precision: 16, scale: 8
+    t.decimal  "volume",           precision: 16, scale: 8
+    t.decimal  "quote_volume",     precision: 16, scale: 8
+    t.decimal  "weighted_average", precision: 16, scale: 8
+    t.index ["currency_pair_id", "time_at"], name: "idx_pair_time_at", unique: true, using: :btree
+  end
+
+  create_table "chart_data5ms", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.integer  "currency_pair_id"
+    t.datetime "date_time"
+    t.bigint   "time_at"
+    t.decimal  "high",             precision: 16, scale: 8
+    t.decimal  "low",              precision: 16, scale: 8
+    t.decimal  "open",             precision: 16, scale: 8
+    t.decimal  "close",            precision: 16, scale: 8
+    t.decimal  "volume",           precision: 16, scale: 8
+    t.decimal  "quote_volume",     precision: 16, scale: 8
+    t.decimal  "weighted_average", precision: 16, scale: 8
+    t.index ["currency_pair_id", "time_at"], name: "idx_pair_time_at", unique: true, using: :btree
+  end
 
   create_table "currency_pairs", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.string "name"
@@ -19,12 +103,12 @@ ActiveRecord::Schema.define(version: 20170621155219) do
   create_table "current_orders", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.string   "currency_pair"
     t.string   "method"
-    t.string  "price",
-    t.string  "amount",
-    t.string  "total_price",
-    t.string  "accumulate_price",
-    t.datetime "created_at",                                null: false
-    t.datetime "updated_at",                                null: false
+    t.string   "price",            limit: 16
+    t.string   "amount",           limit: 16
+    t.string   "total_price",      limit: 16
+    t.string   "accumulate_price", limit: 16
+    t.datetime "created_at",                  null: false
+    t.datetime "updated_at",                  null: false
   end
 
   create_table "galleries", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
