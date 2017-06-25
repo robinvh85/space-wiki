@@ -5,12 +5,11 @@ PoloniexVh.setup do | config |
   config.secret = '0c4496e534e874a8533756ff5121f3e5be4add3c60b985157d9cf325a742c5c74fac18b1262667577c079809b084fa279110563911bcfdf75439588b858f8a59'
 end
 
-namespace :chart_data do
-  task get: :environment do
-    puts "Run rake chart_data:get at #{Time.now}"
+namespace :chart_data_custom do
+  task :get, [:days] => :environment do |_cmd, args|
+    puts "Run rake chart_data:get at #{Time.now} - Before day: #{args[:days]}"
 
-    sleep(5)
-    ChartData.start = (Time.now - 10.minutes).to_i
+    ChartData.start = (Time.now - args[:days].to_i.days).to_i
     ChartData.end = Time.now.to_i
 
     currency_pairs = CurrencyPair.where(is_init: 1)

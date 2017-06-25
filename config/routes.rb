@@ -25,12 +25,19 @@ Rails.application.routes.draw do
   resources :current_orders
   
   get 'poloniex/chart' => 'poloniex#chart'
+  get 'poloniex/compare_chart' => 'poloniex#compare_chart'
   resources :poloniex
 
   namespace :ajax do
     resources :orders
     resources :currency_pairs
 
+    get 'charts/get_5m' => 'charts#get_5m'
+    get 'charts/get_15m' => 'charts#get_15m'
+    get 'charts/get_30m' => 'charts#get_30m'
+    get 'charts/get_2h' => 'charts#get_2h'
+    get 'charts/get_4h' => 'charts#get_4h'
+    get 'charts/get_1d' => 'charts#get_1d'
     resources :charts
   end
 

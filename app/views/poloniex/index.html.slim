@@ -18,10 +18,10 @@ div.container
             tr
               th.column.is-6 Percent
               th.column.is-6 Value
-          tbody style="height: 160px;"
+          tbody style="height: 190px;"
             tr v-for="item in sell_percent_values"
               td.column.is-6
-                | {{ item.percent }} 
+                | +{{ item.percent }} 
               td.column.is-6
                 | {{ item.value }}
     div.panel.column.is-half
@@ -35,9 +35,9 @@ div.container
             tr
               th.column.is-6 Percent
               th.column.is-6 Value
-          tbody style="height: 160px;"
+          tbody style="height: 190px;"
             tr v-for="item in buy_percent_values"
               td.column.is-6
-                | {{ item.percent }} 
+                | -{{ item.percent }} 
               td.column.is-6
                 | {{ item.value }} 
