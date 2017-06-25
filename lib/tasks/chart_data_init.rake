@@ -6,10 +6,12 @@ PoloniexVh.setup do | config |
 end
 
 namespace :chart_data_init do
-  task get: :environment do
-    puts "Run rake chart_data:get_init"
+  task :get, [:pair_name] => :environment do |_cmd, args|
+    puts "Run rake chart_data:get_init for #{args[:pair_name]}"
 
-    currency_pairs = CurrencyPair.all
+    currency_pairs = CurrencyPair.where("name = ?", args[:pair_name])
+    currency_pairs = CurrencyPair.all if currency_pairs.count == 0
+    
     currency_pairs.each do |currency_pair|
       get_data_chart_5m(currency_pair)
       get_data_chart_15m(currency_pair)

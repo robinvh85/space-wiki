@@ -1,0 +1,322 @@
+div.container
+  select value="5m" onchange="changeType(this)" class="input"
+    option value="5m"
+      | 5m
+    option value="15m"
+      | 15m
+    option value="30m"
+      | 30m
+    option value="2h"
+      | 2h
+    option value="4h"
+      | 4h
+    option value="1d"
+      | 1d
+  div.panel
+    div.panel-heading
+      | Pair
+    - @currency_pairs.each do |item|
+      div.panel-block      
+        div id=item.name style="width:100%;"
+
+javascript:
+  // create the chart
+
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+
+  var chart_type = '5m';
+  var pairs = #{@currency_pairs.to_json.html_safe};
+
+  var createChart5m = function(data, pair){
+    Highcharts.stockChart(pair.name, {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'hour',
+          count: 12,
+          text: '12h'
+        }, {
+          type: 'hour',
+          count: 24,
+          text: '24h'
+        }, {
+          type: 'hour',
+          count: 48,
+          text: '48h'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 5m'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '5m candle',
+        data: data,
+       }
+      ]
+    });
+  }
+
+  var createChart15m = function(data, pair){
+    Highcharts.stockChart(pair.name, {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'day',
+          count: 1,
+          text: '1d'
+        }, {
+          type: 'day',
+          count: 3,
+          text: '3d'
+        }, {
+          type: 'day',
+          count: 7,
+          text: '7d'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 15m'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '15m candle',
+        data: data,
+       }
+      ]
+    });
+  }
+
+  var createChart30m = function(data, pair){
+    Highcharts.stockChart(pair.name, {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'day',
+          count: 3,
+          text: '1d'
+        }, {
+          type: 'day',
+          count: 7,
+          text: '3d'
+        }, {
+          type: 'day',
+          count: 14,
+          text: '7d'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 30m'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '30m candle',
+        data: data,
+       }
+      ]
+    });
+  }
+
+  var createChart2h = function(data, pair){
+    Highcharts.stockChart(pair.name, {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'day',
+          count: 7,
+          text: '1d'
+        }, {
+          type: 'day',
+          count: 15,
+          text: '3d'
+        }, {
+          type: 'day',
+          count: 30,
+          text: '7d'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 2h'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '2h candle',
+        data: data,
+       }
+      ]
+    });
+  }
+
+  var createChart4h = function(data, pair){
+    Highcharts.stockChart(pair.name, {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'day',
+          count: 14,
+          text: '1d'
+        }, {
+          type: 'day',
+          count: 30,
+          text: '3d'
+        }, {
+          type: 'day',
+          count: 60,
+          text: '7d'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 4h'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '4h candle',
+        data: data,
+       }
+      ]
+    });
+  }
+
+  var createChart1d = function(data, pair){
+    Highcharts.stockChart(pair.name, {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'month',
+          count: 2,
+          text: '2M'
+        }, {
+          type: 'month',
+          count: 4,
+          text: '4M'
+        }, {
+          type: 'month',
+          count: 6,
+          text: '6M'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: 'Chart 1d'
+      },
+
+      tooltip: {
+        valueDecimals: 3,
+        xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'candlestick',
+        name: '1d candle',
+        data: data,
+       }
+      ]
+    });
+  }
+
+  var changeType = function(obj){
+    chart_type = obj.value;
+
+    load_charts();
+  }
+
+  var refresh_charts = function(pair){
+    switch(chart_type){
+      case '5m':
+        axios.get('/ajax/charts/get_5m', {params: { pair_id: pair.id }}).then(function (res){
+          createChart5m(res.data, pair)
+        });
+        break;
+      case '15m':
+        axios.get('/ajax/charts/get_15m', {params: { pair_id: pair.id }}).then(function (res){
+          createChart15m(res.data, pair)
+        });
+        break;
+      case '30m':
+        axios.get('/ajax/charts/get_30m', {params: { pair_id: pair.id }}).then(function (res){
+          createChart30m(res.data, pair)
+        });
+        break;
+      case '2h':
+        axios.get('/ajax/charts/get_2h', {params: { pair_id: pair.id }}).then(function (res){
+          createChart2h(res.data, pair)
+        });
+        break;
+      case '4h':
+        axios.get('/ajax/charts/get_4h', {params: { pair_id: pair.id }}).then(function (res){
+          createChart4h(res.data, pair)
+        });
+        break;
+      case '1d':
+        axios.get('/ajax/charts/get_1d', {params: { pair_id: pair.id }}).then(function (res){
+          createChart1d(res.data, pair)
+        });
+        break;
+    }
+  }
+
+  var load_charts = function(){
+    for(var i=0; i<pairs.length; i++){
+      refresh_charts(pairs[i]);
+    }
+  }
+
+  $(function(){
+    load_charts();
+    setInterval(function(){ load_charts() }, 300 * 1000);
+  });
+

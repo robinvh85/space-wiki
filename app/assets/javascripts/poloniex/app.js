@@ -60,12 +60,13 @@ var app = new Vue({
       
       return result.toString().replace(/\d\d\d\d\d$/, this.PRICE_MARK);
     },
-    sell_price_click: function(value){
+    price_click: function(value){
       this.sell_value = value;
-    },
-    buy_price_click: function(value){
       this.buy_value = value;
     },
+    // buy_price_click: function(value){
+    //   this.buy_value = value;
+    // },
     // Find and mark trading records
     check_trading_data: function(){
       for(var i=0; i<this.bid_orders.length; i++){
@@ -86,7 +87,7 @@ var app = new Vue({
   watch: {
     sell_value: function (value) {
       this.sell_percent_values = [];
-      var percents = ['0.75', '1.00', '1.25', '1.50', '2.00']
+      var percents = ['0.10', '0.75', '1.00', '1.25', '1.50', '2.00']
 
       for(var i=0; i<percents.length; i++){
         this.sell_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'increase')});
@@ -94,7 +95,7 @@ var app = new Vue({
     },
     buy_value: function (value) {
       this.buy_percent_values = [];
-      var percents = ['0.25', '0.50', '0.75', '1.00', '1.50']
+      var percents = ['0.10', '0.25', '0.50', '0.75', '1.00', '1.50']
 
       for(var i=0; i<percents.length; i++){
         this.buy_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'descrease')});

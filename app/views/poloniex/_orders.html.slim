@@ -13,7 +13,7 @@ div#orders.columns
         tbody
           tr v-for="item in ask_orders" :class="{ trading : item.trading }"
             td.column.is-3
-              label.hand @click="sell_price_click(item.price)"
+              label.hand @click="price_click(item.price)"
                 | {{ item.price }} 
             td.column.is-3
               | {{ item.amount }} 
@@ -35,7 +35,7 @@ div#orders.columns
         tbody
           tr v-for="item in bid_orders" :class="{ trading : item.trading }"
             td.column.is-3
-              label.hand @click="buy_price_click(item.price)"
+              label.hand @click="price_click(item.price)"
                 | {{ item.price }} 
             td.column.is-3
               | {{ item.amount }} 
