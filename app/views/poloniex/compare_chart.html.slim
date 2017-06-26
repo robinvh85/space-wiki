@@ -1,17 +1,25 @@
 div.container
-  select value="5m" onchange="changeType(this)" class="input"
-    option value="5m"
-      | 5m
-    option value="15m"
-      | 15m
-    option value="30m"
-      | 30m
-    option value="2h"
-      | 2h
-    option value="4h"
-      | 4h
-    option value="1d"
-      | 1d
+  div.columns style="margin-top: 0px;"
+    div.column.is-half style="padding: 0px 0.5em"
+      select value="5m" onchange="changeType(this)" class="input"
+        option value="5m"
+          | 5m
+        option value="15m"
+          | 15m
+        option value="30m"
+          | 30m
+        option value="2h"
+          | 2h
+        option value="4h"
+          | 4h
+        option value="1d"
+          | 1d
+    div.column.is-half style="padding: 0px 0.5em"
+      select value="USDT" onchange="changeBaseUnit(this)" class="input"
+        option value="USDT"
+          | USDT
+        option value="BTC"
+          | BTC
   div.panel
     div.panel-heading
       | Pair
@@ -320,6 +328,10 @@ javascript:
     load_charts();
   }
 
+  var changeBaseUnit = function(obj){
+    document.location = "/poloniex/compare_chart?base_unit=" + obj.value
+  }
+
   var refresh_charts = function(pair){
     switch(chart_type){
       case '5m':
@@ -357,7 +369,7 @@ javascript:
 
   var load_charts = function(){
     for(var i=0; i<pairs.length; i++){
-      refresh_charts(pairs[i]);
+      setTimeout(refresh_charts, i * 1000, pairs[i]);
     }
   }
 
@@ -390,6 +402,6 @@ javascript:
 
   $(function(){
     load_charts();
-    // setInterval(function(){ load_charts() }, 300 * 1000);
+    setInterval(function(){ load_charts() }, 300 * 1000);
   });
 

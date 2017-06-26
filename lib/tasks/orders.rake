@@ -1,7 +1,7 @@
 require 'poloniex_vh'
 
 PoloniexVh.setup do | config |
-  config.key = 'KeyVVGCGL9G-5YV2M7RC-TCTCYIFX-QBHGLPX6'
+  config.key = 'VVGCGL9G-5YV2M7RC-TCTCYIFX-QBHGLPX6'
   config.secret = '0c4496e534e874a8533756ff5121f3e5be4add3c60b985157d9cf325a742c5c74fac18b1262667577c079809b084fa279110563911bcfdf75439588b858f8a59'
 end
 
@@ -18,6 +18,14 @@ namespace :orders do
       save_current_orders(currency_pair_name, data['bids'], 'bid')
       save_current_orders(currency_pair_name, data['asks'], 'ask')
     end
+  end
+
+  task get_open: :environment do
+    puts "Run rake orders:get_open"
+    response = PoloniexVh.open_orders('all')
+    data = JSON.parse(response.body)
+
+    binding.pry
   end
 end
 
