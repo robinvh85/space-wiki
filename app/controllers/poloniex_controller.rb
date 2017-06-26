@@ -4,11 +4,11 @@ class PoloniexController < PoloniexBaseController
 	end	
 
 	def chart
-		@currency_pairs = CurrencyPair.all
+		@currency_pairs = CurrencyPair.all.order(sort: 'asc')
 	end
 
 	def compare_chart
-		@currency_pairs = CurrencyPair.where(is_init: 1)
+		@currency_pairs = CurrencyPair.where(is_init: 1).order(sort: 'asc')
 	end
 
 end
