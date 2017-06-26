@@ -26,7 +26,7 @@ javascript:
   axios.defaults.headers.common['X-CSRF-Token'] = token;
 
   var chart_type = '5m';
-  var pairs = #{@currency_pairs.to_json.html_safe};
+  var pairs = #{@currency_pairs.to_json.html_safe};  
 
   var createChart5m = function(data, pair){
     Highcharts.stockChart(pair.name, {
@@ -51,7 +51,7 @@ javascript:
       },
 
       title: {
-          text: 'Chart 5m'
+          text: '5m ' + pair.name
       },
 
       tooltip: {
@@ -63,8 +63,24 @@ javascript:
         type: 'candlestick',
         name: '5m candle',
         data: data,
-       }
-      ]
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        }
+      },
+      /*
+      yAxis: {
+        plotLines: [{
+          color: 'red', 
+          dashStyle: 'longdashdot', // Default to solid
+          value: 41, 
+          width: 1
+        }]
+      }
+      */
     });
   }
 
@@ -91,7 +107,7 @@ javascript:
       },
 
       title: {
-          text: 'Chart 15m'
+          text: '15m ' + pair.name
       },
 
       tooltip: {
@@ -103,8 +119,14 @@ javascript:
         type: 'candlestick',
         name: '15m candle',
         data: data,
-       }
-      ]
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        }
+      },
     });
   }
 
@@ -115,15 +137,15 @@ javascript:
           buttons: [{
           type: 'day',
           count: 3,
-          text: '1d'
-        }, {
-          type: 'day',
-          count: 7,
           text: '3d'
         }, {
           type: 'day',
-          count: 14,
+          count: 7,
           text: '7d'
+        }, {
+          type: 'day',
+          count: 14,
+          text: '14d'
         },{
           type: 'all',
           text: 'All'
@@ -131,7 +153,7 @@ javascript:
       },
 
       title: {
-          text: 'Chart 30m'
+          text: '30m ' + pair.name
       },
 
       tooltip: {
@@ -143,8 +165,14 @@ javascript:
         type: 'candlestick',
         name: '30m candle',
         data: data,
-       }
-      ]
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        }
+      },
     });
   }
 
@@ -155,15 +183,15 @@ javascript:
           buttons: [{
           type: 'day',
           count: 7,
-          text: '1d'
+          text: '7d'
         }, {
           type: 'day',
           count: 15,
-          text: '3d'
+          text: '15d'
         }, {
           type: 'day',
           count: 30,
-          text: '7d'
+          text: '30d'
         },{
           type: 'all',
           text: 'All'
@@ -171,7 +199,7 @@ javascript:
       },
 
       title: {
-          text: 'Chart 2h'
+          text: '2h ' + pair.name
       },
 
       tooltip: {
@@ -183,8 +211,14 @@ javascript:
         type: 'candlestick',
         name: '2h candle',
         data: data,
-       }
-      ]
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        }
+      },
     });
   }
 
@@ -195,15 +229,15 @@ javascript:
           buttons: [{
           type: 'day',
           count: 14,
-          text: '1d'
+          text: '14d'
         }, {
           type: 'day',
           count: 30,
-          text: '3d'
+          text: '30d'
         }, {
           type: 'day',
           count: 60,
-          text: '7d'
+          text: '60d'
         },{
           type: 'all',
           text: 'All'
@@ -211,7 +245,7 @@ javascript:
       },
 
       title: {
-          text: 'Chart 4h'
+          text: '4h ' + pair.name
       },
 
       tooltip: {
@@ -223,8 +257,14 @@ javascript:
         type: 'candlestick',
         name: '4h candle',
         data: data,
-       }
-      ]
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        }
+      },
     });
   }
 
@@ -251,7 +291,7 @@ javascript:
       },
 
       title: {
-          text: 'Chart 1d'
+          text: '1d ' + pair.name
       },
 
       tooltip: {
@@ -263,8 +303,14 @@ javascript:
         type: 'candlestick',
         name: '1d candle',
         data: data,
-       }
-      ]
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        }
+      },
     });
   }
 
@@ -315,8 +361,35 @@ javascript:
     }
   }
 
+  var drawMinMaxLines = function(chart, pair){
+    axix = chart.yAxis[0];
+    min_value = axix.dataMin;
+    max_value = axix.dataMax;
+    plot_min_id = 'plot_min_' + pair.name;
+    plot_max_id = 'plot_max_' + pair.name;
+
+    axix.removePlotLine(plot_min_id);
+    axix.removePlotLine(plot_max_id);
+
+    axix.addPlotLine({
+      value: min_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_min_id
+    });
+
+    axix.addPlotLine({
+      value: max_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_max_id
+    });
+  }
+
   $(function(){
     load_charts();
-    setInterval(function(){ load_charts() }, 300 * 1000);
+    // setInterval(function(){ load_charts() }, 300 * 1000);
   });
 
