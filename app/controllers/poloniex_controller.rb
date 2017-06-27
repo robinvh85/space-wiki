@@ -11,7 +11,8 @@ class PoloniexController < PoloniexBaseController
 		base_unit = params[:base_unit]
 		base_unit = 'USDT' if base_unit.nil? || base_unit.empty?
 
-		@currency_pairs = CurrencyPair.where(base_unit: base_unit, is_init: 1).order(sort: 'asc')
+		@currency_pairs = CurrencyPair.where(base_unit: base_unit, is_tracking: 1).order(sort: 'asc')
+		@all_currency_pairs = CurrencyPair.where(base_unit: base_unit).order(sort: 'asc')
 	end
 
 end

@@ -1,3 +1,8 @@
+div#pair_list.columns.is-multiline
+  - @all_currency_pairs.each do |item|
+    div.column.is-half
+      input id="cbx_#{item.name}" type="checkbox" value=item.id class="cbx" onchange="cbxPairChange(this)"
+        label for="cbx_#{item.name}" =item.name
 div.container
   div.columns style="margin-top: 0px;"
     div.column.is-half style="padding: 0px 0.5em"
@@ -79,16 +84,6 @@ javascript:
           }
         }
       },
-      /*
-      yAxis: {
-        plotLines: [{
-          color: 'red', 
-          dashStyle: 'longdashdot', // Default to solid
-          value: 41, 
-          width: 1
-        }]
-      }
-      */
     });
   }
 
@@ -332,6 +327,17 @@ javascript:
     document.location = "/poloniex/compare_chart?base_unit=" + obj.value
   }
 
+  var cbxPairChange = function(obj){
+    var is_tracking = 0;
+    if(obj.checked){
+      is_tracking = 1;
+    }
+
+    axios.put('/ajax/currency_pairs/' + obj.value, {is_tracking: is_tracking}).then(function (res){
+      console.log(res.data);
+    });
+  }
+
   var refresh_charts = function(pair){
     switch(chart_type){
       case '5m':
@@ -403,5 +409,9 @@ javascript:
   $(function(){
     load_charts();
     setInterval(function(){ load_charts() }, 300 * 1000);
+
+    for(var i=0; i<pairs.length; i++){
+      $("#cbx_" + pairs[i].name)[0].checked = "checked";
+    }    
   });
 

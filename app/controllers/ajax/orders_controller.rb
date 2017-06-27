@@ -8,13 +8,14 @@ module Ajax
       end
       
       @currency_pairs = CurrencyPair.all
-      @bid_orders = CurrentOrder.where(method: 'bid', currency_pair: @pair).select(:currency_pair, :method, :price, :amount, :total_price, :accumulate_price)
-      @ask_orders = CurrentOrder.where(method: 'ask', currency_pair: @pair).select(:currency_pair, :method, :price, :amount, :total_price, :accumulate_price)
+      data = Polo::Chart.get_current(@pair)
 
       render json: {
-        bid_orders: @bid_orders,
-        ask_orders: @ask_orders
+        bid_orders: data['bid_orders'],
+        ask_orders: data['ask_orders']
       }
     end
+
+    private    
   end
 end

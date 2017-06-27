@@ -12,9 +12,11 @@ namespace :chart_data_init_year do
     ChartDataYear.start = Time.new(2017, 1, 1).to_i
     ChartDataYear.end = Time.now.to_i
 
-    currency_pairs = CurrencyPair.where("name = ?", args[:pair_name])
+    # currency_pairs = CurrencyPair.where("name = ?", args[:pair_name])
     # currency_pairs = CurrencyPair.all if currency_pairs.count == 0
     
+    currency_pairs = CurrencyPair.where("is_init = 0")
+
     currency_pairs.each do |currency_pair|
       ChartDataYear.get_data_chart_5m(currency_pair)
       ChartDataYear.get_data_chart_15m(currency_pair)
