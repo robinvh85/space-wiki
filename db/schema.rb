@@ -98,6 +98,9 @@ ActiveRecord::Schema.define(version: 20170623094714) do
 
   create_table "currency_pairs", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.string "name"
+    t.integer "is_init",
+    t.integer "sort",
+    t.string "base_unit"
   end
 
   create_table "current_orders", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
