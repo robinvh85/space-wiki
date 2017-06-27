@@ -26,9 +26,12 @@ Rails.application.routes.draw do
   
   get 'poloniex/chart' => 'poloniex#chart'
   get 'poloniex/compare_chart' => 'poloniex#compare_chart'
+  get 'poloniex/realtime' => 'poloniex#realtime'
   resources :poloniex
 
   namespace :ajax do
+
+    get 'orders/get_open_orders' => 'orders#get_open_orders'
     resources :orders
     resources :currency_pairs
 

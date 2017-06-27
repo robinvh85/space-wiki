@@ -1,7 +1,35 @@
 = content_for :javascripts
   = javascript_include_tag 'poloniex/app'
 
-div.container  
+div.container
+  div.panel style="margin-bottom: 20px;"
+    div.panel-heading
+      | Open Orders
+    div.panel-block
+      table.table
+        thead
+          tr
+            th Pair
+            th Percent
+            th Price
+            th Amount
+            th Type
+            th Date
+        tbody
+          tr v-for="item in open_orders"
+            td 
+              | {{ item.currency_pair_name }}
+            td 
+              | 
+            td
+              | {{ item.price }}
+            td
+              | {{ item.amount }}
+            td
+              | {{ item.order_type }}
+            td
+              | {{ item.date_time }}
+
   select v-model="current_pair" @change="changeCurrencyPair" class='input'
     option v-for="currency_pair in currency_pairs" :value="currency_pair.name"
       | {{ currency_pair.name }}

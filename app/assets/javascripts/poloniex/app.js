@@ -12,6 +12,7 @@ var app = new Vue({
     current_pair: '',
     bid_orders: [],
     ask_orders: [],
+    open_orders: [],
     sell_value: 0,
     buy_value: 0,
     sell_percent_values: [],
@@ -28,7 +29,7 @@ var app = new Vue({
       console.log("INIT");
       this.get_currency_pairs();
       this.get_orders();
-
+      this.get_open_orders();
       setInterval(this.get_orders, 15000);
     },
     get_orders: function(){
@@ -82,7 +83,17 @@ var app = new Vue({
           this.ask_orders[i].trading = true;
         }
       }
-    }
+    },
+    get_open_orders: function(){
+      _this = this;
+      this.$http.get('/ajax/orders/get_open_orders').then(function (res){
+        _this.open_orders = res.data;
+
+        for(var i=0; i<_this.open_orders.length; i++){
+          _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD HH:mm:ss");
+        }
+      });
+    },
   },
   watch: {
     sell_value: function (value) {

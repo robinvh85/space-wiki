@@ -1,0 +1,28 @@
+= content_for :javascripts
+  = javascript_include_tag 'poloniex/realtime'
+
+div.container#realtime 
+  div.panel
+    div.panel-heading
+      | Open Orders
+    div.panel-block
+      table.table
+        thead
+          tr
+            th Percent
+            th Price
+            th Amount
+            th Type
+            th Date
+        tbody
+          tr v-for="item in open_orders"
+            td 
+              | 
+            td
+              | {{ item.price }}
+            td
+              | {{ item.amount }}
+            td
+              | {{ item.order_type }}
+            td
+              | {{ item.date_time }}
