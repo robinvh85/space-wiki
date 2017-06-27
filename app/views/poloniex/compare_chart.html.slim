@@ -1,3 +1,8 @@
+div#pair_list.columns.is-multiline
+  - @all_currency_pairs.each do |item|
+    div.column.is-half
+      input id="cbx_#{item.name}" type="checkbox" value=item.id class="cbx" onchange="cbxPairChange(this)"
+        label for="cbx_#{item.name}" =item.name
 div.container
   div.columns style="margin-top: 0px;"
     div.column.is-half style="padding: 0px 0.5em"
@@ -15,7 +20,7 @@ div.container
         option value="1d"
           | 1d
     div.column.is-half style="padding: 0px 0.5em"
-      select value="USDT" onchange="changeBaseUnit(this)" class="input"
+      select value="#{@base_unit}" onchange="changeBaseUnit(this)" class="input"
         option value="USDT"
           | USDT
         option value="BTC"
@@ -34,7 +39,9 @@ javascript:
   axios.defaults.headers.common['X-CSRF-Token'] = token;
 
   var chart_type = '5m';
-  var pairs = #{@currency_pairs.to_json.html_safe};  
+  var pairs = #{@currency_pairs.to_json.html_safe};
+  var base_unit = '#{@base_unit}';
+  var decimal = 3;
 
   var createChart5m = function(data, pair){
     Highcharts.stockChart(pair.name, {
@@ -63,7 +70,7 @@ javascript:
       },
 
       tooltip: {
-        valueDecimals: 3,
+        valueDecimals: decimal,
         xDateFormat: 'Y'
       },
 
@@ -79,16 +86,6 @@ javascript:
           }
         }
       },
-      /*
-      yAxis: {
-        plotLines: [{
-          color: 'red', 
-          dashStyle: 'longdashdot', // Default to solid
-          value: 41, 
-          width: 1
-        }]
-      }
-      */
     });
   }
 
@@ -119,7 +116,7 @@ javascript:
       },
 
       tooltip: {
-        valueDecimals: 3,
+        valueDecimals: decimal,
         xDateFormat: 'Y'
       },
 
@@ -165,7 +162,7 @@ javascript:
       },
 
       tooltip: {
-        valueDecimals: 3,
+        valueDecimals: decimal,
         xDateFormat: 'Y'
       },
 
@@ -211,7 +208,7 @@ javascript:
       },
 
       tooltip: {
-        valueDecimals: 3,
+        valueDecimals: decimal,
         xDateFormat: 'Y'
       },
 
@@ -257,7 +254,7 @@ javascript:
       },
 
       tooltip: {
-        valueDecimals: 3,
+        valueDecimals: decimal,
         xDateFormat: 'Y'
       },
 
@@ -303,7 +300,7 @@ javascript:
       },
 
       tooltip: {
-        valueDecimals: 3,
+        valueDecimals: decimal,
         xDateFormat: 'Y'
       },
 
@@ -330,6 +327,17 @@ javascript:
 
   var changeBaseUnit = function(obj){
     document.location = "/poloniex/compare_chart?base_unit=" + obj.value
+  }
+
+  var cbxPairChange = function(obj){
+    var is_tracking = 0;
+    if(obj.checked){
+      is_tracking = 1;
+    }
+
+    axios.put('/ajax/currency_pairs/' + obj.value, {is_tracking: is_tracking}).then(function (res){
+      console.log(res.data);
+    });
   }
 
   var refresh_charts = function(pair){
@@ -401,7 +409,20 @@ javascript:
   }
 
   $(function(){
+
+    if(base_unit == 'BTC'){
+      decimal = 8;
+    }
+
+    $('option[value="' + base_unit + '"]')[0].selected = "selected"
+
     load_charts();
     setInterval(function(){ load_charts() }, 300 * 1000);
+
+    for(var i=0; i<pairs.length; i++){
+      var cbxs = $("#cbx_" + pairs[i].name);
+      if(cbxs.length > 0)
+        cbxs[0].checked = "checked";
+    }    
   });
 

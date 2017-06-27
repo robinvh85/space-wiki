@@ -17,7 +17,7 @@ var app = new Vue({
     sell_percent_values: [],
     buy_percent_values: [],
     trading: true,
-    PRICE_MARK: '52508'
+    PRICE_MARK: '2508'
   },
   methods: {
     changeCurrencyPair: function(){
@@ -29,7 +29,7 @@ var app = new Vue({
       this.get_currency_pairs();
       this.get_orders();
 
-      setInterval(this.get_orders, 30000);
+      setInterval(this.get_orders, 15000);
     },
     get_orders: function(){
       _this = this;
@@ -58,7 +58,7 @@ var app = new Vue({
         result = (value - (value * percent / 100)).toFixed(8);
       }
       
-      return result.toString().replace(/\d\d\d\d\d$/, this.PRICE_MARK);
+      return result.toString().replace(/\d\d\d\d$/, this.PRICE_MARK);
     },
     price_click: function(value){
       this.sell_value = value;
