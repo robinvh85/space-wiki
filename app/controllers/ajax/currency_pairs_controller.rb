@@ -1,7 +1,7 @@
 module Ajax
   class CurrencyPairsController < ActionController::Base
     def index
-      render json: CurrencyPair.all
+      render json: CurrencyPair.where(is_tracking: 1).order(sort: 'asc')
     end
 
     def update

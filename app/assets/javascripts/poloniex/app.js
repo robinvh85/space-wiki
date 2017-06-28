@@ -151,6 +151,15 @@ var app = new Vue({
       this.$http.post('/ajax/orders/update_buy_price', {order_number: item.order_number, buy_price: item.buy_price}).then(function (res){
         console.log('Call: /ajax/orders/update_buy_price', res.data);
       });
+    },
+    cancel_order: function(item){
+      if(confirm("Do you want to cancel order " + item.price + " ?")){
+        this.$http.post('/ajax/orders/cancel', {order_number: item.order_number}).then(function (res){
+          if(res.data.success == 1){
+            alert("Cancel done !")
+          }
+        });
+      }
     }
   },
   watch: {

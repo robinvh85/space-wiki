@@ -77,6 +77,14 @@ module Ajax
       }
     end
 
+    def cancel
+      result = JSON.parse(`python script/python/cancel_order.py #{params['order_number']}`)
+
+      render json: {
+        success: result['success']
+      }
+    end
+
     private    
   end
 end
