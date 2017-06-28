@@ -31,7 +31,9 @@ Rails.application.routes.draw do
 
   namespace :ajax do
 
+    post 'orders/update_buy_price' => 'orders#update_buy_price'
     get 'orders/get_open_orders' => 'orders#get_open_orders'
+    get 'orders/get_current_price' => 'orders#get_current_price'
     resources :orders
     resources :currency_pairs
 

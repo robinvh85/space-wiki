@@ -151,3 +151,8 @@ table.scroll tbody td, table.scroll thead > tr> th {
 #poloniex .panel:not(:last-child) {
   margin-bottom: 0rem;
 }
+
+#poloniex .warn {
+  color: #00d1b2;
+  font-weight: bold;
+}
