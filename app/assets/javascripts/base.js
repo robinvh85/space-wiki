@@ -7,3 +7,4 @@
 //= require poloniex/exporting
 //= require poloniex/sand-signika
 //= require util
+//= require moment.min

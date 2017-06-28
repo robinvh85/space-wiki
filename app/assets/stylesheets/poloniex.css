@@ -93,7 +93,7 @@ table.scroll thead th {
 
 table.scroll tbody {
   width: 100%;
-  height: 500px;
+  height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -146,4 +146,13 @@ table.scroll tbody td, table.scroll thead > tr> th {
 
 #pair_list .cbx{
   margin-right: 3px;
+}
+
+#poloniex .panel:not(:last-child) {
+  margin-bottom: 0rem;
+}
+
+#poloniex .warn {
+  color: #00d1b2;
+  font-weight: bold;
 }

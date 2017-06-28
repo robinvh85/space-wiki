@@ -12,12 +12,14 @@ var app = new Vue({
     current_pair: '',
     bid_orders: [],
     ask_orders: [],
+    open_orders: [],
     sell_value: 0,
     buy_value: 0,
     sell_percent_values: [],
     buy_percent_values: [],
     trading: true,
-    PRICE_MARK: '2508'
+    PRICE_MARK: '08',
+    current_prices: {}
   },
   methods: {
     changeCurrencyPair: function(){
@@ -28,8 +30,9 @@ var app = new Vue({
       console.log("INIT");
       this.get_currency_pairs();
       this.get_orders();
-
-      setInterval(this.get_orders, 15000);
+      this.get_open_orders();
+      setInterval(this.get_orders, 20000);
+      setInterval(this.get_open_orders, 60000);
     },
     get_orders: function(){
       _this = this;
@@ -38,6 +41,15 @@ var app = new Vue({
         _this.ask_orders = res.data['ask_orders'];
 
         _this.check_trading_data();
+      });
+    },
+    get_prices: function(pair){
+      _this = this;
+      this.$http.get('/ajax/orders/get_current_price', {params: {pair: pair} }).then(function (res){
+        _this.current_prices[pair].buy = res.data['buy_price'].price;
+        _this.current_prices[pair].sell = res.data['sell_price'].price;
+
+        _this.update_percent_open_order();
       });
     },
     get_currency_pairs: function(){
@@ -58,7 +70,7 @@ var app = new Vue({
         result = (value - (value * percent / 100)).toFixed(8);
       }
       
-      return result.toString().replace(/\d\d\d\d$/, this.PRICE_MARK);
+      return result.toString().replace(/\d\d$/, this.PRICE_MARK);
     },
     price_click: function(value){
       this.sell_value = value;
@@ -70,24 +82,81 @@ var app = new Vue({
     // Find and mark trading records
     check_trading_data: function(){
       for(var i=0; i<this.bid_orders.length; i++){
-        var reg = new RegExp(this.PRICE_MARK);
+        var reg = new RegExp(this.PRICE_MARK + '$');
         if(this.bid_orders[i].price.match(reg) != null){
           this.bid_orders[i].trading = true;
         }
       }
 
       for(var i=0; i<this.ask_orders.length; i++){
-        var reg = new RegExp(this.PRICE_MARK);
+        var reg = new RegExp(this.PRICE_MARK + '$');
         if(this.ask_orders[i].price.match(reg) != null){
           this.ask_orders[i].trading = true;
         }
       }
+    },
+    get_open_orders: function(){
+      _this = this;
+      this.$http.get('/ajax/orders/get_open_orders').then(function (res){
+        _this.open_orders = res.data;
+
+        for(var i=0; i<_this.open_orders.length; i++){
+          var pair = _this.open_orders[i].currency_pair_name;
+          _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD HH:mm:ss");
+          
+          if(_this.current_prices[pair] == null)
+            _this.current_prices[pair] = {};
+
+          _this.get_prices(pair);
+        }
+      });
+    },
+    update_percent_open_order: function(){
+      for(var i=0; i<this.open_orders.length; i++){
+        var order = this.open_orders[i];
+        if(order.order_type == 'sell'){
+          order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);
+          // order.price = parseFloat(order.price);
+          // order.buy_price = parseFloat(order.buy_price);
+
+          order.percent_price = -(order.price - this.current_prices[order.currency_pair_name].sell) / order.price * 100;
+          if(order.buy_price > 0)
+            order.percent_with_buy_price = ((parseFloat(order.price) - parseFloat(order.buy_price)) / parseFloat(order.buy_price) * 100).toFixed(2);
+        } else if(order.order_type == 'buy') {
+          order.current_price = parseFloat(this.current_prices[order.currency_pair_name].buy);
+          order.percent_price = (this.current_prices[order.currency_pair_name].sell - order.price) / order.price * 100;
+        }
+
+        order.buy_price = parseFloat(order.buy_price);
+        if(order.current_price > 1000){
+          order.current_price = order.current_price.toFixed(2);
+          order.buy_price = order.buy_price.toFixed(2);
+        } else if(order.current_price > 100) {
+          order.current_price = order.current_price.toFixed(3);
+          order.buy_price = order.buy_price.toFixed(3);
+        } else if(order.current_price > 10){
+          order.current_price = order.current_price.toFixed(5);
+          order.buy_price = order.buy_price.toFixed(5);
+        } else if(order.current_price > 1){
+          order.current_price = order.current_price.toFixed(6);
+          order.buy_price = order.buy_price.toFixed(6);
+        } else {
+          order.buy_price = order.buy_price.toFixed(8);
+        }
+
+        order.percent_price = order.percent_price.toFixed(2);        
+      }
+    },
+    buy_price_changed: function(item){
+      this.$http.post('/ajax/orders/update_buy_price', {order_number: item.order_number, buy_price: item.buy_price}).then(function (res){
+        console.log('Call: /ajax/orders/update_buy_price', res.data);
+      });
     }
   },
   watch: {
     sell_value: function (value) {
       this.sell_percent_values = [];
-      var percents = ['0.10', '0.75', '1.00', '1.25', '1.50', '2.00']
+      var percents = ['0.10', '1.00', '1.50', '2.00', '3.00', '5.00']
 
       for(var i=0; i<percents.length; i++){
         this.sell_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'increase')});
@@ -95,7 +164,7 @@ var app = new Vue({
     },
     buy_value: function (value) {
       this.buy_percent_values = [];
-      var percents = ['0.10', '0.25', '0.50', '0.75', '1.00', '1.50']
+      var percents = ['0.10', '0.50', '1.00', '1.50', '2.00', '3.00']
 
       for(var i=0; i<percents.length; i++){
         this.buy_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'descrease')});

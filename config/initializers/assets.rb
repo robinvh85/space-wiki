@@ -12,3 +12,4 @@ Rails.application.config.assets.version = '1.0'
 Rails.application.config.assets.precompile += %w( base.js )
 Rails.application.config.assets.precompile += %w( poloniex.css )
 Rails.application.config.assets.precompile += %w( poloniex/app.js )
+Rails.application.config.assets.precompile += %w( poloniex/realtime.js )
