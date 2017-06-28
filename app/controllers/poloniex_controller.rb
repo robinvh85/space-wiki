@@ -10,7 +10,7 @@ class PoloniexController < PoloniexBaseController
 	def compare_chart
 		@base_unit = params[:base_unit]
 		@all = params[:all]
-		@base_unit = 'USDT' if @base_unit.nil? || @base_unit.empty?
+		@base_unit = 'BTC' if @base_unit.nil? || @base_unit.empty?
 
 		if @all.nil? || @all.empty?
 			@currency_pairs = CurrencyPair.where(base_unit: @base_unit, is_tracking: 1).order(sort: 'asc')
