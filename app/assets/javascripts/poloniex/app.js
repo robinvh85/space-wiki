@@ -13,6 +13,7 @@ var app = new Vue({
     bid_orders: [],
     ask_orders: [],
     open_orders: [],
+    balance_orders: [],
     sell_value: 0,
     buy_value: 0,
     sell_percent_values: [],
@@ -98,11 +99,13 @@ var app = new Vue({
     get_open_orders: function(){
       _this = this;
       this.$http.get('/ajax/orders/get_open_orders').then(function (res){
-        _this.open_orders = res.data;
+        _this.open_orders = res.data.open_orders;
+        _this.balance_orders = res.data.balances;
 
         for(var i=0; i<_this.open_orders.length; i++){
           var pair = _this.open_orders[i].currency_pair_name;
-          _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD HH:mm:ss");
+          // _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD HH:mm:ss");
+          _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD");
           
           if(_this.current_prices[pair] == null)
             _this.current_prices[pair] = {};
@@ -114,9 +117,9 @@ var app = new Vue({
     update_percent_open_order: function(){
       for(var i=0; i<this.open_orders.length; i++){
         var order = this.open_orders[i];
+        order.price = parseFloat(order.price);
         if(order.order_type == 'sell'){
-          order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);
-          // order.price = parseFloat(order.price);
+          order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);          
           // order.buy_price = parseFloat(order.buy_price);
 
           order.percent_price = -(order.price - this.current_prices[order.currency_pair_name].sell) / order.price * 100;
@@ -124,24 +127,56 @@ var app = new Vue({
             order.percent_with_buy_price = ((parseFloat(order.price) - parseFloat(order.buy_price)) / parseFloat(order.buy_price) * 100).toFixed(2);
         } else if(order.order_type == 'buy') {
           order.current_price = parseFloat(this.current_prices[order.currency_pair_name].buy);
-          order.percent_price = (this.current_prices[order.currency_pair_name].sell - order.price) / order.price * 100;
+          order.percent_price = (this.current_prices[order.currency_pair_name].buy - order.price) / order.price * 100;
         }
 
         order.buy_price = parseFloat(order.buy_price);
         if(order.current_price > 1000){
           order.current_price = order.current_price.toFixed(2);
           order.buy_price = order.buy_price.toFixed(2);
+          order.price = order.price.toFixed(2);
         } else if(order.current_price > 100) {
           order.current_price = order.current_price.toFixed(3);
           order.buy_price = order.buy_price.toFixed(3);
+          order.price = order.price.toFixed(3);
         } else if(order.current_price > 10){
           order.current_price = order.current_price.toFixed(5);
           order.buy_price = order.buy_price.toFixed(5);
+          order.price = order.price.toFixed(5);
         } else if(order.current_price > 1){
           order.current_price = order.current_price.toFixed(6);
           order.buy_price = order.buy_price.toFixed(6);
+          order.price = order.price.toFixed(6);
         } else {
           order.buy_price = order.buy_price.toFixed(8);
+          order.price = order.price.toFixed(8);
+        }
+
+        order.percent_price = order.percent_price.toFixed(2);        
+      }
+
+      // Calculate percent for balance
+      for(var i=0; i<this.balance_orders.length; i++){
+        var order = this.balance_orders[i];
+        order.price = parseFloat(order.price);
+
+        order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);
+        order.percent_price = (this.current_prices[order.currency_pair_name].sell - order.price) / order.price * 100;
+
+        if(order.current_price > 1000){
+          order.current_price = order.current_price.toFixed(2);
+          order.price = order.price.toFixed(2);
+        } else if(order.current_price > 100) {
+          order.current_price = order.current_price.toFixed(3);
+          order.price = order.price.toFixed(3);
+        } else if(order.current_price > 10){
+          order.current_price = order.current_price.toFixed(5);
+          order.price = order.price.toFixed(5);
+        } else if(order.current_price > 1){
+          order.current_price = order.current_price.toFixed(6);
+          order.price = order.price.toFixed(6);
+        } else {
+          order.price = order.price.toFixed(8);
         }
 
         order.percent_price = order.percent_price.toFixed(2);        
@@ -155,6 +190,15 @@ var app = new Vue({
     cancel_order: function(item){
       if(confirm("Do you want to cancel order " + item.price + " ?")){
         this.$http.post('/ajax/orders/cancel', {order_number: item.order_number}).then(function (res){
+          if(res.data.success == 1){
+            alert("Cancel done !")
+          }
+        });
+      }
+    },
+    done_trade: function(item){
+      if(confirm("Do you want to done order " + item.price + " ?")){
+        this.$http.post('/ajax/orders/done', {order_number: item.order_number}).then(function (res){
           if(res.data.success == 1){
             alert("Cancel done !")
           }

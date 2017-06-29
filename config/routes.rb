@@ -33,6 +33,7 @@ Rails.application.routes.draw do
 
     post 'orders/update_buy_price' => 'orders#update_buy_price'
     post 'orders/cancel' => 'orders#cancel'
+    post 'orders/done' => 'orders#done'
     get 'orders/get_open_orders' => 'orders#get_open_orders'
     get 'orders/get_current_price' => 'orders#get_current_price'
     resources :orders
