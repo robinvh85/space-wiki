@@ -19,7 +19,7 @@ module Ajax
     def get_open_orders
       orders = JSON.parse(`python script/python/get_open_orders.py`)
       data = {}
-      OpenOrder.update_all(is_old: 1)
+      OpenOrder.where("order_type = 'buy' OR order_type = 'sell'").update_all(is_old: 1)
       
       orders.each do |key, values|
         if values.length > 0
@@ -49,9 +49,20 @@ module Ajax
         end
       end
       
-      OpenOrder.where(is_old: 1).delete_all
+      old_orders = OpenOrder.where(is_old: 1)
+      old_orders.each do |order|
+        if order.order_type == 'sell'
+          order.order_type = 'sold'
+        elsif order.order_type = 'buy'
+          order.order_type = 'balance'
+        end       
+        order.save 
+      end
 
-      render json: OpenOrder.all
+      render json: {
+        open_orders: OpenOrder.where("order_type = 'buy' OR order_type = 'sell'"),
+        balances: OpenOrder.where("order_type = 'balance'")
+      }
     end
 
     def get_current_price
@@ -82,6 +93,18 @@ module Ajax
 
       render json: {
         success: result['success']
+      }
+    end
+
+    def done
+      order_number = params['order_number']
+
+      model = OpenOrder.find_by(order_number: order_number)
+      model.order_type = 'sold'
+      model.save
+
+      render json: {
+        status: 'OK'
       }
     end
 

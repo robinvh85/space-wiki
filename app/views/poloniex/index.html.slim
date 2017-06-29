@@ -6,41 +6,64 @@ div.container
     div.panel-heading
       | Open Orders
     div.panel-block
-      table.table
-        thead
-          tr
-            th Type
-            th Pair
-            th Current price
-            th Trade Price
-            th Buy Price
-            th Amount            
-            th Date
-            th
-        tbody
-          tr v-for="item in open_orders"
-            td
-              | {{ item.order_type }}
-            td
-              | {{ item.currency_pair_name }}
-            td 
-              | {{ item.current_price }} 
-              label.warn
-                | ({{ item.percent_price }}%)
-            td
-              | {{ item.price }} 
-              label.warn v-show="item.order_type == 'sell'"
-                | ({{ item.percent_with_buy_price }}%)
-            td
-              input v-model="item.buy_price" style="text-align:right; width: 100px" v-show="item.order_type == 'sell'" @change="buy_price_changed(item)"
-            td
-              | {{ item.amount }}            
-            td
-              | {{ item.date_time }}
-            td
-              a @click="cancel_order(item)"
-                | Cancel
-
+      div.columns style="width: 100%; padding: 10px 0px;"
+        table.table.column.is-8 style="width: 800px;"
+          thead
+            tr
+              th Type
+              th Pair
+              th Current price
+              th Trade Price
+              th Buy Price
+              th Amount            
+              th Date
+              th
+          tbody
+            tr v-for="item in open_orders"
+              td
+                | {{ item.order_type }}
+              td
+                | {{ item.currency_pair_name }}
+              td 
+                | {{ item.current_price }} 
+                label.warn
+                  | ({{ item.percent_price }}%)
+              td
+                | {{ item.price }} 
+                label.warn v-show="item.order_type == 'sell'"
+                  | ({{ item.percent_with_buy_price }}%)
+              td
+                input v-model="item.buy_price" style="text-align:right; width: 100px" v-show="item.order_type == 'sell'" @change="buy_price_changed(item)"
+              td
+                | {{ item.amount }}            
+              td
+                | {{ item.date_time }}
+              td
+                a @click="cancel_order(item)"
+                  | Cancel
+        table.table.column.is-4 style="width: 500px;"
+          thead
+            tr
+              th Pair
+              th Current price
+              th Price
+              th Amount         
+              th
+          tbody
+            tr v-for="item in balance_orders"
+              td
+                | {{ item.currency_pair_name }}
+              td
+                | {{ item.current_price }} 
+                label.warn
+                  | ({{ item.percent_price }}%)
+              td
+                | {{ item.price }}
+              td
+                | {{ item.amount }}
+              td
+                a @click="done_trade(item)"
+                  | Done
   select v-model="current_pair" @change="changeCurrencyPair" class='input'
     option v-for="currency_pair in currency_pairs" :value="currency_pair.name"
       | {{ currency_pair.name }}
