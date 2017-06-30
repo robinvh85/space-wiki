@@ -1,8 +1,8 @@
 div#pair_list.columns.is-multiline
   - @all_currency_pairs.each do |item|
     div.column.is-half
-      input id="cbx_#{item.name}" type="checkbox" value=item.id class="cbx" onchange="cbxPairChange(this)"
-        label for="cbx_#{item.name}" =item.name
+      input id="rdo_#{item.name}" name="rdo_pair" type="radio" pairname="#{item.name}" value=item.id class="rdo" onchange="rdoPairChange(this)"
+        label for="rdo_#{item.name}" =item.name
 div.container
   div.columns style="margin-top: 0px;"
     div.column.is-half style="padding: 0px 0.5em"
@@ -25,6 +25,10 @@ div.container
           | USDT
         option value="BTC"
           | BTC
+        option value="ETH"
+          | ETH
+        option value="XMR"
+          | XMR
   div.panel
     div.panel-heading
       | Chart
@@ -41,31 +45,15 @@ javascript:
   var pairs = #{@currency_pairs.to_json.html_safe};
   var base_unit = '#{@base_unit}';
   var decimal = 3;
+  var chart = null;
+  var current_pair = null;
 
   var createChart = function(data, pair){  
-    Highcharts.stockChart('chart', {
-      rangeSelector: {
-          selected: 1,
-          buttons: [{
-          type: 'day',
-          count: 1,
-          text: '1d'
-        }, {
-          type: 'day',
-          count: 3,
-          text: '3d'
-        }, {
-          type: 'day',
-          count: 7,
-          text: '7d'
-        },{
-          type: 'all',
-          text: 'All'
-        }]
-      },
+    return Highcharts.stockChart('chart', {
+      rangeSelector: getRangeSelector(chart_type),
 
       title: {
-          text: '5m ' + pair.name
+          text: chart_type + ' ' + pair.name
       },
       yAxis: [{
         title: {
@@ -95,7 +83,7 @@ javascript:
         color: '#DDA'
       },{
         type: 'candlestick',
-        name: '5m candle',
+        name: 'candle',
         data: data.candle_data,
         yAxis: 1
       }],
@@ -110,10 +98,28 @@ javascript:
     });
   }
  
-  var load_charts = function(){
-    var pair = {id: 1, name: 'USDT_BTC'}
-    axios.get('/ajax/charts/get_15m', {params: { pair_id: 1 }}).then(function (res){
-      createChart(res.data, pair)
+  var changeType = function(obj){
+    chart_type = obj.value;
+
+    load_charts(current_pair);
+  }
+
+  var rdoPairChange = function(obj){
+    current_pair = {
+      id: obj.value,
+      name: $(obj).attr('pairname')
+    };
+
+    load_charts(current_pair);
+  }
+
+  var load_charts = function(pair){
+    var url = get_url();
+    axios.get(url , {params: { pair_id: pair.id }}).then(function (res){
+      if(chart != null)
+        chart.destroy();
+
+      chart = createChart(res.data, pair)
     });
   }
 
@@ -144,15 +150,174 @@ javascript:
     });
   }
 
+  var changeBaseUnit = function(obj){
+    document.location = "/poloniex/analysis?base_unit=" + obj.value
+  }
+
+  var getRangeSelector = function(chart_type){
+    switch(chart_type){
+      case '5m':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'hour',
+            count: 12,
+            text: '12h'
+          }, {
+            type: 'hour',
+            count: 24,
+            text: '24h'
+          }, {
+            type: 'hour',
+            count: 48,
+            text: '48h'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        };
+        break;
+      case '15m':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'day',
+            count: 1,
+            text: '1d'
+          }, {
+            type: 'day',
+            count: 3,
+            text: '3d'
+          }, {
+            type: 'day',
+            count: 7,
+            text: '7d'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        }
+        break;
+      case '30m':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'day',
+            count: 3,
+            text: '3d'
+          }, {
+            type: 'day',
+            count: 7,
+            text: '7d'
+          }, {
+            type: 'day',
+            count: 14,
+            text: '14d'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        }
+        break;
+      case '2h':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'day',
+            count: 7,
+            text: '7d'
+          }, {
+            type: 'day',
+            count: 15,
+            text: '15d'
+          }, {
+            type: 'day',
+            count: 30,
+            text: '30d'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        };
+        break;
+      case '4h':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'day',
+            count: 14,
+            text: '14d'
+          }, {
+            type: 'day',
+            count: 30,
+            text: '30d'
+          }, {
+            type: 'day',
+            count: 60,
+            text: '60d'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        }
+        break;
+      case '1d':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'month',
+            count: 2,
+            text: '2M'
+          }, {
+            type: 'month',
+            count: 4,
+            text: '4M'
+          }, {
+            type: 'month',
+            count: 6,
+            text: '6M'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        }
+        break;
+    }
+  }
+
+  var get_url = function(){
+    switch(chart_type){
+      case '5m':
+        return '/ajax/chartso/get_5m';
+        break;
+      case '15m':
+        return '/ajax/chartso/get_15m';
+        break;
+      case '30m':
+        return '/ajax/chartso/get_30m';
+        break;
+      case '2h':
+        return '/ajax/chartso/get_2h';
+        break;
+      case '4h':
+        return '/ajax/chartso/get_4h';
+        break;
+      case '1d':
+        return '/ajax/chartso/get_1d';
+        break;
+    }
+  }
+
   $(function(){
 
     if(base_unit == 'BTC'){
       decimal = 8;
     }
 
-    //$('option[value="' + base_unit + '"]')[0].selected = "selected"
+    $('option[value="' + base_unit + '"]')[0].selected = "selected"
+    $($('[name="rdo_pair"]')[0]).trigger( "click" );
 
-    load_charts();
+    // load_charts(current_pair);
     /*
     setInterval(function(){ load_charts() }, 300 * 1000);
 

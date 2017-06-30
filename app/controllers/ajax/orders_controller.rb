@@ -86,16 +86,20 @@ module Ajax
     def cancel
       result = JSON.parse(`python script/python/cancel_order.py #{params['order_number']}`)
 
+      if result['success'] == 1
+        OpenOrder.find_by(order_number: params['order_number']).delete()
+      end
+
       render json: {
         success: result['success']
       }
     end
 
     def done
-      order_number = params['order_number']
+      trade_id = params['trade_id']
 
-      model = OpenOrder.find_by(order_number: order_number)
-      model.order_type = 'done'
+      model = TradeHistory.find_by(trade_id: trade_id)
+      model.is_sold = 1
       model.save
 
       render json: {
@@ -110,7 +114,7 @@ module Ajax
         obj_pair = CurrencyPair.find_by(name: pair)
 
         pair_item.each do |item|
-          if TradeHistory.find_by(trade_id: item['trade_id']).nil?
+          if TradeHistory.find_by(trade_id: item['tradeID']).nil?
             item = {
               category: item['category'],
               fee:      item['fee'],
