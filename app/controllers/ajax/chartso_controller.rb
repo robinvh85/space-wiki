@@ -1,5 +1,5 @@
 module Ajax
-  class ChartsController < ActionController::Base
+  class ChartsoController < ActionController::Base
     def index
       pair_id = params[:pair_id]
       pair_id = CurrencyPair.first.id if pair_id.nil? || pair_id.empty?

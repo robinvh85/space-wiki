@@ -4,7 +4,7 @@ module Ajax
       @pair = params[:pair]
 
       if @pair.nil? || @pair.empty?
-        @pair = CurrencyPair.first.name
+        @pair = 'USDT_BTC'
       end
       
       @currency_pairs = CurrencyPair.all

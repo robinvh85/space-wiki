@@ -1,0 +1,166 @@
+div#pair_list.columns.is-multiline
+  - @all_currency_pairs.each do |item|
+    div.column.is-half
+      input id="cbx_#{item.name}" type="checkbox" value=item.id class="cbx" onchange="cbxPairChange(this)"
+        label for="cbx_#{item.name}" =item.name
+div.container
+  div.columns style="margin-top: 0px;"
+    div.column.is-half style="padding: 0px 0.5em"
+      select value="5m" onchange="changeType(this)" class="input"
+        option value="5m"
+          | 5m
+        option value="15m"
+          | 15m
+        option value="30m"
+          | 30m
+        option value="2h"
+          | 2h
+        option value="4h"
+          | 4h
+        option value="1d"
+          | 1d
+    div.column.is-half style="padding: 0px 0.5em"
+      select value="#{@base_unit}" onchange="changeBaseUnit(this)" class="input"
+        option value="USDT"
+          | USDT
+        option value="BTC"
+          | BTC
+  div.panel
+    div.panel-heading
+      | Chart
+    div.panel-block      
+      div id='chart' style="width:100%;"
+
+javascript:
+  // create the chart
+
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+
+  var chart_type = '5m';
+  var pairs = #{@currency_pairs.to_json.html_safe};
+  var base_unit = '#{@base_unit}';
+  var decimal = 3;
+
+  var createChart = function(data, pair){  
+    Highcharts.stockChart('chart', {
+      rangeSelector: {
+          selected: 1,
+          buttons: [{
+          type: 'day',
+          count: 1,
+          text: '1d'
+        }, {
+          type: 'day',
+          count: 3,
+          text: '3d'
+        }, {
+          type: 'day',
+          count: 7,
+          text: '7d'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+
+      title: {
+          text: '5m ' + pair.name
+      },
+      yAxis: [{
+        title: {
+          text: 'Volume'
+        },
+        //height: 200,
+        lineWidth: 2,
+        opposite: false        
+      },
+      {
+        title: {
+          text: ''
+        },
+        height: 300,
+        gridLineWidth: 0
+      }],
+      tooltip: {
+        valueDecimals: decimal,
+        //xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'column',
+        name: 'Volume',
+        data: data.volume_data,
+        yAxis: 0,
+        color: '#DDA'
+      },{
+        type: 'candlestick',
+        name: '5m candle',
+        data: data.candle_data,
+        yAxis: 1
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+          }
+        },
+        height: 500
+      },
+    });
+  }
+ 
+  var load_charts = function(){
+    var pair = {id: 1, name: 'USDT_BTC'}
+    axios.get('/ajax/charts/get_15m', {params: { pair_id: 1 }}).then(function (res){
+      createChart(res.data, pair)
+    });
+  }
+
+  var drawMinMaxLines = function(chart, pair){    
+    axix = chart.yAxis[1];
+    min_value = axix.dataMin;
+    max_value = axix.dataMax;
+    plot_min_id = 'plot_min_' + pair.name;
+    plot_max_id = 'plot_max_' + pair.name;
+
+    axix.removePlotLine(plot_min_id);
+    axix.removePlotLine(plot_max_id);
+
+    axix.addPlotLine({
+      value: min_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_min_id
+    });
+
+    axix.addPlotLine({
+      value: max_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_max_id
+    });
+  }
+
+  $(function(){
+
+    if(base_unit == 'BTC'){
+      decimal = 8;
+    }
+
+    //$('option[value="' + base_unit + '"]')[0].selected = "selected"
+
+    load_charts();
+    /*
+    setInterval(function(){ load_charts() }, 300 * 1000);
+
+    for(var i=0; i<pairs.length; i++){
+      var cbxs = $("#cbx_" + pairs[i].name);
+      if(cbxs.length > 0)
+        cbxs[0].checked = "checked";
+    } 
+    */   
+  });
+
