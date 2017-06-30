@@ -30,27 +30,63 @@ var app = new Vue({
     init: function(){
       console.log("INIT");
       this.get_currency_pairs();
-      this.get_orders();
+      this.get_trading_orders();
       this.get_open_orders();
-      setInterval(this.get_orders, 20000);
+      this.get_balances();
+      this.get_current_price();
+
+      setInterval(this.get_trading_orders, 60000);
       setInterval(this.get_open_orders, 60000);
+      setInterval(this.get_current_price, 15000);
     },
-    get_orders: function(){
+    get_trading_orders: function(){
       _this = this;
       this.$http.get('/ajax/orders', {params: {pair: this.current_pair} }).then(function (res){
         _this.bid_orders = res.data['bid_orders'];
         _this.ask_orders = res.data['ask_orders'];
 
-        _this.check_trading_data();
+        _this.check_trading_data();        
       });
     },
-    get_prices: function(pair){
-      _this = this;
+    get_current_price: function(){
+      // Get all pair
+      var pairs = [];
+      for(var i=0; i < this.open_orders.length; i++){
+        var pair = this.open_orders[i].currency_pair_name;
+
+        if(pairs.indexOf(pair) == -1){
+          pairs.push(pair);
+
+          if(!this.current_prices[pair]){
+            this.current_prices[pair] = {}
+          }
+        }
+      }
+
+      for(var i=0; i < this.balance_orders.length; i++){
+        var pair = this.balance_orders[i].currency_pair_name;
+
+        if(pairs.indexOf(pair) == -1){
+          pairs.push(pair);
+          
+          if(!this.current_prices[pair]){
+            this.current_prices[pair] = {}
+          }
+        }
+      }
+
+      for(var i=0; i<pairs.length; i++){
+        var pair = pairs[i];
+        this.call_get_current_price(pair);
+      }      
+    },
+    call_get_current_price: function(pair){
       this.$http.get('/ajax/orders/get_current_price', {params: {pair: pair} }).then(function (res){
         _this.current_prices[pair].buy = res.data['buy_price'].price;
         _this.current_prices[pair].sell = res.data['sell_price'].price;
 
         _this.update_percent_open_order();
+        _this.update_data_balance();
       });
     },
     get_currency_pairs: function(){
@@ -100,19 +136,46 @@ var app = new Vue({
       _this = this;
       this.$http.get('/ajax/orders/get_open_orders').then(function (res){
         _this.open_orders = res.data.open_orders;
-        _this.balance_orders = res.data.balances;
 
         for(var i=0; i<_this.open_orders.length; i++){
           var pair = _this.open_orders[i].currency_pair_name;
           // _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD HH:mm:ss");
-          _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD");
-          
-          if(_this.current_prices[pair] == null)
-            _this.current_prices[pair] = {};
-
-          _this.get_prices(pair);
+          _this.open_orders[i].date_time = moment(_this.open_orders[i].date_time).format("YYYY-MM-DD");                    
         }
       });
+    },
+    get_balances: function(){
+      _this = this;
+      this.$http.get('/ajax/orders/get_history_trading').then(function (res){
+        _this.balance_orders = res.data;        
+      });
+    },
+    update_data_balance: function(){
+      for(var i=0; i<this.balance_orders.length; i++){
+        var order = this.balance_orders[i];
+        order.price = parseFloat(order.rate);
+
+        order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);
+        order.percent_price = (this.current_prices[order.currency_pair_name].sell - order.price) / order.price * 100;
+
+        if(order.current_price > 1000){
+          order.current_price = order.current_price.toFixed(2);
+          order.price = order.price.toFixed(2);
+        } else if(order.current_price > 100) {
+          order.current_price = order.current_price.toFixed(3);
+          order.price = order.price.toFixed(3);
+        } else if(order.current_price > 10){
+          order.current_price = order.current_price.toFixed(5);
+          order.price = order.price.toFixed(5);
+        } else if(order.current_price > 1){
+          order.current_price = order.current_price.toFixed(6);
+          order.price = order.price.toFixed(6);
+        } else {
+          order.price = order.price.toFixed(8);
+        }
+
+        order.percent_price = order.percent_price.toFixed(2);        
+      }
     },
     update_percent_open_order: function(){
       for(var i=0; i<this.open_orders.length; i++){
@@ -153,34 +216,7 @@ var app = new Vue({
         }
 
         order.percent_price = order.percent_price.toFixed(2);        
-      }
-
-      // Calculate percent for balance
-      for(var i=0; i<this.balance_orders.length; i++){
-        var order = this.balance_orders[i];
-        order.price = parseFloat(order.price);
-
-        order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);
-        order.percent_price = (this.current_prices[order.currency_pair_name].sell - order.price) / order.price * 100;
-
-        if(order.current_price > 1000){
-          order.current_price = order.current_price.toFixed(2);
-          order.price = order.price.toFixed(2);
-        } else if(order.current_price > 100) {
-          order.current_price = order.current_price.toFixed(3);
-          order.price = order.price.toFixed(3);
-        } else if(order.current_price > 10){
-          order.current_price = order.current_price.toFixed(5);
-          order.price = order.price.toFixed(5);
-        } else if(order.current_price > 1){
-          order.current_price = order.current_price.toFixed(6);
-          order.price = order.price.toFixed(6);
-        } else {
-          order.price = order.price.toFixed(8);
-        }
-
-        order.percent_price = order.percent_price.toFixed(2);        
-      }
+      }      
     },
     buy_price_changed: function(item){
       this.$http.post('/ajax/orders/update_buy_price', {order_number: item.order_number, buy_price: item.buy_price}).then(function (res){
