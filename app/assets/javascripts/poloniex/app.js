@@ -34,6 +34,7 @@ var app = new Vue({
       this.get_open_orders();
       this.get_balances();
       this.get_current_price();
+      this.get_history_trade();
 
       setInterval(this.get_trading_orders, 60000);
       setInterval(this.get_open_orders, 60000);
@@ -45,7 +46,7 @@ var app = new Vue({
         _this.bid_orders = res.data['bid_orders'];
         _this.ask_orders = res.data['ask_orders'];
 
-        _this.check_trading_data();        
+        //_this.check_trading_data();        
       });
     },
     get_current_price: function(){
@@ -107,31 +108,28 @@ var app = new Vue({
         result = (value - (value * percent / 100)).toFixed(8);
       }
       
-      return result.toString().replace(/\d\d$/, this.PRICE_MARK);
+      return result;
     },
     price_click: function(value){
       this.sell_value = value;
       this.buy_value = value;
     },
-    // buy_price_click: function(value){
-    //   this.buy_value = value;
-    // },
     // Find and mark trading records
-    check_trading_data: function(){
-      for(var i=0; i<this.bid_orders.length; i++){
-        var reg = new RegExp(this.PRICE_MARK + '$');
-        if(this.bid_orders[i].price.match(reg) != null){
-          this.bid_orders[i].trading = true;
-        }
-      }
+    // check_trading_data: function(){
+    //   for(var i=0; i<this.bid_orders.length; i++){
+    //     var reg = new RegExp(this.PRICE_MARK + '$');
+    //     if(this.bid_orders[i].price.match(reg) != null){
+    //       this.bid_orders[i].trading = true;
+    //     }
+    //   }
 
-      for(var i=0; i<this.ask_orders.length; i++){
-        var reg = new RegExp(this.PRICE_MARK + '$');
-        if(this.ask_orders[i].price.match(reg) != null){
-          this.ask_orders[i].trading = true;
-        }
-      }
-    },
+    //   for(var i=0; i<this.ask_orders.length; i++){
+    //     var reg = new RegExp(this.PRICE_MARK + '$');
+    //     if(this.ask_orders[i].price.match(reg) != null){
+    //       this.ask_orders[i].trading = true;
+    //     }
+    //   }
+    // },
     get_open_orders: function(){
       _this = this;
       this.$http.get('/ajax/orders/get_open_orders').then(function (res){
@@ -234,12 +232,17 @@ var app = new Vue({
     },
     done_trade: function(item){
       if(confirm("Do you want to done order " + item.price + " ?")){
-        this.$http.post('/ajax/orders/done', {order_number: item.order_number}).then(function (res){
+        this.$http.post('/ajax/orders/done', {trade_id: item.trade_id}).then(function (res){
           if(res.data.success == 1){
             alert("Cancel done !")
           }
         });
       }
+    },
+    get_history_trade: function(){
+      this.$http.get('/ajax/orders/get_history_trade').then(function (res){
+        console.log(res.data);
+      });
     }
   },
   watch: {

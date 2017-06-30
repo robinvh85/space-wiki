@@ -27,6 +27,7 @@ Rails.application.routes.draw do
   get 'poloniex/chart' => 'poloniex#chart'
   get 'poloniex/compare_chart' => 'poloniex#compare_chart'
   get 'poloniex/realtime' => 'poloniex#realtime'
+  get 'poloniex/analysis' => 'poloniex#analysis'
   resources :poloniex
 
   namespace :ajax do
@@ -48,6 +49,13 @@ Rails.application.routes.draw do
     get 'charts/get_4h' => 'charts#get_4h'
     get 'charts/get_1d' => 'charts#get_1d'
     resources :charts
+
+    get 'chartso/get_5m' => 'chartso#get_5m'
+    get 'chartso/get_15m' => 'chartso#get_15m'
+    get 'chartso/get_30m' => 'chartso#get_30m'
+    get 'chartso/get_2h' => 'chartso#get_2h'
+    get 'chartso/get_4h' => 'chartso#get_4h'
+    get 'chartso/get_1d' => 'chartso#get_1d'
   end
 
 end
