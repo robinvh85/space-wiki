@@ -19,7 +19,7 @@ module Ajax
     def get_open_orders
       orders = JSON.parse(`python script/python/get_open_orders.py`)
       data = {}
-      OpenOrder.where("order_type = 'buy' OR order_type = 'sell'").update_all(is_old: 1)
+      OpenOrder.where(is_old: 0).update_all(is_old: 1)
       
       orders.each do |key, values|
         if values.length > 0
@@ -51,17 +51,12 @@ module Ajax
       
       old_orders = OpenOrder.where(is_old: 1)
       old_orders.each do |order|
-        if order.order_type == 'sell'
-          order.order_type = 'sold'
-        elsif order.order_type = 'buy'
-          order.order_type = 'balance'
-        end       
+        order.is_old = 2
         order.save 
       end
 
       render json: {
-        open_orders: OpenOrder.where("order_type = 'buy' OR order_type = 'sell'"),
-        balances: OpenOrder.where("order_type = 'balance'")
+        open_orders: OpenOrder.where(is_old: 0)
       }
     end
 
@@ -100,12 +95,50 @@ module Ajax
       order_number = params['order_number']
 
       model = OpenOrder.find_by(order_number: order_number)
-      model.order_type = 'sold'
+      model.order_type = 'done'
       model.save
 
       render json: {
         status: 'OK'
       }
+    end
+
+    def get_history_trade
+      list = JSON.parse(`python script/python/get_trade_history.py #{(Time.now.to_i - 1.day).to_i} #{Time.now.to_i}`)
+
+      list.each do |pair, pair_item|
+        obj_pair = CurrencyPair.find_by(name: pair)
+
+        pair_item.each do |item|
+          if TradeHistory.find_by(trade_id: item['trade_id']).nil?
+            item = {
+              category: item['category'],
+              fee:      item['fee'],
+              trade_id: item['tradeID'],
+              order_number: item['orderNumber'],
+              amount:   item['amount'],
+              rate:     item['rate'],
+              date_time: item['date'],
+              total:    item['total'],
+              trade_type: item['type'],
+              currency_pair_id: obj_pair.id,
+              currency_pair_name: obj_pair.name
+            }
+            
+            TradeHistory.create(item)
+          end
+        end
+      end
+
+      render json: {
+        status: 'OK'
+      }
+    end
+
+    def get_history_trading
+      list = TradeHistory.where("trade_type='buy' AND is_sold=0")
+      
+      render json: list
     end
 
     private    

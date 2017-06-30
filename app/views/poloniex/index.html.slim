@@ -15,7 +15,6 @@ div.container
               th Current price
               th Trade Price
               th Buy Price
-              th Amount            
               th Date
               th
           tbody
@@ -35,8 +34,6 @@ div.container
               td
                 input v-model="item.buy_price" style="text-align:right; width: 100px" v-show="item.order_type == 'sell'" @change="buy_price_changed(item)"
               td
-                | {{ item.amount }}            
-              td
                 | {{ item.date_time }}
               td
                 a @click="cancel_order(item)"
@@ -47,7 +44,6 @@ div.container
               th Pair
               th Current price
               th Price
-              th Amount         
               th
           tbody
             tr v-for="item in balance_orders"
@@ -58,9 +54,7 @@ div.container
                 label.warn
                   | ({{ item.percent_price }}%)
               td
-                | {{ item.price }}
-              td
-                | {{ item.amount }}
+                | {{ item.rate }}
               td
                 a @click="done_trade(item)"
                   | Done

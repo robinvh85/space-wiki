@@ -33,9 +33,11 @@ Rails.application.routes.draw do
 
     post 'orders/update_buy_price' => 'orders#update_buy_price'
     post 'orders/cancel' => 'orders#cancel'
-    post 'orders/done' => 'orders#done'
+    post 'orders/done' => 'orders#done'    
     get 'orders/get_open_orders' => 'orders#get_open_orders'
     get 'orders/get_current_price' => 'orders#get_current_price'
+    get 'orders/get_history_trade' => 'orders#get_history_trade'
+    get 'orders/get_history_trading' => 'orders#get_history_trading'
     resources :orders
     resources :currency_pairs
 
