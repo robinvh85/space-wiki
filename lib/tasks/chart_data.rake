@@ -16,11 +16,13 @@ namespace :chart_data do
     currency_pairs = CurrencyPair.where(is_init: 1)
     currency_pairs.each do |currency_pair|
       ChartData.get_data_chart_5m(currency_pair)
+
+      ChartData.get_avg_24h(currency_pair)
+      ChartData.get_avg_12h(currency_pair)
+
       ChartData.get_data_chart_15m(currency_pair)
       ChartData.get_data_chart_30m(currency_pair)
       ChartData.get_data_chart_2h(currency_pair)
-      ChartData.get_data_chart_4h(currency_pair)
-      ChartData.get_data_chart_1d(currency_pair)
     end
 
     puts "End rake chart_data:get at #{Time.now}"
@@ -79,27 +81,58 @@ module ChartData
       end
     end
 
-    # 4h
-    def get_data_chart_4h(currency_pair, period = 14400)  
-      puts "#{currency_pair.name} - period: #{period}"
+    #
+    def get_avg_24h(currency_pair)
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair, @start)
+      index = 0
+      list.each do |item|
+        index += 1
+        if item.close < item.open
+          item.min_value = item.close
+        else
+          item.min_value = item.open
+        end
+        item.save
+      end
 
-      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
-      data = JSON.parse(response.body)
+      index = 0
+      list.each do |item|
+        index += 1
+        _end = Time.at(item.time_at).to_i
+        start = (_end - 24.hour).to_i
 
-      data.each do |item|
-        insert_or_update(currency_pair, item, ChartData4h)
+        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).sum(:min_value)
+        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).count
+
+        item.avg_24h_value = (sum / count).to_f
+        item.save
       end
     end
+    
+    def get_avg_12h(currency_pair)
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair, @start)
+      index = 0
+      list.each do |item|
+        index += 1
+        if item.close < item.open
+          item.min_value = item.close
+        else
+          item.min_value = item.open
+        end
+        item.save
+      end
 
-    # 1d
-    def get_data_chart_1d(currency_pair, period = 86400)  
-      puts "#{currency_pair.name} - period: #{period}"
+      index = 0
+      list.each do |item|
+        index += 1
+        _end = Time.at(item.time_at).to_i
+        start = (_end - 12.hour).to_i
 
-      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
-      data = JSON.parse(response.body)
+        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).sum(:min_value)
+        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).count
 
-      data.each do |item|
-        insert_or_update(currency_pair, item, ChartData1d)
+        item.avg_12h_value = (sum / count).to_f
+        item.save
       end
     end
 
