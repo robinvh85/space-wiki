@@ -48,70 +48,6 @@ javascript:
   var chart = null;
   var current_pair = null;
 
-  var createChart5m = function(data, pair){  
-    return Highcharts.stockChart('chart', {
-      rangeSelector: getRangeSelector(chart_type),
-
-      title: {
-          text: chart_type + ' ' + pair.name
-      },
-      yAxis: [{
-        title: {
-          text: 'Volume'
-        },
-        //height: 200,
-        lineWidth: 2,
-        opposite: false        
-      },
-      {
-        title: {
-          text: ''
-        },
-        height: 300,
-        gridLineWidth: 0
-      }],
-      tooltip: {
-        valueDecimals: decimal,
-        //xDateFormat: 'Y'
-      },
-
-      series: [{
-        type: 'column',
-        name: 'Volume',
-        data: data.volume_data,
-        yAxis: 0,
-        color: '#DDA'
-      }
-      /*,{
-        type: 'candlestick',
-        name: 'candle',
-        data: data.candle_data,
-        yAxis: 1
-      }*/
-      ,{
-        name: 'avg 12h',
-        data: data.avg_12h_data,
-        yAxis: 1
-      },{
-        name: 'avg 24h',
-        data: data.avg_24h_data,
-        yAxis: 1
-      },{
-        name: 'min',
-        data: data.min_value,
-        yAxis: 1
-      }],
-      chart: {
-        events: {
-          render: function(e){
-            drawMinMaxLines(e.target, pair);
-          }
-        },
-        height: 500
-      },
-    });
-  }
- 
   var createChart = function(data, pair){  
     return Highcharts.stockChart('chart', {
       rangeSelector: getRangeSelector(chart_type),
@@ -124,15 +60,17 @@ javascript:
           text: 'Volume'
         },
         //height: 200,
-        lineWidth: 2,
-        opposite: false        
+        lineWidth: 1,
+        opposite: false,
+        valueDecimals: 8       
       },
       {
         title: {
           text: ''
         },
         height: 300,
-        gridLineWidth: 0
+        gridLineWidth: 0,
+        lineWidth: 1
       }],
       tooltip: {
         valueDecimals: decimal,
@@ -146,11 +84,23 @@ javascript:
         yAxis: 0,
         color: '#DDA'
       },{
-        type: 'candlestick',
-        name: 'candle',
-        data: data.candle_data,
+        name: 'avg 12h',
+        data: data.avg_12h_data,
         yAxis: 1
-      }],
+      },{
+        name: 'avg 24h',
+        data: data.avg_24h_data,
+        yAxis: 1
+      },{
+        name: 'avg 48h',
+        data: data.avg_48h_data,
+        yAxis: 1
+      },{
+        name: 'min',
+        data: data.min_value,
+        yAxis: 1
+      }
+      ],
       chart: {
         events: {
           render: function(e){
@@ -161,7 +111,7 @@ javascript:
       },
     });
   }
-
+ 
   var changeType = function(obj){
     chart_type = obj.value;
 
@@ -170,8 +120,10 @@ javascript:
 
   var rdoPairChange = function(obj){
     current_pair = {
-      id: obj.value,
-      name: $(obj).attr('pairname')
+      //id: obj.value,
+      //name: $(obj).attr('pairname')
+      id:43,
+      name: 'USDT_LTC'
     };
 
     load_charts(current_pair);
@@ -183,10 +135,7 @@ javascript:
       if(chart != null)
         chart.destroy();
 
-      if(chart_type == '5m')
-        chart = createChart5m(res.data, pair)
-      else
-        chart = createChart(res.data, pair)
+      chart = createChart(res.data, pair)
     });
   }
 
