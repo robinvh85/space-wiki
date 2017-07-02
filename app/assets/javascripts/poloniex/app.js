@@ -183,12 +183,10 @@ var app = new Vue({
           order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);          
           // order.buy_price = parseFloat(order.buy_price);
 
-          order.percent_price = -(order.price - this.current_prices[order.currency_pair_name].sell) / order.price * 100;
           if(order.buy_price > 0)
             order.percent_with_buy_price = ((parseFloat(order.price) - parseFloat(order.buy_price)) / parseFloat(order.buy_price) * 100).toFixed(2);
         } else if(order.order_type == 'buy') {
           order.current_price = parseFloat(this.current_prices[order.currency_pair_name].buy);
-          order.percent_price = (this.current_prices[order.currency_pair_name].buy - order.price) / order.price * 100;
         }
 
         order.buy_price = parseFloat(order.buy_price);
@@ -212,8 +210,6 @@ var app = new Vue({
           order.buy_price = order.buy_price.toFixed(8);
           order.price = order.price.toFixed(8);
         }
-
-        order.percent_price = order.percent_price.toFixed(2);        
       }      
     },
     buy_price_changed: function(item){

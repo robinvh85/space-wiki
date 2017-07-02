@@ -1,8 +1,10 @@
-div#pair_list.columns.is-multiline
+div#pair_list.columns.is-multiline style="width: 282px;"
   - @all_currency_pairs.each do |item|
     div.column.is-half
       input id="rdo_#{item.name}" name="rdo_pair" type="radio" pairname="#{item.name}" value=item.id class="rdo" onchange="rdoPairChange(this)"
-        label for="rdo_#{item.name}" =item.name
+        label for="rdo_#{item.name}" =item.name 
+        label 
+          | &nbsp;#{item.percent_min_24h}%
 div.container
   div.columns style="margin-top: 0px;"
     div.column.is-half style="padding: 0px 0.5em"
@@ -62,12 +64,17 @@ javascript:
         //height: 200,
         lineWidth: 2,
         opposite: false        
-      },
-      {
+      },{
         title: {
           text: ''
         },
         height: 300,
+        gridLineWidth: 0
+      },{
+        title: {
+          text: 'BTC'
+        },
+        //height: 300,
         gridLineWidth: 0
       }],
       tooltip: {
@@ -100,6 +107,10 @@ javascript:
         name: 'min',
         data: data.min_value,
         yAxis: 1
+      },{
+        name: 'BTC',
+        data: data.btc_value,
+        yAxis: 2
       }],
       chart: {
         events: {
@@ -109,6 +120,9 @@ javascript:
         },
         height: 500
       },
+      legend: {
+        enabled: true
+      }
     });
   }
  

@@ -10,6 +10,9 @@ module Ajax
       list = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time)
       data = create_data_with_avg(list)
 
+      btc_list = ChartData5m.where("currency_pair_id = 4 AND time_at > ? AND time_at < ?", start_time, end_time)
+      data['btc_value'] = create_btc_data(btc_list)
+
       render json: data
     end
 
@@ -116,6 +119,16 @@ module Ajax
         avg_24h_data: avg_24h_data,
         min_value: min_value
       }
+    end
+
+    def create_btc_data(list)
+      btc_data = []
+
+      list.each do |item|
+        btc_data.push([item.time_at * 1000, item.min_value.to_f])
+      end
+
+      btc_data
     end
   end
 end
