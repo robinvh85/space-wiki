@@ -107,8 +107,8 @@ module Ajax
       list.each do |item|
         candle_data.push([item.time_at * 1000, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
         volume_data.push([item.time_at * 1000, item.volume.to_f])
-        avg_12h_data.push([item.time_at * 1000, item.avg_12h_value.to_f])
-        avg_24h_data.push([item.time_at * 1000, item.avg_24h_value.to_f])
+        # avg_12h_data.push([item.time_at * 1000, item.avg_12h_value.to_f])
+        # avg_24h_data.push([item.time_at * 1000, item.avg_24h_value.to_f])
         min_value.push([item.time_at * 1000, item.min_value.to_f])
       end
 
