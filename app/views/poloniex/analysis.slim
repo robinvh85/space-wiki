@@ -6,9 +6,14 @@ div#pair_list.columns.is-multiline style="width: 285px;"
         label 
           | &nbsp;#{item.percent_min_24h}%
 div#pair_note
-  textarea#note_item.input style="height: 300px;"
-  button onclick="updateNote()"
-    | Update
+  div
+    textarea#note_item.input style="height: 300px;"
+    button onclick="updateNote()"
+      | Update
+  div style="margin-top: 10px;"
+    textarea#note_polo.input style="height: 300px;"
+    button onclick="updatePoloNote()"
+      | Update
 div.container
   div.columns style="margin-top: 0px;"
     div.column.is-half style="padding: 0px 0.5em"
@@ -49,6 +54,7 @@ javascript:
 
   var chart_type = '5m';
   var pairs = #{@currency_pairs.to_json.html_safe};
+  var polo = #{@polo.to_json.html_safe};
   var pairs_hash = {};
   var base_unit = '#{@base_unit}';
   var decimal = 3;
@@ -422,6 +428,15 @@ javascript:
     });
   }
 
+  var updatePoloNote = function(){
+    var note = $("#note_polo").val();
+    polo.note = note;
+
+    axios.put('/ajax/polos/update', {polo: polo}).then(function (res){
+      console.log('Call: /ajax/polos/update', res.data);
+    });
+  }
+
   $(function(){
 
     if(base_unit == 'BTC'){
@@ -431,6 +446,8 @@ javascript:
     pairs_hash = array_to_hash(pairs, 'id');
     $('option[value="' + base_unit + '"]')[0].selected = "selected"
     $($('[name="rdo_pair"]')[0]).trigger( "click" );
+
+    $("#note_polo").val(polo.note);
 
     // load_charts(current_pair);
     /*

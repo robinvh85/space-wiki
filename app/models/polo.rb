@@ -1,0 +1,2 @@
+class Polo < ApplicationRecord
+end

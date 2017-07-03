@@ -9,6 +9,7 @@ class PoloniexController < PoloniexBaseController
 
 		@currency_pairs = CurrencyPair.all.order(sort: 'asc')
 		@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit).order(percent_min_24h: 'asc')
+		@polo = Polo.first
 	end
 
 	def analysisavg
