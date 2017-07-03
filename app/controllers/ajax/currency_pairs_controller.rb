@@ -13,5 +13,14 @@ module Ajax
       }
     end
     
+    def update_note
+      pair = CurrencyPair.find(params[:id])
+      pair.note = params[:note]
+      pair.save
+      render json: {
+        status: 'OK'
+      }
+    end  
+
   end
 end
