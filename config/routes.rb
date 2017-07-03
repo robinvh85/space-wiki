@@ -59,6 +59,8 @@ Rails.application.routes.draw do
     get 'chartso/get_2h' => 'chartso#get_2h'
     get 'chartso/get_4h' => 'chartso#get_4h'
     get 'chartso/get_1d' => 'chartso#get_1d'
+
+    resources :polos
   end
 
 end
