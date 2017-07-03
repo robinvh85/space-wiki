@@ -17,8 +17,8 @@ namespace :chart_data do
     currency_pairs.each do |currency_pair|
       ChartData.get_data_chart_5m(currency_pair)
 
-      ChartData.get_avg_24h(currency_pair)
-      ChartData.get_avg_12h(currency_pair)
+      # ChartData.get_avg_24h(currency_pair)
+      # ChartData.get_avg_12h(currency_pair)
       ChartData.get_percent_min_24h(currency_pair)
       
       ChartData.get_data_chart_15m(currency_pair)

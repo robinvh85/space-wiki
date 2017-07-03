@@ -244,7 +244,7 @@ var app = new Vue({
   watch: {
     sell_value: function (value) {
       this.sell_percent_values = [];
-      var percents = ['0.10', '1.00', '1.50', '2.00', '3.00', '5.00']
+      var percents = ['1.00', '2.00', '3.00', '5.00', '7.00', '9.00']
 
       for(var i=0; i<percents.length; i++){
         this.sell_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'increase')});
@@ -252,7 +252,7 @@ var app = new Vue({
     },
     buy_value: function (value) {
       this.buy_percent_values = [];
-      var percents = ['0.10', '0.50', '1.00', '1.50', '2.00', '3.00']
+      var percents = ['0.10', '0.5', '1.00', '1.50', '2.00', '3.00']
 
       for(var i=0; i<percents.length; i++){
         this.buy_percent_values.push({percent: percents[i] + '%', value: this.cal_value_percent(value, percents[i], 'descrease')});

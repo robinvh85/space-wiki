@@ -69,24 +69,26 @@ javascript:
           text: chart_type + ' ' + pair.name
       },
       yAxis: [{
-        title: {
-          text: 'Volume'
+        title: {  // Volume
+          text: null
         },
-        //height: 200,
-        lineWidth: 2,
-        opposite: false        
+        labels: {
+          enabled: false
+        },
+        lineWidth: 1,
+        opposite: false    
       },{
         title: {
           text: ''
         },
-        height: 300,
         gridLineWidth: 0
       },{
         title: {
-          text: 'BTC'
+          text: ''
         },
         //height: 300,
-        gridLineWidth: 0
+        gridLineWidth: 0,
+        opposite: false
       }],
       tooltip: {
         valueDecimals: decimal,
@@ -105,7 +107,7 @@ javascript:
         name: 'candle',
         data: data.candle_data,
         yAxis: 1
-      }*/
+      }
       ,{
         name: 'avg 12h',
         data: data.avg_12h_data,
@@ -114,7 +116,7 @@ javascript:
         name: 'avg 24h',
         data: data.avg_24h_data,
         yAxis: 1
-      },{
+      }*/,{
         name: 'min',
         data: data.min_value,
         yAxis: 1
@@ -129,7 +131,7 @@ javascript:
             drawMinMaxLines(e.target, pair);
           }
         },
-        height: 500
+        height: 700
       },
       legend: {
         enabled: true
