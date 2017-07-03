@@ -2,7 +2,7 @@ module Ajax
   class PolosController < ActionController::Base
     
     def update
-      Polo.update(polo_params)
+      Poloni.update(polo_params)
       render json: {
         status: 'OK'
       }
