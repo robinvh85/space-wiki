@@ -1,2 +1,0 @@
-class Polo < ApplicationRecord
-end
