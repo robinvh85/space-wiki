@@ -156,3 +156,11 @@ table.scroll tbody td, table.scroll thead > tr> th {
   color: #00d1b2;
   font-weight: bold;
 }
+
+#pair_note {
+  position: fixed;
+  width: 260px;
+  height: 300px;
+  font-size: 0.9em;
+  right: 10px;
+}

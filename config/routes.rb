@@ -21,7 +21,7 @@ Rails.application.routes.draw do
   get 'change_subject/:id' => 'application#change_subject'
   get 'change_root_topic/:id' => 'application#change_root_topic'
   get 'default_values' => 'application#default_values'
-
+  
   resources :current_orders
   
   get 'poloniex/chart' => 'poloniex#chart'
@@ -41,6 +41,8 @@ Rails.application.routes.draw do
     get 'orders/get_history_trade' => 'orders#get_history_trade'
     get 'orders/get_history_trading' => 'orders#get_history_trading'
     resources :orders
+
+    post 'currency_pairs/update_note' => 'currency_pairs#update_note'
     resources :currency_pairs
 
     get 'charts/get_5m' => 'charts#get_5m'

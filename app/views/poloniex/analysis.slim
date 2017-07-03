@@ -1,8 +1,14 @@
-div#pair_list.columns.is-multiline
+div#pair_list.columns.is-multiline style="width: 285px;"
   - @all_currency_pairs.each do |item|
     div.column.is-half
       input id="rdo_#{item.name}" name="rdo_pair" type="radio" pairname="#{item.name}" value=item.id class="rdo" onchange="rdoPairChange(this)"
-        label for="rdo_#{item.name}" =item.name
+        label for="rdo_#{item.name}" =item.name 
+        label 
+          | &nbsp;#{item.percent_min_24h}%
+div#pair_note
+  textarea#note_item.input style="height: 300px;"
+  button onclick="updateNote()"
+    | Update
 div.container
   div.columns style="margin-top: 0px;"
     div.column.is-half style="padding: 0px 0.5em"
@@ -43,6 +49,7 @@ javascript:
 
   var chart_type = '5m';
   var pairs = #{@currency_pairs.to_json.html_safe};
+  var pairs_hash = {};
   var base_unit = '#{@base_unit}';
   var decimal = 3;
   var chart = null;
@@ -62,12 +69,17 @@ javascript:
         //height: 200,
         lineWidth: 2,
         opposite: false        
-      },
-      {
+      },{
         title: {
           text: ''
         },
         height: 300,
+        gridLineWidth: 0
+      },{
+        title: {
+          text: 'BTC'
+        },
+        //height: 300,
         gridLineWidth: 0
       }],
       tooltip: {
@@ -100,6 +112,10 @@ javascript:
         name: 'min',
         data: data.min_value,
         yAxis: 1
+      },{
+        name: 'BTC',
+        data: data.btc_value,
+        yAxis: 2
       }],
       chart: {
         events: {
@@ -109,6 +125,9 @@ javascript:
         },
         height: 500
       },
+      legend: {
+        enabled: true
+      }
     });
   }
  
@@ -165,7 +184,7 @@ javascript:
   var changeType = function(obj){
     chart_type = obj.value;
 
-    load_charts(current_pair);
+    load_charts(current_pair);    
   }
 
   var rdoPairChange = function(obj){
@@ -174,6 +193,7 @@ javascript:
       name: $(obj).attr('pairname')
     };
 
+    $("#note_item").val(pairs_hash[current_pair.id].note);
     load_charts(current_pair);
   }
 
@@ -375,12 +395,40 @@ javascript:
     }
   }
 
+  var array_to_hash = function(arr, key){
+    var hash = {};
+    for(var i=0; i<arr.length; i++){
+      hash[arr[i][key]] = arr[i];
+    }
+
+    return hash;
+  }
+
+  /*
+  var changeNote = function(obj){
+    pairs_hash[current_pair.id].note = obj.value;
+    axios.post('/ajax/currency_pairs/update_note', {id: current_pair.id, note: obj.value}).then(function (res){
+      console.log('Call: /ajax/currency_pairs/update_note', res.data);
+    });
+  }
+  */
+
+  var updateNote = function(){
+    var note = $("#note_item").val();
+    pairs_hash[current_pair.id].note = note;
+
+    axios.post('/ajax/currency_pairs/update_note', {id: current_pair.id, note: note}).then(function (res){
+      console.log('Call: /ajax/currency_pairs/update_note', res.data);
+    });
+  }
+
   $(function(){
 
     if(base_unit == 'BTC'){
       decimal = 8;
     }
 
+    pairs_hash = array_to_hash(pairs, 'id');
     $('option[value="' + base_unit + '"]')[0].selected = "selected"
     $($('[name="rdo_pair"]')[0]).trigger( "click" );
 

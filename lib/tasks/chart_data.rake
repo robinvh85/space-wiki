@@ -19,7 +19,8 @@ namespace :chart_data do
 
       ChartData.get_avg_24h(currency_pair)
       ChartData.get_avg_12h(currency_pair)
-
+      ChartData.get_percent_min_24h(currency_pair)
+      
       ChartData.get_data_chart_15m(currency_pair)
       ChartData.get_data_chart_30m(currency_pair)
       ChartData.get_data_chart_2h(currency_pair)
@@ -83,7 +84,7 @@ module ChartData
 
     #
     def get_avg_24h(currency_pair)
-      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair, @start)
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
       index = 0
       list.each do |item|
         index += 1
@@ -101,8 +102,8 @@ module ChartData
         _end = Time.at(item.time_at).to_i
         start = (_end - 24.hour).to_i
 
-        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).sum(:min_value)
-        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).count
+        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).sum(:min_value)
+        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).count
 
         item.avg_24h_value = (sum / count).to_f
         item.save
@@ -110,7 +111,7 @@ module ChartData
     end
     
     def get_avg_12h(currency_pair)
-      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair, @start)
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
       index = 0
       list.each do |item|
         index += 1
@@ -128,11 +129,28 @@ module ChartData
         _end = Time.at(item.time_at).to_i
         start = (_end - 12.hour).to_i
 
-        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).sum(:min_value)
-        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair, start, _end).count
+        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).sum(:min_value)
+        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).count
 
         item.avg_12h_value = (sum / count).to_f
         item.save
+      end
+    end
+
+    def get_percent_min_24h(currency_pair)
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+
+      index = 0
+      list.each do |item|
+        index += 1
+        _end = Time.at(item.time_at).to_i
+        start = (_end - 24.hour).to_i
+
+        min = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).minimum(:min_value)
+        max = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).maximum(:min_value)
+
+        currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
+        currency_pair.save
       end
     end
 
