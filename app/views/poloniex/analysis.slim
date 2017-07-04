@@ -158,7 +158,7 @@ javascript:
         title: {
           text: ''
         },
-        height: 300,
+        //height: 300,
         gridLineWidth: 0
       }],
       tooltip: {
@@ -184,7 +184,7 @@ javascript:
             drawMinMaxLines(e.target, pair);
           }
         },
-        height: 500
+        height: 700
       },
     });
   }
@@ -215,6 +215,8 @@ javascript:
         chart = createChart5m(res.data, pair)
       else
         chart = createChart(res.data, pair)
+
+      //addPlotHover();
     });
   }
 
@@ -439,6 +441,30 @@ javascript:
     });
   }
 
+  var addPlotHover = function(){
+    $('#chart').mousemove(function(e){    
+      var chart = Highcharts.charts[Highcharts.charts.length - 1];
+      var xaxis = chart.xAxis[0];
+      var yaxis = chart.yAxis[0];
+      xaxis.removePlotLine('plot-line-x');
+      yaxis.removePlotLine('plot-line-y');
+      var x = xaxis.toValue(e.offsetX, false);
+      var y = yaxis.toValue(e.offsetY, false);
+      xaxis.addPlotLine({
+          value: x,
+          color: 'red',
+          width: 1,
+          id: 'plot-line-x'
+      });
+      yaxis.addPlotLine({
+          value: y,
+          color: 'red',
+          width: 1,
+          id: 'plot-line-y'
+      });
+  });
+  }
+
   $(function(){
 
     if(base_unit == 'BTC'){
@@ -460,6 +486,8 @@ javascript:
       if(cbxs.length > 0)
         cbxs[0].checked = "checked";
     } 
-    */   
+    */
+
+    addPlotHover();
   });
 
