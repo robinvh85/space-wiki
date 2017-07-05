@@ -139,7 +139,18 @@ module ChartData
 
     def get_percent_min_24h(currency_pair)
       list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+      index = 0
+      list.each do |item|
+        index += 1
+        if item.close < item.open
+          item.min_value = item.close
+        else
+          item.min_value = item.open
+        end
+        item.save
+      end
 
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
       index = 0
       list.each do |item|
         index += 1
