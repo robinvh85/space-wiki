@@ -23,9 +23,9 @@ var app = new Vue({
     current_prices: {}
   },
   methods: {
-    changeCurrencyPair: function(){
+    changeCurrencyPair: function(pair){
+      this.current_pair = pair.name;
       console.log(this.current_pair);
-      this.get_orders();
     },
     init: function(){
       console.log("INIT");
@@ -35,8 +35,7 @@ var app = new Vue({
       this.get_balances();
       this.get_current_price();
       this.get_history_trade();
-
-      setInterval(this.get_trading_orders, 60000);
+      
       setInterval(this.get_open_orders, 60000);
       setInterval(this.get_current_price, 15000);
     },
@@ -47,6 +46,7 @@ var app = new Vue({
         _this.ask_orders = res.data['ask_orders'];
 
         //_this.check_trading_data();        
+        setTimeout(_this.get_trading_orders, 10000);
       });
     },
     get_current_price: function(){

@@ -21,6 +21,8 @@ namespace :chart_data do
       ChartData.get_data_chart_15m(currency_pair)
       ChartData.get_data_chart_30m(currency_pair)
       ChartData.get_data_chart_2h(currency_pair)
+      
+      ChartData.get_real_price(currency_pair) if currency_pair.base_unit == 'BTC'
     end
 
     puts "End rake chart_data:get at #{Time.now}"
@@ -106,6 +108,16 @@ module ChartData
         currency_pair.save
       end
     end
+
+    def get_real_price(currency_pair)
+      obj = ChartData5m.where("currency_pair_id = ?", currency_pair.id).last
+      url = "https://api.coinmarketcap.com/v1/ticker/#{currency_pair.long_name}/"
+      content = Net::HTTP.get(URI.parse(url))
+      data = JSON.parse(content)
+      obj.price_usd = data[0]['price_usd']
+      obj.price_btc = data[0]['price_btc']
+      obj.save
+    end    
 
     def insert_or_update(currency_pair, data_item, chart_data_class)
       chart_data_obj = chart_data_class.find_by("currency_pair_id = ? AND time_at = ?", currency_pair.id, data_item['date'])

@@ -1,6 +1,12 @@
 = content_for :javascripts
   = javascript_include_tag 'poloniex/app'
 
+div#pair_list.columns.is-multiline style="width: 300px;" 
+  div.column.is-half v-for="currency_pair in currency_pairs"
+    input name="rdo_pair" type="radio" :id="currency_pair.name" :value="currency_pair.name" v-model="current_pair" @click="changeCurrencyPair(currency_pair)"
+    label :for="currency_pair.name"
+      | {{ currency_pair.name }} ({{ currency_pair.percent_min_24h }}%)
+
 div.container
   div.panel style="margin-bottom: 20px;"
     div.panel-heading
@@ -55,10 +61,21 @@ div.container
                 | {{ item.rate }}
               td
                 a @click="done_trade(item)"
-                  | Done
-  select v-model="current_pair" @change="changeCurrencyPair" class='input'
-    option v-for="currency_pair in currency_pairs" :value="currency_pair.name"
-      | {{ currency_pair.name }}
+                  | Done  
+  
+  div#percent.columns
+    div.panel.column
+      div.panel-heading
+        | Order
+        div style="text-align:right; float:right"
+          input.input v-model="sell_value" maxlength="16" style="width:170px; text-align:right;" placeholder="Price"
+          input.input v-model="sell_value" maxlength="16" style="width:170px; text-align:right; margin-left:10px;" placeholder="Amount"
+          button.button.is-primary style="margin-left:10px; width: 80px;"
+            | Buy
+          button.button.is-info style="margin-left:10px; width: 80px;"
+            | Sell
+        div.clear
+  
   = render 'orders'
   div#percent.columns
     div.panel.column.is-half
