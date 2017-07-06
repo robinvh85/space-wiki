@@ -8,7 +8,7 @@ module Ajax
       end_time = Time.now.to_i
       
       list = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time)
-      data = create_data_with_avg(list)
+      data = create_data(list)
 
       btc_list = ChartData5m.where("currency_pair_id = 4 AND time_at > ? AND time_at < ?", start_time, end_time)
       data['btc_value'] = create_btc_data(btc_list)
@@ -89,37 +89,15 @@ module Ajax
       list.each do |item|
         candle_data.push([item.time_at * 1000, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
         volume_data.push([item.time_at * 1000, item.volume.to_f])
-      end
-
-      {
-        candle_data: candle_data,
-        volume_data: volume_data
-      }
-    end
-    
-    def create_data_with_avg(list)
-      candle_data = []
-      volume_data = []
-      avg_12h_data = []
-      avg_24h_data = []
-      min_value = []
-
-      list.each do |item|
-        candle_data.push([item.time_at * 1000, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
-        volume_data.push([item.time_at * 1000, item.volume.to_f])
-        # avg_12h_data.push([item.time_at * 1000, item.avg_12h_value.to_f])
-        # avg_24h_data.push([item.time_at * 1000, item.avg_24h_value.to_f])
         min_value.push([item.time_at * 1000, item.min_value.to_f])
       end
 
       {
         candle_data: candle_data,
         volume_data: volume_data,
-        avg_12h_data: avg_12h_data,
-        avg_24h_data: avg_24h_data,
         min_value: min_value
       }
-    end
+    end    
 
     def create_btc_data(list)
       btc_data = []

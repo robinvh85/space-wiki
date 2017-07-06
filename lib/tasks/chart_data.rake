@@ -16,9 +16,6 @@ namespace :chart_data do
     currency_pairs = CurrencyPair.where(is_init: 1)
     currency_pairs.each do |currency_pair|
       ChartData.get_data_chart_5m(currency_pair)
-
-      # ChartData.get_avg_24h(currency_pair)
-      # ChartData.get_avg_12h(currency_pair)
       ChartData.get_percent_min_24h(currency_pair)
       
       ChartData.get_data_chart_15m(currency_pair)
@@ -82,64 +79,20 @@ module ChartData
       end
     end
 
-    #
-    def get_avg_24h(currency_pair)
-      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      index = 0
-      list.each do |item|
-        index += 1
-        if item.close < item.open
-          item.min_value = item.close
-        else
-          item.min_value = item.open
-        end
-        item.save
-      end
-
-      index = 0
-      list.each do |item|
-        index += 1
-        _end = Time.at(item.time_at).to_i
-        start = (_end - 24.hour).to_i
-
-        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).sum(:min_value)
-        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).count
-
-        item.avg_24h_value = (sum / count).to_f
-        item.save
-      end
-    end
-    
-    def get_avg_12h(currency_pair)
-      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      index = 0
-      list.each do |item|
-        index += 1
-        if item.close < item.open
-          item.min_value = item.close
-        else
-          item.min_value = item.open
-        end
-        item.save
-      end
-
-      index = 0
-      list.each do |item|
-        index += 1
-        _end = Time.at(item.time_at).to_i
-        start = (_end - 12.hour).to_i
-
-        sum = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).sum(:min_value)
-        count = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).count
-
-        item.avg_12h_value = (sum / count).to_f
-        item.save
-      end
-    end
-
     def get_percent_min_24h(currency_pair)
       list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+      index = 0
+      list.each do |item|
+        index += 1
+        if item.close < item.open
+          item.min_value = item.close
+        else
+          item.min_value = item.open
+        end
+        item.save
+      end
 
+      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
       index = 0
       list.each do |item|
         index += 1
