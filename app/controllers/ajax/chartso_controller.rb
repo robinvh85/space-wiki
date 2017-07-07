@@ -86,21 +86,18 @@ module Ajax
       candle_data = []
       volume_data = []
       min_value = []
-      price_btc = []
 
       list.each do |item|
         time_at = item.time_at * 1000
         candle_data.push([time_at, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
         volume_data.push([time_at, item.volume.to_f])
         min_value.push([time_at, item.min_value.to_f])
-        price_btc.push([time_at, item.price_btc.to_f]) unless item.price_btc.nil?
       end
 
       {
         candle_data: candle_data,
         volume_data: volume_data,
         min_value: min_value,
-        price_btc: price_btc
       }
     end
 
@@ -108,7 +105,6 @@ module Ajax
       candle_data = []
       volume_data = []
       min_value = []
-      price_btc = []
 
       list.each do |item|
         time_at = item.time_at * 1000
@@ -120,8 +116,7 @@ module Ajax
       {
         candle_data: candle_data,
         volume_data: volume_data,
-        min_value: min_value,
-        price_btc: price_btc
+        min_value: min_value
       }
     end    
 
