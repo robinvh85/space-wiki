@@ -45,6 +45,11 @@ div.container
       | Chart
     div.panel-block      
       div id='chart' style="width:100%;"
+  div.panel
+    div.panel-heading
+      | Chart 30m
+    div.panel-block      
+      div id='chart_30m' style="width:100%;"
 
 javascript:
   // create the chart
@@ -59,6 +64,7 @@ javascript:
   var base_unit = '#{@base_unit}';
   var decimal = 3;
   var chart = null;
+  var chart_30m = null;
   var current_pair = null;
 
   var max_point = {
@@ -209,6 +215,96 @@ javascript:
     });
   }
 
+  var createChart30m = function(data, pair){  
+    return Highcharts.stockChart('chart_30m', {
+      rangeSelector: {
+          selected: 2,
+          buttons: [{
+          type: 'day',
+          count: 7,
+          text: '7d'
+        }, {
+          type: 'day',
+          count: 15,
+          text: '14d'
+        }, {
+          type: 'month',
+          count: 1,
+          text: '1m'
+        }, {
+          type: 'month',
+          count: 2,
+          text: '2m'
+        }, {
+          type: 'month',
+          count: 3,
+          text: '3m'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+      title: {
+          text: '30m ' + pair.name
+      },
+      yAxis: [{
+        title: {
+          text: ''
+        },
+        gridLineWidth: 0
+      },{
+        title: {
+          text: ''
+        },
+        //height: 300,
+        gridLineWidth: 0,
+        opposite: false
+      }],
+      tooltip: {
+        valueDecimals: decimal,
+        //xDateFormat: 'Y'
+      },
+
+      series: [{
+        name: 'min',
+        data: data.min_value,
+        yAxis: 0,
+        id: 'data_min'
+      },{
+        name: 'BTC',
+        data: data.btc_value,
+        yAxis: 1
+      }
+      /*,{
+        type: 'flags',
+        name: 'Flags on series',
+        data: [],
+        onSeries: 'data_min',
+        id: 'flag_max',
+        shape: 'squarepin'
+      }*/],
+      chart: {
+        events: {
+          /*
+          render: function(e){
+            drawMinMaxLines(e.target, pair);
+
+            if(!max_point.is_changing){
+              setTimeout(function(){
+                showMaxFlag();
+              }, 1000);
+            }
+          }
+          */
+        },
+        height: 700
+      },
+      legend: {
+        enabled: false
+      }
+    });
+  }
+
   var changeType = function(obj){
     chart_type = obj.value;
 
@@ -223,6 +319,7 @@ javascript:
 
     $("#note_item").val(pairs_hash[current_pair.id].note);
     load_charts(current_pair);
+    load_chart_30m(current_pair);
   }
 
   var load_charts = function(pair){
@@ -236,6 +333,16 @@ javascript:
       }
       else
         chart = createChart(res.data, pair)
+    });
+  }
+
+  var load_chart_30m = function(pair){
+    var url = '/ajax/chartso/get_30m_full';
+    axios.get(url , {params: { pair_id: pair.id }}).then(function (res){
+      if(chart_30m != null)
+        chart_30m.destroy();
+
+      chart_30m = createChart30m(res.data, pair)
     });
   }
 

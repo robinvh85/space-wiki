@@ -153,8 +153,8 @@ var app = new Vue({
         var order = this.balance_orders[i];
         order.price = parseFloat(order.rate);
 
-        order.current_price = parseFloat(this.current_prices[order.currency_pair_name].sell);
-        order.percent_price = (this.current_prices[order.currency_pair_name].sell - order.price) / order.price * 100;
+        order.current_price = parseFloat(this.current_prices[order.currency_pair_name].buy);
+        order.percent_price = (this.current_prices[order.currency_pair_name].buy - order.price) / order.price * 100;
 
         if(order.current_price > 1000){
           order.current_price = order.current_price.toFixed(2);
