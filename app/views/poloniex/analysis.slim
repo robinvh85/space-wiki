@@ -196,10 +196,16 @@ javascript:
         type: 'candlestick',
         name: 'candle',
         data: data.candle_data,
+        yAxis: 1,
+        visible: true
+      },{
+        name: 'min_value',
+        data: data.min_value,
         yAxis: 1
       }],
       chart: {
         events: {
+          /*
           render: function(e){
             drawMinMaxLines(e.target, pair);
             if(!max_point.is_changing){
@@ -207,10 +213,13 @@ javascript:
                 showMaxFlag();
               }, 1000);
             }
-          }
+          }*/
         },
         height: 700
       },
+      legend: {
+        enabled: true
+      }
     });
   }
 
