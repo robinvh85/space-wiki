@@ -139,13 +139,14 @@ module PoloniexVh
 
   def self.post( command, params = {} )
     params[:command] = command
-    params[:nonce]   = (Time.now.to_f * 10000000).to_i
+    params[:nonce]   = (Time.now.to_f * 1000000).to_i
     resource[ 'tradingApi' ].post params, { Key: configuration.key , Sign: create_sign( params ) }
   end
 
   def self.create_sign( data )
     encoded_data = Addressable::URI.form_encode( data )
-    OpenSSL::HMAC.hexdigest( 'sha512', configuration.secret , encoded_data )
+    digest = OpenSSL::Digest.new('sha512')
+    OpenSSL::HMAC.hexdigest( digest, configuration.secret , encoded_data )
   end
 
 end
