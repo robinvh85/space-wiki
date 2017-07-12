@@ -7,7 +7,7 @@ end
 
 namespace :chart_data_init_year do
   task :get, [:pair_name] => :environment do |_cmd, args|
-    puts "Run rake chart_data:get_init for #{args[:pair_name]}"
+    puts "Run rake chart_data_init_year:get_init for #{args[:pair_name]}"
 
     ChartDataYear.start = Time.new(2017, 1, 1).to_i
     ChartDataYear.end = Time.now.to_i

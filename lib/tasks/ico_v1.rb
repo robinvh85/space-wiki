@@ -1,36 +1,83 @@
 #### GHI CHU
 # Can xac dinh gia tri chan lo hop ly. Dang thu nghiem 2%
 
-# BotTradeInfo.status: -1: disabled, 0:ready, 1: running
 
 namespace :ico do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading"
     
-    pairs = BotTradeInfo.where(status: 0) # Get all pair ready
+    currency_pair = CurrencyPair.find(31)
 
-    pairs.each do |pair|
-      thread = Thread.new{
-        currency_pair = CurrencyPair.find(pair.currency_pair_id)
+    config_STRAT = {
+      currency_pair: currency_pair,
+      buy_amount: 0.2/2,
+      pair_id: 29
+    }
 
-        config = {
-          currency_pair: currency_pair,
-          buy_amount: pair.buy_amount,
-          limit_invert_when_buy: pair.limit_invert_when_sell || 0.3,
-          limit_invert_when_sell: pair.limit_invert_when_sell || 0.3,
-          limit_good_profit: pair.limit_good_profit || 2,
-          limit_losses_profit: pair.limit_losses_profit || 2,
-          interval_time: pair.interval_time || 20,
-          limit_verify_times: pair.limit_verify_times || 2,
-          delay_time_after_sold: pair.delay_time_after_sold || 20
-        }  
+    currency_pair = CurrencyPair.find(91)
+    config_BELA = {
+      currency_pair: currency_pair,
+      buy_amount: 36/2
+    }
 
-        ico = Ico.new(config)
-        ico.start_trading()
+    
+
+    # ltc = Ico.new(config_GNT)
+    # ltc.start_trading()
+
+    t1 = Thread.new{
+      currency_pair = CurrencyPair.find(31)
+
+      config_GNT = {
+        currency_pair: currency_pair,
+        buy_amount: 25/2,
+        pair_id: 31
+      }  
+
+      ico1 = Ico.new(config_GNT)
+      ico1.start_trading()
+    }
+
+    t2 = Thread.new{
+      sleep(5)
+      currency_pair = CurrencyPair.find(52)
+      config_POT = {
+        currency_pair: currency_pair,
+        buy_amount: 80/2
       }
 
-      thread.join
-    end
+      ico2 = Ico.new(config_POT)
+      ico2.start_trading()
+    }
+
+    # t3 = Thread.new{
+    #   sleep(10)
+    #   currency_pair = CurrencyPair.find(21)
+    #   config_DGB = {
+    #     currency_pair: currency_pair,
+    #     buy_amount: 640/2
+    #   }
+
+    #   ico3 = Ico.new(config_DGB)
+    #   ico3.start_trading()
+    # }
+
+    t4 = Thread.new{
+      sleep(10)
+      currency_pair = CurrencyPair.find(92)
+      config_SBD = {
+        currency_pair: currency_pair,
+        buy_amount: 7/2
+      }
+
+      ico3 = Ico.new(config_SBD)
+      ico3.start_trading()
+    }
+
+    t1.join
+    t2.join
+    # t3.join
+    t4.join
   end
 end
 
@@ -45,19 +92,18 @@ class Ico
     @ceil_price = 0.0  # when buying, value min khi doi chieu
     @vh_bought_price = 0.0
     @vh_bought_amount = 0.0
-    @verify_times = 0
-    @verify_force_sell_times = 0
 
     @currency_pair = config[:currency_pair]
+    @verify_times = 0
 
     @config = {
       buy_amount: config[:buy_amount],
-      limit_trade_percent: config[:limit_good_profit], # limit enough for sell or buy
-      limit_changed_percent: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
-      limit_force_sell: config[:limit_losses_profit],    # force sell when price down too high 
-      interval_time: config[:interval_time],
-      limit_verify_times: config[:limit_verify_times],  # Limit times for verify true value price,
-      delay_time_after_sold: config[:delay_time_after_sold] # 20 seconds
+      limit_trade_percent: 2, # limit enough for sell or buy
+      limit_changed_percent: 0.3, # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
+      limit_force_sell: 2,    # force sell when price down too high 
+      interval_time: 20,
+      limit_verify_times: 2,  # Limit times for verify true value price,
+      delay_time_after_sold: 20 # 20 seconds
     }
   end
 
@@ -172,18 +218,32 @@ class Ico
           if @verify_times == @config[:limit_verify_times]
             sell()
           end
-        elsif -current_buy_changed_with_ceil_percent > @config[:limit_force_sell]          
-          @verify_force_sell_times += 1
-          puts "#{@currency_pair.name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
-          if @verify_force_sell_times == @config[:limit_verify_times]
-            sell()  # Sell khi gia da giam xuong ~2% so voi gia tran
-          end
-        end      
-      end    
-    else # Khi dang tiep tuc di len      
-      @verify_times = 0
-      @verify_force_sell_times = 0
+        elsif -current_buy_changed_with_ceil_percent > @config[:limit_force_sell]
+          sell()  # Sell khi gia da giam xuong ~2% so voi gia tran
+        end
+      else
+        # Khi dang tiep tuc di len
+      end
     end
+
+    # Backup
+    # if changed_buy_percent <= 0 # when price down      
+    #   if -current_buy_changed_with_ceil_percent > @config[:limit_changed_percent] # Co the sell khi dao chieu vuot nguong cho phep
+    #     if current_buy_changed_with_vh_bought_price > @config[:limit_trade_percent] # Khi dang loi
+    #       @verify_times += 1
+    #       puts "#{@currency_pair.name}  CALL SELL at times: #{@verify_times}"
+    #       if @verify_times == @config[:limit_verify_times]
+    #         sell()
+    #       end        
+    #     elsif current_buy_changed_with_vh_bought_price < 0 # Khi dang lo
+    #       if -current_buy_changed_with_vh_bought_price > @config[:limit_force_sell] # neu lo qua muc cho phep thi force sell
+    #         sell() # force sell
+    #       end
+    #     end
+    #   else
+    #     # Khi dang tiep tuc di len
+    #   end
+    # end
   end
 
   def update_current_price  
