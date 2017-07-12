@@ -7,9 +7,12 @@ namespace :ico do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading"
     
-    pairs = BotTradeInfo.where(status: 0) # Get all pair ready
+    list = BotTradeInfo.where(status: 0) # Get all pair ready
 
-    pairs.each do |pair|
+    threads = []
+    
+    list.each do |pair|
+      puts "Create thread for #{pair.currency_pair_name}"
       thread = Thread.new{
         currency_pair = CurrencyPair.find(pair.currency_pair_id)
 
@@ -22,14 +25,21 @@ namespace :ico do
           limit_losses_profit: pair.limit_losses_profit || 2,
           interval_time: pair.interval_time || 20,
           limit_verify_times: pair.limit_verify_times || 2,
-          delay_time_after_sold: pair.delay_time_after_sold || 20
+          delay_time_after_sold: pair.delay_time_after_sold || 20,
+          limit_pump_percent: 2,
+          delay_time_when_pump: 30
         }  
 
         ico = Ico.new(config)
         ico.start_trading()
       }
 
-      thread.join
+      sleep(5)
+      threads << thread      
+    end
+
+    threads.each do |t|
+      t.join
     end
   end
 end
@@ -57,7 +67,9 @@ class Ico
       limit_force_sell: config[:limit_losses_profit],    # force sell when price down too high 
       interval_time: config[:interval_time],
       limit_verify_times: config[:limit_verify_times],  # Limit times for verify true value price,
-      delay_time_after_sold: config[:delay_time_after_sold] # 20 seconds
+      delay_time_after_sold: config[:delay_time_after_sold], # 20 seconds
+      limit_pump_percent: config[:limit_pump_percent],
+      delay_time_when_pump: config[:delay_time_when_pump]
     }
   end
 
@@ -103,6 +115,8 @@ class Ico
     # TODO: call API for sell
     @vh_bought_price = Api.buy(@currency_pair, @config[:buy_amount], @current_sell_price)
 
+    Log.buy(@currency_pair, @config[:buy_amount], @vh_bought_price)
+
     # @vh_bought_price = @current_sell_price
     @trading_type = "SELL"
     @floor_price = 0.0
@@ -113,6 +127,9 @@ class Ico
   def sell
     # TODO: call API for buy
     Api.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
+    
+    profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
+    Log.sell(@currency_pair, @config[:buy_amount], @vh_bought_price, profit)
 
     @trading_type = "BUY"
     @floor_price = 0.0
@@ -137,6 +154,7 @@ class Ico
 
     # do nothing when downing
     puts "#{@currency_pair.name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
+    Log.analysis_buy(@currency_pair, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
     if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
       @floor_price = @previous_price
@@ -159,9 +177,10 @@ class Ico
     # puts "ana_sell: at #{Time.now}"
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
     puts "#{@currency_pair.name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
+    Log.analysis_sell(@currency_pair, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2))
 
     if @ceil_price == 0.0 || @ceil_price < @previous_price
-      @ceil_price = @previous_price 
+      @ceil_price = @previous_price
     end
 
     if changed_buy_percent <= 0 # when price down      
@@ -172,12 +191,16 @@ class Ico
           if @verify_times == @config[:limit_verify_times]
             sell()
           end
-        elsif -current_buy_changed_with_ceil_percent > @config[:limit_force_sell]          
-          @verify_force_sell_times += 1
-          puts "#{@currency_pair.name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
-          if @verify_force_sell_times == @config[:limit_verify_times]
-            sell()  # Sell khi gia da giam xuong ~2% so voi gia tran
-          end
+        elsif -current_buy_changed_with_ceil_percent > @config[:limit_force_sell]
+          if -changed_buy_percent > @config[:limit_pump_percent] # Neu gia giam nhieu => pump
+            sleep(@config[:delay_time_when_pump]) # Sleep cho qua dump
+          else
+            @verify_force_sell_times += 1
+            puts "#{@currency_pair.name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
+            if @verify_force_sell_times == @config[:limit_verify_times]
+              sell()  # Sell khi gia da giam xuong ~2% so voi gia tran
+            end
+          end          
         end      
       end    
     else # Khi dang tiep tuc di len      
@@ -268,5 +291,51 @@ end
 
 module Log
   class << self
+    def analysis_buy(pair, floor_price, previous_price, current_sell_price, changed_sell_percent, changed_with_floor_percent)
+      BotTradeLog.create({
+        currency_pair_id: pair.id,
+        currency_pair_name: pair.name,
+        trade_type: 'buy',
+        floor_price: floor_price,
+        previous_price: previous_price,
+        current_price: current_sell_price,
+        changed_price_percent: changed_sell_percent,
+        changed_with_floor_percent: changed_with_floor_percent
+      })
+    end
+
+    def analysis_sell(pair, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent)
+      BotTradeLog.create({
+        currency_pair_id: pair.id,
+        currency_pair_name: pair.name,
+        trade_type: 'sell',
+        ceil_price: ceil_price,
+        previous_price: previous_price,
+        current_price: current_buy_price,
+        changed_price_percent: changed_sell_percent,
+        changed_with_ceil_percent: changed_with_ceil_percent
+      })
+    end
+
+    def buy(pair, amount, price)
+      BotTradeHistory.create({
+        currency_pair_id: pair.id,
+        currency_pair_name: pair.name,
+        trade_type: 'buy',
+        amount: amount,
+        price: price
+      })
+    end
+
+    def sell(pair, amount, price, profit)
+      BotTradeHistory.create({
+        currency_pair_id: pair.id,
+        currency_pair_name: pair.name,
+        trade_type: 'buy',
+        amount: amount,
+        price: price,
+        profit: profit
+      })
+    end
   end
 end
