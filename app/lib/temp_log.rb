@@ -21,7 +21,7 @@ module TempLog
         ceil_price: ceil_price,
         previous_price: previous_price,
         current_price: current_buy_price,
-        changed_price_percent: changed_sell_percent,
+        changed_price_percent: changed_buy_percent,
         changed_with_ceil_percent: changed_with_ceil_percent
       })
     end

@@ -34,7 +34,7 @@ namespace :ico_temp do
         ico.start_trading()
       }
 
-      sleep(3)
+      sleep(1)
       threads << thread      
     end
 
