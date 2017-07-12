@@ -1,0 +1,2 @@
+class BotTradeInfo < ApplicationRecord
+end

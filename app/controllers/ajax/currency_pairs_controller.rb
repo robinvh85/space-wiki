@@ -1,7 +1,18 @@
 module Ajax
   class CurrencyPairsController < ActionController::Base
     def index
-      render json: CurrencyPair.where(is_tracking: 1).order(sort: 'asc')
+
+      @base_unit = params[:base_unit]
+		  @base_unit = 'BTC' if @base_unit.nil? || @base_unit.empty?
+
+      if params['all'] == 1
+        @all_currency_pairs = CurrencyPair.where(base_unit: @base_unit).order(percent_min_24h: 'asc')
+      else
+        @all_currency_pairs = CurrencyPair.where(base_unit: @base_unit, is_disabled: 0).order(percent_min_24h: 'asc')
+      end
+
+      # render json: CurrencyPair.where(is_tracking: 1).order(sort: 'asc')
+      render json: @all_currency_pairs
     end
 
     def update

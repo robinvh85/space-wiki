@@ -45,6 +45,11 @@ div.container
       | Chart
     div.panel-block      
       div id='chart' style="width:100%;"
+  div.panel
+    div.panel-heading
+      | Chart 30m
+    div.panel-block      
+      div id='chart_30m' style="width:100%;"
 
 javascript:
   // create the chart
@@ -59,6 +64,7 @@ javascript:
   var base_unit = '#{@base_unit}';
   var decimal = 3;
   var chart = null;
+  var chart_30m = null;
   var current_pair = null;
 
   var max_point = {
@@ -105,7 +111,8 @@ javascript:
         name: 'Volume',
         data: data.volume_data,
         yAxis: 0,
-        color: '#DDA'
+        color: '#DDA',
+        visible: false
       }
       /*,{
         type: 'candlestick',
@@ -121,7 +128,8 @@ javascript:
       },{
         name: 'BTC',
         data: data.btc_value,
-        yAxis: 2
+        yAxis: 2,
+        visible: false
       },{
         type: 'flags',
         name: 'Flags on series',
@@ -133,7 +141,7 @@ javascript:
       chart: {
         events: {
           render: function(e){
-            drawMinMaxLines(e.target, pair);
+            drawMinMaxLines(e.target, pair, 1);
 
             if(!max_point.is_changing){
               setTimeout(function(){
@@ -163,7 +171,7 @@ javascript:
         },
         //height: 200,
         lineWidth: 2,
-        opposite: false        
+        opposite: false,  
       },
       {
         title: {
@@ -182,15 +190,22 @@ javascript:
         name: 'Volume',
         data: data.volume_data,
         yAxis: 0,
-        color: '#DDA'
+        color: '#DDA',
+        visible: false
       },{
         type: 'candlestick',
         name: 'candle',
         data: data.candle_data,
+        yAxis: 1,
+        visible: true
+      },{
+        name: 'min_value',
+        data: data.min_value,
         yAxis: 1
       }],
       chart: {
         events: {
+          /*
           render: function(e){
             drawMinMaxLines(e.target, pair);
             if(!max_point.is_changing){
@@ -198,10 +213,107 @@ javascript:
                 showMaxFlag();
               }, 1000);
             }
+          }*/
+        },
+        height: 700
+      },
+      legend: {
+        enabled: true
+      }
+    });
+  }
+
+  var createChart30m = function(data, pair){  
+    return Highcharts.stockChart('chart_30m', {
+      rangeSelector: {
+          selected: 2,
+          buttons: [{
+          type: 'day',
+          count: 3,
+          text: '3d'
+        },{
+          type: 'day',
+          count: 7,
+          text: '7d'
+        }, {
+          type: 'day',
+          count: 15,
+          text: '14d'
+        }, {
+          type: 'month',
+          count: 1,
+          text: '1m'
+        }, {
+          type: 'month',
+          count: 2,
+          text: '2m'
+        }, {
+          type: 'month',
+          count: 3,
+          text: '3m'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+      title: {
+          text: '30m ' + pair.name
+      },
+      yAxis: [{
+        title: {
+          text: ''
+        },
+        gridLineWidth: 0,
+      },{
+        title: {
+          text: ''
+        },
+        //height: 300,
+        gridLineWidth: 0,
+        opposite: false
+      }],
+      tooltip: false,
+      plotOptions: {
+          series: {
+            lineWidth: 1
+          }
+      },
+      series: [{
+        name: 'min',
+        data: data.min_value,
+        yAxis: 0,
+        id: 'data_min'
+      },{
+        name: 'BTC',
+        data: data.btc_value,
+        yAxis: 1,
+        visible: false
+      }
+      /*,{
+        type: 'flags',
+        name: 'Flags on series',
+        data: [],
+        onSeries: 'data_min',
+        id: 'flag_max',
+        shape: 'squarepin'
+      }*/],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair, 0);
+            /*
+            if(!max_point.is_changing){
+              setTimeout(function(){
+                showMaxFlag();
+              }, 1000);
+            }*/
           }
         },
         height: 700
       },
+      legend: {
+        enabled: true
+      }
     });
   }
 
@@ -219,6 +331,7 @@ javascript:
 
     $("#note_item").val(pairs_hash[current_pair.id].note);
     load_charts(current_pair);
+    load_chart_30m(current_pair);
   }
 
   var load_charts = function(pair){
@@ -235,8 +348,18 @@ javascript:
     });
   }
 
-  var drawMinMaxLines = function(chart, pair){    
-    axix = chart.yAxis[1];
+  var load_chart_30m = function(pair){
+    var url = '/ajax/chartso/get_30m_full';
+    axios.get(url , {params: { pair_id: pair.id }}).then(function (res){
+      if(chart_30m != null)
+        chart_30m.destroy();
+
+      chart_30m = createChart30m(res.data, pair)
+    });
+  }
+
+  var drawMinMaxLines = function(chart, pair, index){    
+    axix = chart.yAxis[index];
     min_value = axix.dataMin;
     max_value = axix.dataMax;
     plot_min_id = 'plot_min_' + pair.name;
@@ -484,7 +607,7 @@ javascript:
 
   var addPlotHover = function(){
     $('#chart').mousemove(function(e){    
-      var chart = Highcharts.charts[Highcharts.charts.length - 1];
+      // var chart = Highcharts.charts[Highcharts.charts.length - 1];
       //var xaxis = chart.xAxis[0];
       var yaxis = chart.yAxis[1];
       //xaxis.removePlotLine('plot-line-x');
@@ -539,6 +662,53 @@ javascript:
   });
   }
 
+  var addPlotHover30m = function(){
+    $('#chart_30m').mousemove(function(e){    
+      //var chart = Highcharts.charts[Highcharts.charts.length - 1];
+      var yaxis = chart_30m.yAxis[0];
+      yaxis.removePlotLine('plot-line-y');
+      var y = yaxis.toValue(e.offsetY, false);
+
+      var y_current = chart_30m.yAxis[0].toValue(e.offsetY, false);
+
+      var yData = chart_30m.yAxis[0].series["0"].processedYData;
+      var last_value = yData[yData.length - 1];
+      var percent_last_value = ((y_current / last_value) * 100).toFixed(1);
+
+
+      if(y_current > 1000){
+        y_current = y_current.toFixed(1);
+      } else if(y_current > 100) {
+        y_current = y_current.toFixed(2);
+      } else if(y_current > 10){
+        y_current = y_current.toFixed(3);
+      } else if(y_current > 1){
+        y_current = y_current.toFixed(4);
+      } else if(y_current > 0.1) {
+        y_current = y_current.toFixed(5);
+      } else if(y_current > 0.01) {
+        y_current = y_current.toFixed(6);
+      } else if(y_current > 0.001) {
+        y_current = y_current.toFixed(7);
+      } else {
+        y_current = y_current.toFixed(8);
+      }
+
+      yaxis.addPlotLine({
+        value: y,
+        color: 'green',
+        width: 1,
+        id: 'plot-line-y',
+        label: {
+          text: "(" + percent_last_value + "%) " + y_current,
+          align: 'right',
+          x: -40
+        },
+        zIndex: 99
+      });
+  });
+  }
+
   $(function(){
 
     if(base_unit == 'BTC'){
@@ -563,5 +733,6 @@ javascript:
     */
 
     addPlotHover();
+    addPlotHover30m();
   });
 

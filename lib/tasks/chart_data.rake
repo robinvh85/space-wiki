@@ -19,7 +19,11 @@ namespace :chart_data do
       ChartData.get_percent_min_24h(currency_pair)
       
       ChartData.get_data_chart_15m(currency_pair)
+      ChartData.get_percent_min_15m_24h(currency_pair)
+
       ChartData.get_data_chart_30m(currency_pair)
+      ChartData.get_percent_min_30m_24h(currency_pair)
+      
       ChartData.get_data_chart_2h(currency_pair)
     end
 
@@ -105,6 +109,60 @@ module ChartData
         currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
         currency_pair.save
       end
+    end
+
+    def get_percent_min_15m_24h(currency_pair)
+      list = ChartData15m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+      index = 0
+      list.each do |item|
+        index += 1
+        if item.close < item.open
+          item.min_value = item.close
+        else
+          item.min_value = item.open
+        end
+        item.save
+      end
+
+      list = ChartData15m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+      index = 0
+      list.each do |item|
+        index += 1
+        _end = Time.at(item.time_at).to_i
+        start = (_end - 24.hour).to_i
+
+        min = ChartData15m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).minimum(:min_value)
+        max = ChartData15m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).maximum(:min_value)
+
+        currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
+        currency_pair.save
+      end
+    end
+
+    def get_percent_min_30m_24h(currency_pair)
+      list = ChartData30m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+      list.each do |item|
+        if item.close < item.open
+          item.min_value = item.close
+        else
+          item.min_value = item.open
+        end
+        item.save
+      end
+
+      # list = ChartData30m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
+      # index = 0
+      # list.each do |item|
+      #   index += 1
+      #   _end = Time.at(item.time_at).to_i
+      #   start = (_end - 24.hour).to_i
+
+      #   min = ChartData30m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).minimum(:min_value)
+      #   max = ChartData30m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).maximum(:min_value)
+
+      #   currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
+      #   currency_pair.save
+      # end
     end
 
     def insert_or_update(currency_pair, data_item, chart_data_class)

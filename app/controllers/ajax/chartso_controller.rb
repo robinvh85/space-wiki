@@ -8,9 +8,25 @@ module Ajax
       end_time = Time.now.to_i
       
       list = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time)
-      data = create_data(list)
+      data = create_data_5m(list)
 
       btc_list = ChartData5m.where("currency_pair_id = 4 AND time_at > ? AND time_at < ?", start_time, end_time)
+      data['btc_value'] = create_btc_data(btc_list)
+
+      render json: data
+    end
+
+    def get_30m_full
+      pair_id = params[:pair_id]
+      pair_id = CurrencyPair.first.id if pair_id.nil? || pair_id.empty?
+
+      start_time = (Time.now - 3.months).to_i
+      end_time = Time.now.to_i
+      
+      list = ChartData30m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time)
+      data = create_data_30m(list)
+
+      btc_list = ChartData30m.where("currency_pair_id = 4 AND time_at > ? AND time_at < ?", start_time, end_time)
       data['btc_value'] = create_btc_data(btc_list)
 
       render json: data
@@ -82,14 +98,48 @@ module Ajax
     end
 
     private
+    def create_data_5m(list)
+      candle_data = []
+      volume_data = []
+      min_value = []
+
+      list.each do |item|
+        time_at = item.time_at * 1000
+        candle_data.push([time_at, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
+        volume_data.push([time_at, item.volume.to_f])
+        min_value.push([time_at, item.min_value.to_f])
+      end
+
+      {
+        candle_data: candle_data,
+        volume_data: volume_data,
+        min_value: min_value
+      }
+    end
+
+    def create_data_30m(list)
+      min_value = []
+
+      list.each do |item|
+        time_at = item.time_at * 1000
+        min_value.push([time_at, item.min_value.to_f])
+      end
+
+      {
+        min_value: min_value,
+      }
+    end
+
     def create_data(list)
       candle_data = []
       volume_data = []
+      min_value = []
 
       list.each do |item|
-        candle_data.push([item.time_at * 1000, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
-        volume_data.push([item.time_at * 1000, item.volume.to_f])
-        min_value.push([item.time_at * 1000, item.min_value.to_f])
+        time_at = item.time_at * 1000
+        candle_data.push([time_at, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
+        volume_data.push([time_at, item.volume.to_f])
+        min_value.push([time_at, item.min_value.to_f])
       end
 
       {
