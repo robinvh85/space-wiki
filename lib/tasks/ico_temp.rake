@@ -3,11 +3,11 @@
 
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
 
-namespace :ico do
+namespace :ico_temp do
   task :start_trading, [] => :environment do |_cmd, args|
-    puts "Run rake ico:start_trading"
+    puts "Run rake ico:start_trading temp"
     
-    list = BotTradeInfo.where(status: 1) # Get all pair ready
+    list = BotTradeInfo.where("status > -1") # Get all pair ready
 
     threads = []
     
@@ -30,11 +30,11 @@ namespace :ico do
           delay_time_when_pump: 30
         }  
 
-        ico = Ico.new(config)
+        ico = TempIco.new(config)
         ico.start_trading()
       }
 
-      sleep(5)
+      sleep(3)
       threads << thread      
     end
 
@@ -64,11 +64,12 @@ module Api
 
     def buy(pair, amount, price)
       puts "====> #{pair.name} Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
-      result = JSON.parse(`python script/python/buy.py #{pair.name} #{'%.8f' % (price * 1.01)} #{amount}`)
-      trade = result["resultingTrades"][0]
-      
-      traded_amount = trade["amount"].to_f - trade["amount"].to_f * 0.005 # Remain 0.5%
-      traded_price = trade["rate"].to_f
+      # result = JSON.parse(`python script/python/buy.py #{pair.name} #{'%.8f' % (price * 1.01)} #{amount}`)
+      # trade = result["resultingTrades"][0]
+      sleep(2) # time to buy
+            
+      traded_amount = amount
+      traded_price = price
 
       puts "======> #{pair.name} BUY FINISH at price: #{'%.8f' % traded_price} - amount: #{traded_amount}"
       traded_price
@@ -80,17 +81,16 @@ module Api
       profit = (price - bought_price) / bought_price * 100
 
       puts "====> #{pair.name} Sell Amount: #{amount} with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
-      result = JSON.parse(`python script/python/sell.py #{pair.name} #{'%.8f' % price} #{amount}`)
+      # result = JSON.parse(`python script/python/sell.py #{pair.name} #{'%.8f' % price} #{amount}`)
+      sleep(2) # time to sell
 
-      if result["resultingTrades"].length > 0
-        trade = result["resultingTrades"][0]
-        profit = (trade["rate"].to_f - bought_price) / bought_price * 100
+      # trade = result["resultingTrades"][0]
+      # profit = (trade["rate"].to_f - bought_price) / bought_price * 100
+      profit = (price - bought_price) / bought_price * 100
 
-        puts "=======> #{pair.name} SELL FINISH with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
-        true
-      else
-        false
-      end
+      puts "=======> #{pair.name} SELL FINISH with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
+      true
     end
+
   end
 end
