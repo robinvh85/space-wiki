@@ -3,44 +3,48 @@
 
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
 
-namespace :ico_temp do
+namespace :ico_temp2 do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading temp"
     
-    list = BotTradeInfo.where("status > -1") # Get all pair ready
+    list = BotTradeInfo.where(temp_status: 0) # Get all pair ready
 
-    threads = []
+    ico_list = []
     
     list.each do |pair|
       puts "Create thread for #{pair.currency_pair_name}"
-      thread = Thread.new{
-        currency_pair = CurrencyPair.find(pair.currency_pair_id)
+      
+      currency_pair = CurrencyPair.find(pair.currency_pair_id)
 
-        config = {
-          currency_pair: currency_pair,
-          buy_amount: pair.buy_amount,
-          limit_invert_when_buy: pair.limit_invert_when_sell || 0.3,
-          limit_invert_when_sell: pair.limit_invert_when_sell || 0.3,
-          limit_good_profit: pair.limit_good_profit || 2,
-          limit_losses_profit: pair.limit_losses_profit || 2,
-          interval_time: pair.interval_time || 20,
-          limit_verify_times: pair.limit_verify_times || 2,
-          delay_time_after_sold: pair.delay_time_after_sold || 20,
-          limit_pump_percent: 2,
-          delay_time_when_pump: 30
-        }  
+      config = {
+        currency_pair: currency_pair,
+        buy_amount: pair.buy_amount,
+        limit_invert_when_buy: pair.limit_invert_when_sell || 0.3,
+        limit_invert_when_sell: pair.limit_invert_when_sell || 0.3,
+        limit_good_profit: pair.limit_good_profit || 2,
+        limit_losses_profit: pair.limit_losses_profit || 2,
+        interval_time: pair.interval_time || 20,
+        limit_verify_times: pair.limit_verify_times || 2,
+        delay_time_after_sold: pair.delay_time_after_sold || 20,
+        limit_pump_percent: 2,
+        delay_time_when_pump: 30
+      }  
 
-        ico = TempIco.new(config)
-        ico.start_trading()
-      }
-
-      sleep(3)
-      threads << thread      
+      ico = TempIco.new(config)
+      ico_list << ico
+      pair.temp_status = 1
+      pair.save
     end
 
-    threads.each do |t|
-      t.join
+    while(true)
+      ico_list.each do |ico|
+        ico.update_current_price()
+        ico.analysis()
+        sleep(0.01)
+      end
+      sleep(1)
     end
+
   end
 end
 

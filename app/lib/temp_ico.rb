@@ -83,7 +83,7 @@ class TempIco
     Api.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    TempLog.sell(@currency_pair, @config[:buy_amount], @vh_bought_price, profit)
+    TempLog.sell(@currency_pair, @config[:buy_amount], @current_buy_price, profit)
 
     @trading_type = "BUY"
     @floor_price = 0.0
