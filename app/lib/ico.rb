@@ -11,6 +11,7 @@ class Ico
     @vh_bought_amount = 0.0
     @verify_times = 0
     @verify_force_sell_times = 0
+    @is_sold = false
 
     @currency_pair = config[:currency_pair]
 
@@ -89,7 +90,9 @@ class Ico
     @floor_price = 0.0
     @ceil_price = 0.0
     @verify_times = 0
-    sleep(@config[:delay_time_after_sold])
+    
+    # sleep(@config[:delay_time_after_sold])
+    @is_sold = true
   end
 
   # Can create many algorithms and watching for better
@@ -180,6 +183,10 @@ class Ico
     while(true) do
       update_current_price()
       analysis()
+
+      if @is_sold # If a trading cycle done
+        return
+      end
 
       sleep(@config[:interval_time])
       # flag_stop = true  # TODO : get thong tin flag stop

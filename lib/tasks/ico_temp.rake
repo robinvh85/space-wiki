@@ -2,6 +2,9 @@
 # Can xac dinh gia tri chan lo hop ly. Dang thu nghiem 2%
 
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
+# ico_temp
+# + Su dung thread de chay training ico
+# + Khuyet diem: chi start dc 4 thread chay dong thoi
 
 namespace :ico_temp do
   task :start_trading, [] => :environment do |_cmd, args|

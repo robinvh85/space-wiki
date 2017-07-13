@@ -1,0 +1,2 @@
+class BotTempTradeLog < ApplicationRecord
+end
