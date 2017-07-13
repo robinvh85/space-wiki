@@ -1,7 +1,7 @@
 module TempLog
   class << self
     def analysis_buy(pair, floor_price, previous_price, current_sell_price, changed_sell_percent, changed_with_floor_percent)
-      BotTradeLog.create({
+      BotTempTradeLog.create({
         currency_pair_id: pair.id,
         currency_pair_name: pair.name,
         trade_type: 'buy',
@@ -14,7 +14,7 @@ module TempLog
     end
 
     def analysis_sell(pair, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent)
-      BotTradeLog.create({
+      BotTempTradeLog.create({
         currency_pair_id: pair.id,
         currency_pair_name: pair.name,
         trade_type: 'sell',

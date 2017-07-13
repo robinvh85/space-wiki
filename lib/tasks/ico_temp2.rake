@@ -1,7 +1,8 @@
 #### GHI CHU
 # Can xac dinh gia tri chan lo hop ly. Dang thu nghiem 2%
-
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
+# ico_temp2:
+# + Bo thread, chay dung while de co the chay cung luc 15 ico
 
 namespace :ico_temp2 do
   task :start_trading, [] => :environment do |_cmd, args|

@@ -7,39 +7,58 @@ namespace :ico do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading"
     
-    list = BotTradeInfo.where(status: 1) # Get all pair ready
-
-    threads = []
-    
-    list.each do |pair|
-      puts "Create thread for #{pair.currency_pair_name}"
+    2.times.each do |index|
+      puts "Create thread 1"
       thread = Thread.new{
-        currency_pair = CurrencyPair.find(pair.currency_pair_id)
+        while true
+          trade_info = BotTradeInfo.where(status: 0).order(priority: 'DESC').first
 
-        config = {
-          currency_pair: currency_pair,
-          buy_amount: pair.buy_amount,
-          limit_invert_when_buy: pair.limit_invert_when_sell || 0.3,
-          limit_invert_when_sell: pair.limit_invert_when_sell || 0.3,
-          limit_good_profit: pair.limit_good_profit || 2,
-          limit_losses_profit: pair.limit_losses_profit || 2,
-          interval_time: pair.interval_time || 20,
-          limit_verify_times: pair.limit_verify_times || 2,
-          delay_time_after_sold: pair.delay_time_after_sold || 20,
-          limit_pump_percent: 2,
-          delay_time_when_pump: 30
-        }  
+          if trade_info.present?
+            trade_info.status = 1
+            trade_info.save!
 
-        ico = Ico.new(config)
-        ico.start_trading()
+            currency_pair = CurrencyPair.find(trade_info.currency_pair_id)
+
+            config = {
+              currency_pair: currency_pair,
+              buy_amount: trade_info.buy_amount,
+              limit_invert_when_buy: trade_info.limit_invert_when_sell || 0.3,
+              limit_invert_when_sell: trade_info.limit_invert_when_sell || 0.3,
+              limit_good_profit: trade_info.limit_good_profit || 2,
+              limit_losses_profit: trade_info.limit_losses_profit || 2,
+              interval_time: trade_info.interval_time || 20,
+              limit_verify_times: trade_info.limit_verify_times || 2,
+              delay_time_after_sold: trade_info.delay_time_after_sold || 20,
+              limit_pump_percent: 2,
+              delay_time_when_pump: 30
+            }  
+
+            ico = Ico.new(config)
+            ico.start_trading()
+
+            trade_info.status = 0 # Set available for ico
+            trade_info.save!
+          end
+
+          sleep(30)
+        end
       }
-
-      sleep(5)
-      threads << thread      
     end
+  end
 
-    threads.each do |t|
-      t.join
+  task :reset_priority, [] => :environment do |_cmd, args|
+    BotTradeInfo.update_all(priority: -100)
+    sql = "SELECT currency_pair_id, currency_pair_name, created_at, SUM(profit) as profit 
+      FROM bot_temp_trade_histories 
+      WHERE trade_type = 'sell' AND DATE_SUB( NOW() , INTERVAL 1 HOUR ) < created_at GROUP BY profit 
+      ORDER BY profit DESC
+      LIMIT 10"
+
+    list = BotTempTradeHistory.find_by_sql(sql)
+    list.each do |item|
+      trade_info = BotTradeInfo.find_by(currency_pair_id: item.currency_pair_id)
+      trade_info.priority = item.profit
+      trade_info.save
     end
   end
 end
