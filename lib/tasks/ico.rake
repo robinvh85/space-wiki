@@ -7,13 +7,17 @@ namespace :ico do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading"
     
+    threads = []
+
     2.times.each do |index|
-      puts "Create thread 1"
+      puts "Create thread #{index}"
       thread = Thread.new{
         while true
-          trade_info = BotTradeInfo.where(status: 0).order(priority: 'DESC').first
+          puts "Find a new ICO at #{Time.now}"
+          trade_info = BotTradeInfo.where("status = 0 AND priority > 0 ").order(priority: 'DESC').first
 
           if trade_info.present?
+            puts "Trading #{trade_info.currency_pair_name}"
             trade_info.status = 1
             trade_info.save!
 
@@ -39,26 +43,36 @@ namespace :ico do
             trade_info.status = 0 # Set available for ico
             trade_info.save!
           end
-
           sleep(30)
         end
       }
+
+      threads << thread
+    end
+
+    threads.each do |t|
+      t.join
     end
   end
 
   task :reset_priority, [] => :environment do |_cmd, args|
-    BotTradeInfo.update_all(priority: -100)
-    sql = "SELECT currency_pair_id, currency_pair_name, created_at, SUM(profit) as profit 
-      FROM bot_temp_trade_histories 
-      WHERE trade_type = 'sell' AND DATE_SUB( NOW() , INTERVAL 1 HOUR ) < created_at GROUP BY profit 
-      ORDER BY profit DESC
-      LIMIT 10"
+    while true
+      puts "RESET Priority"
+      BotTradeInfo.update_all(priority: -100)
+      sql = "SELECT currency_pair_id, currency_pair_name, created_at, SUM(profit) as profit 
+        FROM bot_temp_trade_histories 
+        WHERE trade_type = 'sell' AND DATE_SUB( NOW() , INTERVAL 1 HOUR ) < created_at GROUP BY profit 
+        ORDER BY profit DESC
+        LIMIT 10"
 
-    list = BotTempTradeHistory.find_by_sql(sql)
-    list.each do |item|
-      trade_info = BotTradeInfo.find_by(currency_pair_id: item.currency_pair_id)
-      trade_info.priority = item.profit
-      trade_info.save
+      list = BotTempTradeHistory.find_by_sql(sql)
+      list.each do |item|
+        trade_info = BotTradeInfo.find_by(currency_pair_id: item.currency_pair_id)
+        trade_info.priority = item.profit
+        trade_info.save
+      end
+
+      sleep(5 * 60)
     end
   end
 end

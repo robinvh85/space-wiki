@@ -11,9 +11,10 @@ namespace :ico_temp2 do
     list = BotTradeInfo.where(temp_status: 0) # Get all pair ready
 
     ico_list = []
-    
+    inteval = 20
+
     list.each do |pair|
-      puts "Create thread for #{pair.currency_pair_name}"
+      puts "Create training for #{pair.currency_pair_name}"
       
       currency_pair = CurrencyPair.find(pair.currency_pair_id)
 
@@ -43,7 +44,11 @@ namespace :ico_temp2 do
         ico.analysis()
         sleep(0.01)
       end
-      sleep(1)
+
+      time_sleep = inteval
+      time_sleep = inteval/ico_list.length if ico_list.length > 0
+
+      sleep(time_sleep)
     end
 
   end
