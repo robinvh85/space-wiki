@@ -1,47 +1,63 @@
 #### GHI CHU
 # Can xac dinh gia tri chan lo hop ly. Dang thu nghiem 2%
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
-# ico_temp2:
-# + Bo thread, chay dung while de co the chay cung luc 15 ico
+# ico_temp3:
+# + Chay training toi da 15 ico
+# + Chi chay training nhung ico co percentChange > 0
 
-namespace :ico_temp2 do
+namespace :ico_temp3 do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading temp"
     
-    list = BotTradeInfo.where(temp_status: 0) # Get all pair ready
 
     ico_list = []
     inteval = 20
 
-    list.each do |pair|
-      puts "Create training for #{pair.currency_pair_name}"
-      
-      currency_pair = CurrencyPair.find(pair.currency_pair_id)
+    while true
+      # Get 1 trade_info best and save ico to ico_list
+      # ico_list max length is 15
+      puts "ico_list.length is #{ico_list.length}. Check for new TradeInfo at #{Time.now}"
+      if ico_list.length < 15
+        trade_info = BotTradeInfo.where("temp_status = 0 AND percent_changed > 0").order(percent_changed: 'DESC').first
 
-      config = {
-        currency_pair: currency_pair,
-        buy_amount: pair.buy_amount,
-        limit_invert_when_buy: pair.limit_invert_when_sell || 0.3,
-        limit_invert_when_sell: pair.limit_invert_when_sell || 0.3,
-        limit_good_profit: pair.limit_good_profit || 2,
-        limit_losses_profit: pair.limit_losses_profit || 2,
-        interval_time: pair.interval_time || 20,
-        limit_verify_times: pair.limit_verify_times || 2,
-        delay_time_after_sold: pair.delay_time_after_sold || 20,
-        limit_pump_percent: 2,
-        delay_time_when_pump: 30
-      }  
+        if trade_info.present?
+          puts "Start training for #{trade_info.currency_pair_id}"
 
-      ico = TempIco.new(config)
-      ico_list << ico
-      pair.temp_status = 1
-      pair.save
-    end
+          currency_pair = CurrencyPair.find(trade_info.currency_pair_id)
 
-    while(true)
+          config = {
+            currency_pair: currency_pair,
+            buy_amount: trade_info.buy_amount,
+            limit_invert_when_buy: trade_info.limit_invert_when_sell || 0.3,
+            limit_invert_when_sell: trade_info.limit_invert_when_sell || 0.3,
+            limit_good_profit: trade_info.limit_good_profit || 2,
+            limit_losses_profit: trade_info.limit_losses_profit || 2,
+            interval_time: trade_info.interval_time || 20,
+            limit_verify_times: trade_info.limit_verify_times || 2,
+            delay_time_after_sold: trade_info.delay_time_after_sold || 20,
+            limit_pump_percent: 2,
+            delay_time_when_pump: 30
+          }  
+
+          ico = TempIco.new(config)
+          ico_list << ico
+          trade_info.temp_status = 1
+          trade_info.save
+        end
+      end
+
+      # Chay training nhung ico nam trong list
       ico_list.each do |ico|
+        puts "Training #{ico.currency_pair.name}"
         ico.update_current_price()
         ico.analysis()
+        
+        if ico.is_sold == true # when end of a trade cycle
+          trade_info = BotTradeInfo.find_by(currency_pair_id: ico.currency_pair.id)
+          trade_info.temp_status = 0
+          ico_list.delete(ico)
+        end
+
         sleep(0.01)
       end
 
@@ -50,7 +66,6 @@ namespace :ico_temp2 do
 
       sleep(time_sleep)
     end
-
   end
 end
 

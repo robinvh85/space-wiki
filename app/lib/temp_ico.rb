@@ -1,4 +1,6 @@
 class TempIco
+  attr_accessor :currency_pair, :is_sold
+
   def initialize(config)
     @trading_type = "BUY" # BUY or SELL
     
@@ -11,6 +13,7 @@ class TempIco
     @vh_bought_amount = 0.0
     @verify_times = 0
     @verify_force_sell_times = 0
+    @is_sold = false
 
     @currency_pair = config[:currency_pair]
 
@@ -67,7 +70,7 @@ class TempIco
   # Method
   def buy
     # TODO: call API for sell
-    @vh_bought_price = Api.buy(@currency_pair, @config[:buy_amount], @current_sell_price)
+    @vh_bought_price = ApiTemp.buy(@currency_pair, @config[:buy_amount], @current_sell_price)
 
     TempLog.buy(@currency_pair, @config[:buy_amount], @vh_bought_price)
 
@@ -80,7 +83,7 @@ class TempIco
   
   def sell
     # TODO: call API for buy
-    Api.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
+    ApiTemp.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
     TempLog.sell(@currency_pair, @config[:buy_amount], @current_buy_price, profit)
@@ -89,7 +92,9 @@ class TempIco
     @floor_price = 0.0
     @ceil_price = 0.0
     @verify_times = 0
-    sleep(@config[:delay_time_after_sold])
+    @is_sold = true
+
+    # sleep(@config[:delay_time_after_sold])
   end
 
   # Can create many algorithms and watching for better
@@ -169,23 +174,27 @@ class TempIco
     @previous_price = @current_buy_price if @trading_type == 'SELL'
 
     # Get new price
-    data = Api.get_current_trading_price(@currency_pair)
+    data = ApiTemp.get_current_trading_price(@currency_pair)
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
     # puts "Get current price - Buy: #{@current_buy_price} - Sell: #{@current_sell_price} at #{Time.now}"
   end
 
-  def start_trading
-    puts "start_trading: #{@currency_pair.name} at #{Time.now}"
-    while(true) do
-      update_current_price()
-      analysis()
+  # def start_trading
+  #   puts "start_trading: #{@currency_pair.name} at #{Time.now}"
+  #   while(true) do
+  #     update_current_price()
+  #     analysis()
 
-      sleep(@config[:interval_time])
-      # flag_stop = true  # TODO : get thong tin flag stop
-      # if flag_stop  # If stop, stop trading
-      #   break
-      # end
-    end
-  end
+  #     if @is_sold # If a trading cycle done
+  #       return
+  #     end
+
+  #     sleep(@config[:interval_time])
+  #     # flag_stop = true  # TODO : get thong tin flag stop
+  #     # if flag_stop  # If stop, stop trading
+  #     #   break
+  #     # end
+  #   end
+  # end
 end
