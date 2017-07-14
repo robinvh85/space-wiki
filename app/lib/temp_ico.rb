@@ -11,6 +11,7 @@ class TempIco
     @vh_bought_amount = 0.0
     @verify_times = 0
     @verify_force_sell_times = 0
+    @is_sold = false
 
     @currency_pair = config[:currency_pair]
 
@@ -89,7 +90,9 @@ class TempIco
     @floor_price = 0.0
     @ceil_price = 0.0
     @verify_times = 0
-    sleep(@config[:delay_time_after_sold])
+    @is_sold = true
+
+    # sleep(@config[:delay_time_after_sold])
   end
 
   # Can create many algorithms and watching for better
@@ -175,17 +178,21 @@ class TempIco
     # puts "Get current price - Buy: #{@current_buy_price} - Sell: #{@current_sell_price} at #{Time.now}"
   end
 
-  def start_trading
-    puts "start_trading: #{@currency_pair.name} at #{Time.now}"
-    while(true) do
-      update_current_price()
-      analysis()
+  # def start_trading
+  #   puts "start_trading: #{@currency_pair.name} at #{Time.now}"
+  #   while(true) do
+  #     update_current_price()
+  #     analysis()
 
-      sleep(@config[:interval_time])
-      # flag_stop = true  # TODO : get thong tin flag stop
-      # if flag_stop  # If stop, stop trading
-      #   break
-      # end
-    end
-  end
+  #     if @is_sold # If a trading cycle done
+  #       return
+  #     end
+
+  #     sleep(@config[:interval_time])
+  #     # flag_stop = true  # TODO : get thong tin flag stop
+  #     # if flag_stop  # If stop, stop trading
+  #     #   break
+  #     # end
+  #   end
+  # end
 end

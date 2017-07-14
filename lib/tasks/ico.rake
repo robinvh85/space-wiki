@@ -57,7 +57,23 @@ namespace :ico do
 
   task :reset_priority, [] => :environment do |_cmd, args|
     while true
-      puts "RESET Priority"
+      puts "Get Percent Changed at #{Time.now}"
+
+      # Get percent changed
+      BotTradeInfo.update_all(percent_changed: -100)
+      result = JSON.parse(`python script/python/get_tickers.py`)
+      result.each do |key, value|
+        trade_info = BotTradeInfo.find_by(currency_pair_name: key)
+        if trade_info.present?
+          trade_info.percent_changed = value["percentChange"]
+          trade_info.save!
+        else
+          puts "Have no pair #{key}"
+        end
+      end
+
+      # Reset priority
+      puts "Reset Priority at #{Time.now}"
       BotTradeInfo.update_all(priority: -100)
       sql = "SELECT currency_pair_id, currency_pair_name, created_at, SUM(profit) as profit 
         FROM bot_temp_trade_histories 
