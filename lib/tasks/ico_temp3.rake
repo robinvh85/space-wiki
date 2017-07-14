@@ -46,6 +46,9 @@ namespace :ico_temp3 do
         end
       end
 
+      time_sleep = inteval
+      time_sleep = inteval/ico_list.length if ico_list.length > 0
+
       # Chay training nhung ico nam trong list
       ico_list.each do |ico|
         puts "Training #{ico.currency_pair.name}"
@@ -58,13 +61,8 @@ namespace :ico_temp3 do
           ico_list.delete(ico)
         end
 
-        sleep(0.01)
+        sleep(time_sleep)
       end
-
-      time_sleep = inteval
-      time_sleep = inteval/ico_list.length if ico_list.length > 0
-
-      sleep(time_sleep)
     end
   end
 end

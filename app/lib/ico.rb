@@ -134,7 +134,7 @@ class Ico
     # puts "ana_sell: at #{Time.now}"
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
     puts "#{@currency_pair.name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
-    Log.analysis_sell(@currency_pair, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2))
+    Log.analysis_sell(@currency_pair, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
 
     if @ceil_price == 0.0 || @ceil_price < @previous_price
       @ceil_price = @previous_price

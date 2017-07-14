@@ -3,7 +3,7 @@
 
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
 
-namespace :ico do
+namespace :ico_main do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading"
     
@@ -37,8 +37,8 @@ namespace :ico do
               delay_time_when_pump: 30
             }  
 
-            ico = Ico.new(config)
-            ico.start_trading()
+            ico_obj = Ico.new(config)
+            ico_obj.start_trading()
 
             trade_info.status = 0 # Set available for ico
             trade_info.save!
