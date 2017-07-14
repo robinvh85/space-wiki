@@ -17,7 +17,7 @@ namespace :ico do
           trade_info = BotTradeInfo.where("status = 0 AND priority > 0 ").order(priority: 'DESC').first
 
           if trade_info.present?
-            puts "Trading #{trade_info.currency_pair_name}"
+            puts "Trading new #{trade_info.currency_pair_name}"
             trade_info.status = 1
             trade_info.save!
 

@@ -16,8 +16,9 @@ namespace :ico_temp3 do
     while true
       # Get 1 trade_info best and save ico to ico_list
       # ico_list max length is 15
+      puts "ico_list.length is #{ico_list.length}. Check for new TradeInfo at #{Time.now}"
       if ico_list.length < 15
-        trade_info = BotTradeInfo.find_by("temp_status = 0 AND percent_changed > 0").order(percent_changed: 'DESC')
+        trade_info = BotTradeInfo.where("temp_status = 0 AND percent_changed > 0").order(percent_changed: 'DESC').first
 
         if trade_info.present?
           puts "Start training for #{trade_info.currency_pair_id}"
@@ -47,6 +48,7 @@ namespace :ico_temp3 do
 
       # Chay training nhung ico nam trong list
       ico_list.each do |ico|
+        puts "Training #{ico.currency_pair.name}"
         ico.update_current_price()
         ico.analysis()
         

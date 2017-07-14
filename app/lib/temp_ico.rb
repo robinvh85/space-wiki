@@ -1,4 +1,6 @@
 class TempIco
+  attr_accessor :currency_pair, :is_sold
+
   def initialize(config)
     @trading_type = "BUY" # BUY or SELL
     
