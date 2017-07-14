@@ -67,7 +67,7 @@ class TempIco
   # Method
   def buy
     # TODO: call API for sell
-    @vh_bought_price = Api.buy(@currency_pair, @config[:buy_amount], @current_sell_price)
+    @vh_bought_price = ApiTemp.buy(@currency_pair, @config[:buy_amount], @current_sell_price)
 
     TempLog.buy(@currency_pair, @config[:buy_amount], @vh_bought_price)
 
@@ -80,7 +80,7 @@ class TempIco
   
   def sell
     # TODO: call API for buy
-    Api.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
+    ApiTemp.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
     TempLog.sell(@currency_pair, @config[:buy_amount], @current_buy_price, profit)
@@ -169,7 +169,7 @@ class TempIco
     @previous_price = @current_buy_price if @trading_type == 'SELL'
 
     # Get new price
-    data = Api.get_current_trading_price(@currency_pair)
+    data = ApiTemp.get_current_trading_price(@currency_pair)
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
     # puts "Get current price - Buy: #{@current_buy_price} - Sell: #{@current_sell_price} at #{Time.now}"
