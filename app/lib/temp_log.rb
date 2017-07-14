@@ -13,7 +13,7 @@ module TempLog
       })
     end
 
-    def analysis_sell(pair, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent)
+    def analysis_sell(pair, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent, profit)
       BotTempTradeLog.create({
         currency_pair_id: pair.id,
         currency_pair_name: pair.name,
@@ -22,7 +22,8 @@ module TempLog
         previous_price: previous_price,
         current_price: current_buy_price,
         changed_price_percent: changed_buy_percent,
-        changed_with_ceil_percent: changed_with_ceil_percent
+        changed_with_ceil_percent: changed_with_ceil_percent,
+        profit: profit
       })
     end
 

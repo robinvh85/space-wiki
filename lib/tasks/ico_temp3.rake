@@ -36,7 +36,8 @@ namespace :ico_temp3 do
             limit_verify_times: trade_info.limit_verify_times || 2,
             delay_time_after_sold: trade_info.delay_time_after_sold || 20,
             limit_pump_percent: 2,
-            delay_time_when_pump: 30
+            delay_time_when_pump: 30,
+            limit_force_sell_temp: trade_info.limit_force_sell_temp || 2
           }  
 
           ico = TempIco.new(config)
@@ -58,6 +59,7 @@ namespace :ico_temp3 do
         if ico.is_sold == true # when end of a trade cycle
           trade_info = BotTradeInfo.find_by(currency_pair_id: ico.currency_pair.id)
           trade_info.temp_status = 0
+          trade_info.save
           ico_list.delete(ico)
         end
 

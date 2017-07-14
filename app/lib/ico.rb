@@ -26,6 +26,8 @@ class Ico
       limit_pump_percent: config[:limit_pump_percent],
       delay_time_when_pump: config[:delay_time_when_pump]
     }
+
+    @limit_odd_price_percent = 1
   end
 
   # Properties
@@ -75,7 +77,7 @@ class Ico
     # @vh_bought_price = @current_sell_price
     @trading_type = "SELL"
     @floor_price = 0.0
-    @ceil_price = 0.0
+    @ceil_price = @vh_bought_price
     @verify_times = 0
   end
   
@@ -117,7 +119,13 @@ class Ico
       @floor_price = @previous_price
     end
 
-    if changed_sell_percent >= 0 # when price up      
+    if changed_sell_percent >= 0 # when price up
+      odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
+      if odd_price_percent > @limit_odd_price_percent
+        puts "===> ODD NOT BUY : #{@current_sell_price} > @{Buy @current_buy_price} : #{odd_price_percent}% too high"
+        return
+      end
+
       if current_sell_changed_with_floor_percent > @config[:limit_changed_percent] # buy khi gia tang lon hon nguong
         @verify_times += 1
 

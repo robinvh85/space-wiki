@@ -26,7 +26,8 @@ class TempIco
       limit_verify_times: config[:limit_verify_times],  # Limit times for verify true value price,
       delay_time_after_sold: config[:delay_time_after_sold], # 20 seconds
       limit_pump_percent: config[:limit_pump_percent],
-      delay_time_when_pump: config[:delay_time_when_pump]
+      delay_time_when_pump: config[:delay_time_when_pump],
+      limit_force_sell_temp: config[:limit_force_sell_temp]
     }
   end
 
@@ -136,7 +137,7 @@ class TempIco
     # puts "ana_sell: at #{Time.now}"
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
     puts "#{@currency_pair.name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
-    TempLog.analysis_sell(@currency_pair, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2))
+    TempLog.analysis_sell(@currency_pair, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
 
     if @ceil_price == 0.0 || @ceil_price < @previous_price
       @ceil_price = @previous_price
@@ -165,6 +166,11 @@ class TempIco
     else # Khi dang tiep tuc di len      
       @verify_times = 0
       @verify_force_sell_times = 0
+
+      if profit > @config[:limit_force_sell_temp] # Force when profit >
+        puts "====> #{@currency_pair.name}  FORCE SELL with profit #{profit} at #{Time.now}"
+        sell()
+      end
     end
   end
 

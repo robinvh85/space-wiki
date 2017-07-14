@@ -9,7 +9,7 @@ namespace :ico_main do
     
     threads = []
 
-    2.times.each do |index|
+    3.times.each do |index|
       puts "Create thread #{index}"
       thread = Thread.new{
         while true
@@ -47,6 +47,7 @@ namespace :ico_main do
         end
       }
 
+      sleep(5)
       threads << thread
     end
 
@@ -65,7 +66,7 @@ namespace :ico_main do
       result.each do |key, value|
         trade_info = BotTradeInfo.find_by(currency_pair_name: key)
         if trade_info.present?
-          trade_info.percent_changed = value["percentChange"]
+          trade_info.percent_changed = value["percentChange"].to_f * 100
           trade_info.save!
         else
           puts "Have no pair #{key}"
