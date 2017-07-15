@@ -184,7 +184,7 @@ class TempIco
 
   def check_active_bot_trade(profit)
     # Check to active realt bot trade
-    return if @verify_times_active_bot_trade != -1
+    return if @verify_times_active_bot_trade == -1
 
     if profit > @limit_percent_active_bot_trade
       @verify_times_active_bot_trade += 1
