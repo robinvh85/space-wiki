@@ -32,6 +32,8 @@ class TempIco
 
     @limit_percent_active_bot_trade = 1
     @verify_times_active_bot_trade = 0
+    
+    @bot_trade_history = BotTempTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name})
   end
 
   # Properties
@@ -76,7 +78,7 @@ class TempIco
     # TODO: call API for sell
     @vh_bought_price = ApiTemp.buy(@trade_info, @config[:buy_amount], @current_sell_price)
 
-    TempLog.buy(@trade_info, @config[:buy_amount], @vh_bought_price)
+    TempLog.buy(@bot_trade_history, @config[:buy_amount], @vh_bought_price)
 
     # @vh_bought_price = @current_sell_price
     @trading_type = "SELL"
@@ -90,7 +92,7 @@ class TempIco
     ApiTemp.sell(@trade_info, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    TempLog.sell(@trade_info, @config[:buy_amount], @current_buy_price, profit)
+    TempLog.sell(@bot_trade_history, @config[:buy_amount], @current_buy_price, profit)
 
     @trading_type = "BUY"
     @floor_price = 0.0
@@ -179,7 +181,7 @@ class TempIco
     # Check to active realt bot trade
     return if @verify_times_active_bot_trade != -1
 
-    if profit > @limit_percent_active_bot_trad\e
+    if profit > @limit_percent_active_bot_trade
       @verify_times_active_bot_trade += 1
       if @verify_times_active_bot_trade == 2
         # TODO : set priority = 1

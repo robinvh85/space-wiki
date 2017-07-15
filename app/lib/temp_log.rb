@@ -27,25 +27,16 @@ module TempLog
       })
     end
 
-    def buy(trade_info, amount, price)
-      BotTempTradeHistory.create({
-        currency_pair_id: trade_info.currency_pair_id,
-        currency_pair_name: trade_info.currency_pair_name,
-        trade_type: 'buy',
-        amount: amount,
-        price: price
-      })
+    def buy(bot_trade_history, amount, price)
+      bot_trade_history.buy_price = price
+      bot_trade_history.amount = amount
+      bot_trade_history.save!
     end
 
-    def sell(trade_info, amount, price, profit)
-      BotTempTradeHistory.create({
-        currency_pair_id: trade_info.currency_pair_id,
-        currency_pair_name: trade_info.currency_pair_name,
-        trade_type: 'sell',
-        amount: amount,
-        price: price,
-        profit: profit
-      })
+    def sell(bot_trade_history, amount, price, profit)
+      bot_trade_history.sell_price = price
+      bot_trade_history.profit = profit
+      bot_trade_history.save!
     end
   end
 end
