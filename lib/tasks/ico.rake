@@ -14,7 +14,7 @@ namespace :ico_main do
       thread = Thread.new{
         while true
           puts "Find a new ICO at #{Time.now}"
-          trade_info = BotTradeInfo.where("status = 0 AND priority > 0 ").order(priority: 'DESC').first
+          trade_info = BotTradeInfo.where("status = 0 AND priority > 0 AND percent_changed > 0").order(priority: 'DESC').first
 
           if trade_info.present?
             puts "Trading new #{trade_info.currency_pair_name}"
@@ -28,7 +28,7 @@ namespace :ico_main do
               buy_amount: trade_info.buy_amount,
               limit_invert_when_buy: trade_info.limit_invert_when_sell || 0.3,
               limit_invert_when_sell: trade_info.limit_invert_when_sell || 0.3,
-              limit_good_profit: trade_info.limit_good_profit || 2,
+              limit_good_profit: trade_info.limit_good_profit || 1.5,
               limit_losses_profit: trade_info.limit_losses_profit || 2,
               interval_time: trade_info.interval_time || 20,
               limit_verify_times: trade_info.limit_verify_times || 2,
