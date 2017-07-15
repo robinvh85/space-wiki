@@ -77,7 +77,7 @@ namespace :ico_main do
           ico_info.high_24hr = value["high24hr"]
           ico_info.low_24hr = value["low24hr"]
           ico_info.save!
-        else
+        end
       end
 
       # Reset priority

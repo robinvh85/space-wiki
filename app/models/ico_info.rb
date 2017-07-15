@@ -1,0 +1,2 @@
+class IcoInfo < ApplicationRecord
+end
