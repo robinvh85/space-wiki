@@ -93,7 +93,7 @@ namespace :ico_main do
       list.each do |item|
         trade_info = BotTradeInfo.find_by(currency_pair_id: item.currency_pair_id)
         trade_info.priority = item.profit
-        trade_info.save
+        trade_info.save!
       end
 
       sleep(5 * 60)

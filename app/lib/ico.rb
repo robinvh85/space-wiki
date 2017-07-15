@@ -115,6 +115,10 @@ class Ico
     puts "#{@currency_pair.name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
     Log.analysis_buy(@currency_pair, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
+    if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
+      @floor_price = @previous_price
+    end
+
     ico_info = IcoInfo.find_by(currency_pair_id: @currency_pair.id)
     if ico_info.present?
       max_change = ico_info.high_24hr - ico_info.low_24hr
@@ -126,14 +130,10 @@ class Ico
       end
     end
 
-    if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
-      @floor_price = @previous_price
-    end
-
     if changed_sell_percent >= 0 # when price up
       odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
       if odd_price_percent > @limit_odd_price_percent
-        puts "===> ODD NOT BUY : #{@current_sell_price} > #{@current_buy_price} : #{odd_price_percent}% too high"
+        puts "===> ODD NOT BUY : #{@current_sell_price} > #{@current_buy_price} : #{odd_price_percent.round(2)}% too high"
         return
       end
 
