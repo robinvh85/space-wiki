@@ -71,6 +71,13 @@ namespace :ico_main do
         else
           puts "Have no pair #{key}"
         end
+
+        ico_info = IcoInfo.find_by(currency_pair_name: key)
+        if ico_info.present?
+          ico_info.high_24hr = value["high24hr"]
+          ico_info.low_24hr = value["low24hr"]
+          ico_info.save!
+        else
       end
 
       # Reset priority

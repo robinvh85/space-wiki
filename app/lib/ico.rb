@@ -17,7 +17,7 @@ class Ico
 
     @config = {
       buy_amount: config[:buy_amount],
-      limit_trade_percent: config[:limit_good_profit], # limit enough for sell or buy
+      limit_good_profit: config[:limit_good_profit], # limit enough for sell or buy
       limit_changed_percent: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
       limit_force_sell: config[:limit_losses_profit],    # force sell when price down too high 
       interval_time: config[:interval_time],
@@ -27,7 +27,7 @@ class Ico
       delay_time_when_pump: config[:delay_time_when_pump]
     }
 
-    @limit_odd_price_percent = 1
+    @limit_odd_price_percent = 0.6
   end
 
   # Properties
@@ -115,6 +115,17 @@ class Ico
     puts "#{@currency_pair.name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
     Log.analysis_buy(@currency_pair, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
+    ico_info = IcoInfo.find_by(currency_pair_id: @currency_pair.id)
+    if ico_info.present?
+      max_change = ico_info.high_24hr - ico_info.low_24hr
+      current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
+
+      if current_percent > 70
+        puts "===> #{@currency_pair.name} price to high #{current_percent}% => NOT BUY"
+        return
+      end
+    end
+
     if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
       @floor_price = @previous_price
     end
@@ -122,7 +133,7 @@ class Ico
     if changed_sell_percent >= 0 # when price up
       odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
       if odd_price_percent > @limit_odd_price_percent
-        puts "===> ODD NOT BUY : #{@current_sell_price} > @{Buy @current_buy_price} : #{odd_price_percent}% too high"
+        puts "===> ODD NOT BUY : #{@current_sell_price} > #{@current_buy_price} : #{odd_price_percent}% too high"
         return
       end
 
@@ -150,7 +161,7 @@ class Ico
 
     if changed_buy_percent <= 0 # when price down      
       if -current_buy_changed_with_ceil_percent > @config[:limit_changed_percent] # Co the sell khi dao chieu vuot nguong cho phep ~0.3
-        if current_buy_changed_with_vh_bought_price > @config[:limit_trade_percent] # Khi dang loi ~>2%
+        if current_buy_changed_with_vh_bought_price > @config[:limit_good_profit] # Khi dang loi ~>2%
           @verify_times += 1
           puts "#{@currency_pair.name}  CALL SELL at times: #{@verify_times}"
           if @verify_times == @config[:limit_verify_times]
