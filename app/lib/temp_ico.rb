@@ -118,7 +118,7 @@ class TempIco
     # TODO: check khi nao gia ban va gia mua chenh lech ko qua 0.5% thi moi mua
 
     # do nothing when downing
-    puts "#{@trade_info.name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
+    puts "#{@trade_info.currency_pair_name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
     TempLog.analysis_buy(@trade_info, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
     if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
@@ -129,7 +129,7 @@ class TempIco
       if current_sell_changed_with_floor_percent > @config[:limit_changed_percent] # buy khi gia tang lon hon nguong
         @verify_times += 1
 
-        puts "#{@trade_info.name}  CALL BUY at times: #{@verify_times}"
+        puts "#{@trade_info.currency_pair_name}  CALL BUY at times: #{@verify_times}"
         if @verify_times == @config[:limit_verify_times]
           buy()
         end
@@ -141,7 +141,7 @@ class TempIco
     # do nothing when upping
     # puts "ana_sell: at #{Time.now}"
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    puts "#{@trade_info.name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
+    puts "#{@trade_info.currency_pair_name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
     TempLog.analysis_sell(@trade_info, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
 
     check_active_bot_trade(profit)
@@ -150,7 +150,7 @@ class TempIco
       if -current_buy_changed_with_ceil_percent > @config[:limit_changed_percent] # Co the sell khi dao chieu vuot nguong cho phep ~0.3
         if current_buy_changed_with_vh_bought_price > @config[:limit_trade_percent] # Khi dang loi ~>2%
           @verify_times += 1
-          puts "#{@trade_info.name}  CALL SELL at times: #{@verify_times}"
+          puts "#{@trade_info.currency_pair_name}  CALL SELL at times: #{@verify_times}"
           if @verify_times == @config[:limit_verify_times]
             sell()
           end
@@ -159,7 +159,7 @@ class TempIco
             sleep(@config[:delay_time_when_pump]) # Sleep cho qua dump
           else
             @verify_force_sell_times += 1
-            puts "#{@trade_info.name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
+            puts "#{@trade_info.currency_pair_name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
             if @verify_force_sell_times == @config[:limit_verify_times]
               sell()  # Sell khi gia da giam xuong ~2% so voi gia tran
             end
@@ -171,7 +171,7 @@ class TempIco
       @verify_force_sell_times = 0
 
       if profit > @config[:limit_force_sell_temp] # Force when profit >
-        puts "====> #{@trade_info.name}  FORCE SELL with profit #{profit} at #{Time.now}"
+        puts "====> #{@trade_info.currency_pair_name}  FORCE SELL with profit #{profit} at #{Time.now}"
         sell()
       end
     end
@@ -185,7 +185,7 @@ class TempIco
       @verify_times_active_bot_trade += 1
       if @verify_times_active_bot_trade == 2
         # TODO : set priority = 1
-        puts "===> #{@trade_info.name} - FORCE ACTIVE"
+        puts "===> #{@trade_info.currency_pair_name} - FORCE ACTIVE"
         BotTradeInfo.update!(@trade_info.currency_pair_id, priority: 1)
         @verify_times_active_bot_trade = -1
       end
