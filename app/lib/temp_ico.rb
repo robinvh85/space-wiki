@@ -85,6 +85,9 @@ class TempIco
     @floor_price = 0.0
     @ceil_price = 0.0
     @verify_times = 0
+
+    @bot_trade_history.buy_at = Time.now
+    @bot_trade_history.save!
   end
   
   def sell
@@ -101,6 +104,8 @@ class TempIco
     @is_sold = true
 
     # sleep(@config[:delay_time_after_sold])
+    @bot_trade_history.sell_at = Time.now
+    @bot_trade_history.save!
   end
 
   # Can create many algorithms and watching for better
