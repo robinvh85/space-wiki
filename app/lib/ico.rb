@@ -13,7 +13,7 @@ class Ico
     @verify_force_sell_times = 0
     @is_sold = false
 
-    @currency_pair = config[:currency_pair]
+    @trade_info = config[:trade_info]
 
     @config = {
       buy_amount: config[:buy_amount],
@@ -28,6 +28,7 @@ class Ico
     }
 
     @limit_odd_price_percent = 0.6
+    @bot_trade_history = BotTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name})
   end
 
   # Properties
@@ -70,9 +71,9 @@ class Ico
   # Method
   def buy
     # TODO: call API for sell
-    @vh_bought_price = Api.buy(@currency_pair, @config[:buy_amount], @current_sell_price)
+    @vh_bought_price = Api.buy(@trade_info, @config[:buy_amount], @current_sell_price)
 
-    Log.buy(@currency_pair, @config[:buy_amount], @vh_bought_price)
+    Log.buy(@bot_trade_history, @config[:buy_amount], @vh_bought_price)
 
     # @vh_bought_price = @current_sell_price
     @trading_type = "SELL"
@@ -83,10 +84,10 @@ class Ico
   
   def sell
     # TODO: call API for buy
-    Api.sell(@currency_pair, @config[:buy_amount], @current_buy_price, @vh_bought_price)
+    Api.sell(@bot_trade_history, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    Log.sell(@currency_pair, @config[:buy_amount], @current_buy_price, profit)
+    Log.sell(@trade_info, @config[:buy_amount], @current_buy_price, profit)
 
     @trading_type = "BUY"
     @floor_price = 0.0
@@ -112,20 +113,20 @@ class Ico
     # TODO: check khi nao gia ban va gia mua chenh lech ko qua 0.5% thi moi mua
 
     # do nothing when downing
-    puts "#{@currency_pair.name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
-    Log.analysis_buy(@currency_pair, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
+    puts "#{@trade_info.currency_pair_name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
+    Log.analysis_buy(@trade_info, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
     if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
       @floor_price = @previous_price
     end
 
-    ico_info = IcoInfo.find_by(currency_pair_id: @currency_pair.id)
+    ico_info = IcoInfo.find_by(currency_pair_id: @trade_info.currency_pair_id)
     if ico_info.present?
       max_change = ico_info.high_24hr - ico_info.low_24hr
       current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
 
       if current_percent > 70
-        puts "===> #{@currency_pair.name} price to high #{current_percent}% => NOT BUY"
+        puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => NOT BUY"
         return
       end
     end
@@ -140,7 +141,7 @@ class Ico
       if current_sell_changed_with_floor_percent > @config[:limit_changed_percent] # buy khi gia tang lon hon nguong
         @verify_times += 1
 
-        puts "#{@currency_pair.name}  CALL BUY at times: #{@verify_times}"
+        puts "#{@trade_info.currency_pair_name}  CALL BUY at times: #{@verify_times}"
         if @verify_times == @config[:limit_verify_times]
           buy()
         end
@@ -152,8 +153,8 @@ class Ico
     # do nothing when upping
     # puts "ana_sell: at #{Time.now}"
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    puts "#{@currency_pair.name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
-    Log.analysis_sell(@currency_pair, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
+    puts "#{@trade_info.currency_pair_name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
+    Log.analysis_sell(@trade_info, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
 
     if @ceil_price == 0.0 || @ceil_price < @previous_price
       @ceil_price = @previous_price
@@ -163,7 +164,7 @@ class Ico
       if -current_buy_changed_with_ceil_percent > @config[:limit_changed_percent] # Co the sell khi dao chieu vuot nguong cho phep ~0.3
         if current_buy_changed_with_vh_bought_price > @config[:limit_good_profit] # Khi dang loi ~>2%
           @verify_times += 1
-          puts "#{@currency_pair.name}  CALL SELL at times: #{@verify_times}"
+          puts "#{@trade_info.currency_pair_name}  CALL SELL at times: #{@verify_times}"
           if @verify_times == @config[:limit_verify_times]
             sell()
           end
@@ -172,7 +173,7 @@ class Ico
             sleep(@config[:delay_time_when_pump]) # Sleep cho qua dump
           else
             @verify_force_sell_times += 1
-            puts "#{@currency_pair.name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
+            puts "#{@trade_info.currency_pair_name}  CALL FORCE SELL at times: #{@verify_force_sell_times}"
             if @verify_force_sell_times == @config[:limit_verify_times]
               sell()  # Sell khi gia da giam xuong ~2% so voi gia tran
             end
@@ -191,14 +192,14 @@ class Ico
     @previous_price = @current_buy_price if @trading_type == 'SELL'
 
     # Get new price
-    data = Api.get_current_trading_price(@currency_pair)
+    data = Api.get_current_trading_price(@trade_info)
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
     # puts "Get current price - Buy: #{@current_buy_price} - Sell: #{@current_sell_price} at #{Time.now}"
   end
 
   def start_trading
-    puts "start_trading: #{@currency_pair.name} at #{Time.now}"
+    puts "start_trading: #{@trade_info.currency_pair_name} at #{Time.now}"
     while(true) do
       update_current_price()
       analysis()

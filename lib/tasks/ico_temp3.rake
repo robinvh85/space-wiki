@@ -23,10 +23,8 @@ namespace :ico_temp3 do
         if trade_info.present?
           puts "Start training for #{trade_info.currency_pair_id}"
 
-          currency_pair = CurrencyPair.find(trade_info.currency_pair_id)
-
           config = {
-            currency_pair: currency_pair,
+            trade_info: trade_info,
             buy_amount: trade_info.buy_amount,
             limit_invert_when_buy: trade_info.limit_invert_when_sell || 0.3,
             limit_invert_when_sell: trade_info.limit_invert_when_sell || 0.3,
@@ -48,18 +46,17 @@ namespace :ico_temp3 do
       end
 
       time_sleep = inteval
-      time_sleep = inteval/ico_list.length if ico_list.length > 0
+      time_sleep = inteval / ico_list.length if ico_list.length > 0
 
       # Chay training nhung ico nam trong list
       ico_list.each do |ico|
-        puts "Training #{ico.currency_pair.name}"
+        puts "Training #{ico.trade_info.currency_pair_name}"
         ico.update_current_price()
         ico.analysis()
         
         if ico.is_sold == true # when end of a trade cycle
-          trade_info = BotTradeInfo.find_by(currency_pair_id: ico.currency_pair.id)
-          trade_info.temp_status = 0
-          trade_info.save
+          ico.trade_info.temp_status = 0
+          ico.trade_info.save!
           ico_list.delete(ico)
         end
 
@@ -76,9 +73,9 @@ end
 
 module ApiTemp
   class << self
-    def get_current_trading_price(pair)
+    def get_current_trading_price(trade_info)
       result = {}
-      response = PoloniexVh.order_book(pair.name)
+      response = PoloniexVh.order_book(trade_info.currency_pair_name)
       data = JSON.parse(response.body)
 
       {
@@ -87,33 +84,33 @@ module ApiTemp
       }
     end
 
-    def buy(pair, amount, price)
-      puts "====> #{pair.name} Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
-      # result = JSON.parse(`python script/python/buy.py #{pair.name} #{'%.8f' % (price * 1.01)} #{amount}`)
+    def buy(trade_info, amount, price)
+      puts "====> #{trade_info.currency_pair_name} Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
+      # result = JSON.parse(`python script/python/buy.py #{trade_info.currency_pair_name} #{'%.8f' % (price * 1.01)} #{amount}`)
       # trade = result["resultingTrades"][0]
       sleep(2) # time to buy
             
       traded_amount = amount
       traded_price = price
 
-      puts "======> #{pair.name} BUY FINISH at price: #{'%.8f' % traded_price} - amount: #{traded_amount}"
+      puts "======> #{trade_info.currency_pair_name} BUY FINISH at price: #{'%.8f' % traded_price} - amount: #{traded_amount}"
       traded_price
     end
 
-    def sell(pair, amount, price, bought_price)
+    def sell(trade_info, amount, price, bought_price)
       amount = amount - amount * 0.003
-      price = price - price * 0.005 # remain 0.5%
+      # price = price - price * 0.005 # remain 0.5%
       profit = (price - bought_price) / bought_price * 100
 
-      puts "====> #{pair.name} Sell Amount: #{amount} with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
-      # result = JSON.parse(`python script/python/sell.py #{pair.name} #{'%.8f' % price} #{amount}`)
+      puts "====> #{trade_info.currency_pair_name} Sell Amount: #{amount} with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
+      # result = JSON.parse(`python script/python/sell.py #{trade_info.currency_pair_name} #{'%.8f' % price} #{amount}`)
       sleep(2) # time to sell
 
       # trade = result["resultingTrades"][0]
       # profit = (trade["rate"].to_f - bought_price) / bought_price * 100
       profit = (price - bought_price) / bought_price * 100
 
-      puts "=======> #{pair.name} SELL FINISH with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
+      puts "=======> #{trade_info.currency_pair_name} SELL FINISH with Price: #{'%.8f' % price}(#{profit.round(2)}%) at #{Time.now}"
       true
     end
 

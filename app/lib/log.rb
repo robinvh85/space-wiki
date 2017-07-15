@@ -1,9 +1,9 @@
 module Log
   class << self
-    def analysis_buy(pair, floor_price, previous_price, current_sell_price, changed_sell_percent, changed_with_floor_percent)
+    def analysis_buy(trade_info, floor_price, previous_price, current_sell_price, changed_sell_percent, changed_with_floor_percent)
       BotTradeLog.create({
-        currency_pair_id: pair.id,
-        currency_pair_name: pair.name,
+        currency_pair_id: trade_info.currency_pair_id,
+        currency_pair_name: trade_info.currency_pair_name,
         trade_type: 'buy',
         floor_price: floor_price,
         previous_price: previous_price,
@@ -13,10 +13,10 @@ module Log
       })
     end
 
-    def analysis_sell(pair, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent, profit)
+    def analysis_sell(trade_info, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent, profit)
       BotTradeLog.create({
-        currency_pair_id: pair.id,
-        currency_pair_name: pair.name,
+        currency_pair_id: trade_info.currency_pair_id,
+        currency_pair_name: trade_info.currency_pair_name,
         trade_type: 'sell',
         ceil_price: ceil_price,
         previous_price: previous_price,
@@ -27,25 +27,16 @@ module Log
       })
     end
 
-    def buy(pair, amount, price)
-      BotTradeHistory.create({
-        currency_pair_id: pair.id,
-        currency_pair_name: pair.name,
-        trade_type: 'buy',
-        amount: amount,
-        price: price
-      })
+    def buy(bot_trade_history, amount, price)
+      bot_trade_history.buy_price = price
+      bot_trade_history.amount = amount
+      bot_trade_history.save!
     end
 
-    def sell(pair, amount, price, profit)
-      BotTradeHistory.create({
-        currency_pair_id: pair.id,
-        currency_pair_name: pair.name,
-        trade_type: 'sell',
-        amount: amount,
-        price: price,
-        profit: profit
-      })
+    def sell(bot_trade_history, amount, price, profit)
+      bot_trade_history.sell_price = price
+      bot_trade_history.profit = profit
+      bot_trade_history.save!
     end
   end
 end
