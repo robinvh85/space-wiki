@@ -14,7 +14,7 @@ namespace :ico_main do
       thread = Thread.new{
         while true
           puts "Find a new ICO at #{Time.now}"
-          trade_info = BotTradeInfo.where("status = 0 AND priority > 0 AND percent_changed > 0").order(priority: 'DESC').first
+          trade_info = BotTradeInfo.where("status = 0 AND priority = 1 AND percent_changed > 0").order(updated_at: 'DESC').first
 
           if trade_info.present?
             puts "Trading new #{trade_info.currency_pair_name}"
