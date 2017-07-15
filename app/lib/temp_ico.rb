@@ -191,7 +191,7 @@ class TempIco
       if @verify_times_active_bot_trade == 2
         # TODO : set priority = 1
         puts "===> #{@trade_info.currency_pair_name} - FORCE ACTIVE"
-        BotTradeInfo.update!(@trade_info.currency_pair_id, priority: 1)
+        BotTradeInfo.update(@trade_info.currency_pair_id, priority: 1)
         @verify_times_active_bot_trade = -1
       end
     else
