@@ -134,16 +134,14 @@ class Ico
       max_change = ico_info.high_24hr - ico_info.low_24hr
       current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
 
-      if current_percent > 80
-        puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => NOT BUY"
-        return
+      if current_percent > 90
+        puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => CANCEL TRADING"
+        cancel_trading()
+      # elsif current_percent > 80
+      #   puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => NOT BUY"
+      #   return
       end
     end
-    
-    # current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
-    # if current_percent > 70
-    #   puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => BUT STILL BUY"
-    # end
 
     if changed_sell_percent >= 0 # when price up
       odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
@@ -210,6 +208,16 @@ class Ico
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
     # puts "Get current price - Buy: #{@current_buy_price} - Sell: #{@current_sell_price} at #{Time.now}"
+  end
+
+  def cancel_trading
+    @is_sold = true
+
+    @bot_trade_history.amount = -1
+    @bot_trade_history.save!
+
+    @trade_info.priority = 0  # Reset priority to active
+    @trade_info.save!
   end
 
   def start_trading
