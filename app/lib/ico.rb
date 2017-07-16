@@ -150,14 +150,16 @@ class Ico
         return
       end
 
-      if current_sell_changed_with_floor_percent > @config[:limit_changed_percent] # buy khi gia tang lon hon nguong
-        @verify_times += 1
+      buy()
 
-        puts "#{@trade_info.currency_pair_name}  CALL BUY at times: #{@verify_times}"
-        if @verify_times == @config[:limit_verify_times]
-          buy()
-        end
-      end 
+      # if current_sell_changed_with_floor_percent > @config[:limit_changed_percent] # buy khi gia tang lon hon nguong
+      #   @verify_times += 1
+
+      #   puts "#{@trade_info.currency_pair_name}  CALL BUY at times: #{@verify_times}"
+      #   if @verify_times == @config[:limit_verify_times]
+      #     buy()
+      #   end
+      # end 
     end      
   end
 
