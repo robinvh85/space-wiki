@@ -87,10 +87,10 @@ class Ico
   
   def sell
     # TODO: call API for buy
-    Api.sell(@bot_trade_history, @config[:buy_amount], @current_buy_price, @vh_bought_price)
+    Api.sell(@trade_info, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    Log.sell(@trade_info, @config[:buy_amount], @current_buy_price, profit)
+    Log.sell(@bot_trade_history, @config[:buy_amount], @current_buy_price, profit)
 
     @trading_type = "BUY"
     @floor_price = 0.0
@@ -136,10 +136,11 @@ class Ico
     #     return
     #   end
     # end
-    current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
-    if current_percent > 70
-      puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => BUT STILL BUY"
-    end
+    
+    # current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
+    # if current_percent > 70
+    #   puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => BUT STILL BUY"
+    # end
 
     if changed_sell_percent >= 0 # when price up
       odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100

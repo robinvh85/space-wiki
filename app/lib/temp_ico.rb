@@ -176,7 +176,7 @@ class TempIco
       @verify_force_sell_times = 0
 
       if profit > @config[:limit_force_sell_temp] # Force when profit >
-        puts "====> #{@trade_info.currency_pair_name}  FORCE SELL with profit #{profit} at #{Time.now}"
+        puts "====> #{@trade_info.currency_pair_name}  FORCE SELL with profit #{profit.round(2)} at #{Time.now}"
         sell()
       end
     end
@@ -186,6 +186,7 @@ class TempIco
     # Check to active realt bot trade
     return if @verify_times_active_bot_trade == -1
 
+    puts "===> #{@trade_info.currency_pair_name} - Check active bot trade with profit #{profit} - verify time #{@verify_times_active_bot_trade}"
     if profit > @limit_percent_active_bot_trade
       @verify_times_active_bot_trade += 1
       if @verify_times_active_bot_trade == 2
