@@ -137,6 +137,7 @@ class Ico
       if current_percent > 90
         puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => CANCEL TRADING"
         cancel_trading()
+        return
       # elsif current_percent > 80
       #   puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => NOT BUY"
       #   return
