@@ -102,6 +102,9 @@ class Ico
 
     @bot_trade_history.sell_at = Time.now
     @bot_trade_history.save!
+
+    @trade_info.priority = 0  # Reset priority to active
+    @trade_info.save!
   end
 
   # Can create many algorithms and watching for better

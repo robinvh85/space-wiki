@@ -18,7 +18,7 @@ namespace :ico_main do
 
           if trade_info.present?
             puts "Trading new #{trade_info.currency_pair_name}"
-            trade_info.priority = 0
+            trade_info.priority = -1
             trade_info.status = 1
             trade_info.save!
 

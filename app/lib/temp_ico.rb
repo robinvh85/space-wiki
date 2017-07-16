@@ -30,7 +30,7 @@ class TempIco
       limit_force_sell_temp: config[:limit_force_sell_temp]
     }
 
-    @limit_percent_active_bot_trade = 1
+    @limit_percent_active_bot_trade = 0.5
     @verify_times_active_bot_trade = 0
     
     @bot_trade_history = BotTempTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name})
@@ -192,7 +192,12 @@ class TempIco
       if @verify_times_active_bot_trade == 2
         # TODO : set priority = 1
         puts "===> #{@trade_info.currency_pair_name} - FORCE ACTIVE"
-        BotTradeInfo.update(@trade_info.id, priority: 1)
+        bot_trade_info = BotTradeInfo.find_by("priority = 0 AND id = ?", @trade_info.id)
+        if bot_trade_info.present?
+          bot_trade_info.priority = 1
+          bot_trade_info.save!
+        end
+
         @verify_times_active_bot_trade = -1
       end
     else
