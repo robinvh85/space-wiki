@@ -9,7 +9,7 @@ namespace :ico_main do
     
     threads = []
 
-    3.times.each do |index|
+    4.times.each do |index|
       puts "Create thread #{index}"
       thread = Thread.new{
         while true
@@ -28,7 +28,7 @@ namespace :ico_main do
               limit_invert_when_buy: trade_info.limit_invert_when_sell || 0.3,
               limit_invert_when_sell: trade_info.limit_invert_when_sell || 0.3,
               limit_good_profit: trade_info.limit_good_profit || 1.5,
-              limit_losses_profit: trade_info.limit_losses_profit || 2,
+              limit_losses_profit: trade_info.limit_losses_profit || 1.5,
               interval_time: trade_info.interval_time || 20,
               limit_verify_times: trade_info.limit_verify_times || 2,
               delay_time_after_sold: trade_info.delay_time_after_sold || 20,

@@ -19,7 +19,7 @@ class Ico
       buy_amount: config[:buy_amount],
       limit_good_profit: config[:limit_good_profit], # limit enough for sell or buy
       limit_changed_percent: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
-      limit_force_sell: config[:limit_losses_profit],    # force sell when price down too high 
+      limit_losses_profit: config[:limit_losses_profit],    # force sell when price down too high 
       interval_time: config[:interval_time],
       limit_verify_times: config[:limit_verify_times],  # Limit times for verify true value price,
       delay_time_after_sold: config[:delay_time_after_sold], # 20 seconds
@@ -179,7 +179,7 @@ class Ico
           if @verify_times == @config[:limit_verify_times]
             sell()
           end
-        elsif -current_buy_changed_with_ceil_percent > @config[:limit_force_sell]
+        elsif -current_buy_changed_with_ceil_percent > @config[:limit_losses_profit]
           if -changed_buy_percent > @config[:limit_pump_percent] # Neu gia giam nhieu => pump
             sleep(@config[:delay_time_when_pump]) # Sleep cho qua dump
           else

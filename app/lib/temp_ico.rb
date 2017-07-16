@@ -185,9 +185,9 @@ class TempIco
   def check_active_bot_trade(profit)
     # Check to active realt bot trade
     return if @verify_times_active_bot_trade == -1
-
-    puts "===> #{@trade_info.currency_pair_name} - Check active bot trade with profit #{profit} - verify time #{@verify_times_active_bot_trade}"
+    
     if profit > @limit_percent_active_bot_trade
+      puts "===> #{@trade_info.currency_pair_name} - Check active bot trade with profit #{profit} - verify time #{@verify_times_active_bot_trade}"
       @verify_times_active_bot_trade += 1
       if @verify_times_active_bot_trade == 2
         # TODO : set priority = 1
