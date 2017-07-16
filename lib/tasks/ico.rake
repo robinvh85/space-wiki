@@ -9,12 +9,12 @@ namespace :ico_main do
     
     threads = []
 
-    4.times.each do |index|
+    3.times.each do |index|
       puts "Create thread #{index}"
       thread = Thread.new{
         while true
           puts "Find a new ICO at #{Time.now}"
-          trade_info = BotTradeInfo.where("status = 0 AND priority = 1 AND percent_changed > 0").order(updated_at: 'DESC').first
+          trade_info = BotTradeInfo.where("status = 0 AND priority = 1").order(updated_at: 'DESC').first
 
           if trade_info.present?
             puts "Trading new #{trade_info.currency_pair_name}"
