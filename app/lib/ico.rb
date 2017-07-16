@@ -126,16 +126,16 @@ class Ico
       @floor_price = @previous_price
     end
 
-    # ico_info = IcoInfo.find_by(currency_pair_id: @trade_info.currency_pair_id)
-    # if ico_info.present?
-    #   max_change = ico_info.high_24hr - ico_info.low_24hr
-    #   current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
+    ico_info = IcoInfo.find_by(currency_pair_id: @trade_info.currency_pair_id)
+    if ico_info.present?
+      max_change = ico_info.high_24hr - ico_info.low_24hr
+      current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
 
-    #   if current_percent > 70
-    #     puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => NOT BUY"
-    #     return
-    #   end
-    # end
+      if current_percent > 80
+        puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% => NOT BUY"
+        return
+      end
+    end
     
     # current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
     # if current_percent > 70
