@@ -31,12 +31,12 @@ module DumpLog
       BotDumpTradeLog.create({
         currency_pair_id: trade_info.currency_pair_id,
         currency_pair_name: trade_info.currency_pair_name,
-        trade_type: 'up',
-        floor_price: ceil_price,
+        trade_type: 'down',
+        ceil_price: ceil_price,
         previous_price: previous_price,
         current_price: current_down_price,
         changed_price_percent: changed_down_percent,
-        changed_with_floor_percent: changed_with_ceil_percent,
+        changed_with_ceil_percent: changed_with_ceil_percent,
         price_24h_percent: price_24h_percent
       })
     end

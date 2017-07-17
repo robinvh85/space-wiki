@@ -6,20 +6,19 @@
 # + Chi chay training nhung ico co percentChange > 0
 
 namespace :ico_detect_dump do
-  task :start_trading, [status_num] => :environment do |_cmd, args|
+  task :start_trading, [:status_num] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading temp"
     ico_list = []
     inteval = 20
 
-    if status_num.nil
-      puts "Need specify status_num ico_detect_dump:start_trading[1]"
-      return
+    status_num = args[:status_num]
+    if status_num.nil?
+      abort "Error: Need specify status_num ico_detect_dump:start_trading[1]"
     end
 
     obj = BotTradeInfo.where("temp_status = ?", status_num).first
     if obj.present?
-      puts "Status_num = #{status_num} has been existed. Please check it."
-      return
+      abort "Error: Status_num = #{status_num} has been existed. Please check it."
     end
 
     while true

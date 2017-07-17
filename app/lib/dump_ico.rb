@@ -52,16 +52,15 @@ class DumpIco
 
     # Can create many algorithms and watching for better
   def analysis
-
     if @trading_type == 'up'
       if @current_up_price < @previous_up_price # Doi chieu
-        @trading_type == 'down'
+        @trading_type = 'down'
         @ceil_price = @current_down_price
         get_price_24h()
       end
     elsif @trading_type =='down'
       if @current_down_price > @previous_down_price # Doi chieu
-        @trading_type == 'up'
+        @trading_type = 'up'
         @floor_price = @current_up_price
         get_price_24h()
       end
@@ -87,20 +86,20 @@ class DumpIco
       @floor_price = @current_down_price
     end
     
-    @price_24h_percent = ((@current_down_price - @min_24h) - (@max_24h - @min_24h)) / (@max_24h - @min_24h) * 100
+    @price_24h_percent = (@current_down_price - @min_24h) / (@max_24h - @min_24h) * 100
 
-    DumpLog.analysis_down(@trade_info, @floor_price, @previous_price, @current_down_price, changed_down_percent.round(2), current_down_changed_with_ceil_percent.round(2), @price_24h_percent)
+    DumpLog.analysis_down(@trade_info, @floor_price, @previous_down_price, @current_down_price, changed_down_percent.round(2), current_down_changed_with_ceil_percent.round(2), @price_24h_percent)
   end
 
   def analysis_price_up
-    puts "#{@trade_info.currency_pair_name} UP -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_price: #{'%.8f' % @current_up_price} (#{current_up_changed_with_floor_percent.round(2)}% | #{changed_up_percent.round(2)})%"
+    puts "#{@trade_info.currency_pair_name} UP -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_up_price} - current_price: #{'%.8f' % @current_up_price} (#{current_up_changed_with_floor_percent.round(2)}% | #{changed_up_percent.round(2)})%"
     if @floor_price == 0.0 || @current_up_price < @floor_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
       @floor_price = @current_up_price
     end
     
-    @price_24h_percent = ((@current_up_price - @min_24h) - (@max_24h - @min_24h)) / (@max_24h - @min_24h) * 100
+    @price_24h_percent = (@current_up_price - @min_24h) / (@max_24h - @min_24h) * 100
 
-    DumpLog.analysis_up(@trade_info, @floor_price, @previous_price, @current_up_price, changed_up_percent.round(2), current_up_changed_with_floor_percent.round(2), price_24h_percent)
+    DumpLog.analysis_up(@trade_info, @floor_price, @previous_up_price, @current_up_price, changed_up_percent.round(2), current_up_changed_with_floor_percent.round(2), @price_24h_percent)
   end
 
   def update_current_price  
@@ -110,7 +109,7 @@ class DumpIco
 
     # Get new price
     data = ApiTemp.get_current_trading_price(@trade_info)
-    @current_down_price  = data[:sell_price]
-    @current_up_price = data[:buy_price]
+    @current_down_price  = data[:sell_price].to_f
+    @current_up_price = data[:buy_price].to_f
   end
 end
