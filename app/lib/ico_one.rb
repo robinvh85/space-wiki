@@ -29,6 +29,8 @@ class IcoOne
 
     @limit_odd_price_percent = 0.6
     @bot_trade_history = BotTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name})
+
+    @count_profit_force_sell = 0
   end
 
   # Properties
@@ -96,6 +98,7 @@ class IcoOne
     @floor_price = 0.0
     @ceil_price = 0.0
     @verify_times = 0
+    @count_profit_force_sell = 0
     
     # sleep(@config[:delay_time_after_sold])
     @is_sold = true
@@ -169,7 +172,18 @@ class IcoOne
       @ceil_price = @previous_price
     end
 
-    if changed_buy_percent <= 0 # when price down      
+    if changed_buy_percent <= 0 # when price down
+
+      # Profit for sell: chot loi
+      if profit > @config[:limit_good_profit]
+        @count_profit_force_sell += 1
+
+        if @count_profit_force_sell > @config[:limit_verify_times]
+          sell()
+        end
+      end
+
+
       if -current_buy_changed_with_ceil_percent > @config[:limit_changed_percent] # Co the sell khi dao chieu vuot nguong cho phep ~0.3 VHI
         if current_buy_changed_with_vh_bought_price > @config[:limit_good_profit] # Khi dang loi ~>2% VHI
           @verify_times += 1
@@ -192,6 +206,7 @@ class IcoOne
     else # Khi dang tiep tuc di len      
       @verify_times = 0
       @verify_force_sell_times = 0
+      @count_profit_force_sell = 0
     end
   end
 
