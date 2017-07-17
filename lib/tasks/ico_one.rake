@@ -9,7 +9,7 @@ namespace :ico_main_one do
     
     threads = []
 
-    ico_list = ["BTC_XVC", "BTC_NOTE", "BTC_BELA", "BTC_FLO"]
+    ico_list = ["BTC_NXT", "BTC_REP", "BTC_SJCX", "BTC_LTC"]
 
     ico_list.each do |ico_name|
       puts "Create thread for #{ico_name}"

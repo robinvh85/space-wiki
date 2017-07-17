@@ -2,101 +2,115 @@ class DumpIco
   attr_accessor :trade_info, :is_sold
 
   def initialize(config)
-    @trading_type = "BUY" # BUY or SELL
+    @trading_type = "down" # down mean BUY and up mean sell
     
-    @current_buy_price = 0.0
-    @current_sell_price = 0.0
-    @previous_price = 0.0
+    @current_down_price = 0.0
+    @current_up_price = 0.0
+    @previous_down_price = 0.0
+    @previous_up_price = 0.0
     @floor_price = 0.0  # when buying, value min khi doi chieu
     @ceil_price = 0.0  # when buying, value min khi doi chieu
-    @vh_bought_price = 0.0
-    @vh_bought_amount = 0.0
-    @verify_times = 0
-    @verify_force_sell_times = 0
-    @is_sold = false
+
+    @min_24h = 0
+    @max_24h = 0
 
     @trade_info = config[:trade_info]
-
-    @config = {
-      buy_amount: config[:buy_amount],
-      limit_trade_percent: config[:limit_good_profit], # limit enough for sell or buy
-      limit_changed_percent: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
-      limit_force_sell: config[:limit_losses_profit],    # force sell when price down too high 
-      interval_time: config[:interval_time],
-      limit_verify_times: config[:limit_verify_times],  # Limit times for verify true value price,
-      delay_time_after_sold: config[:delay_time_after_sold], # 20 seconds
-      limit_pump_percent: config[:limit_pump_percent],
-      delay_time_when_pump: config[:delay_time_when_pump],
-      limit_force_sell_temp: config[:limit_force_sell_temp]
-    }
-
-    @limit_percent_active_bot_trade = 0.5
-    @verify_times_active_bot_trade = 0
   end
 
   # Properties
-  def changed_buy_percent
-    if @previous_price == 0
+  def changed_down_percent
+    if @previous_down_price == 0
       0.0
     else
-      (@current_buy_price - @previous_price) / @previous_price * 100
+      (@current_down_price - @previous_down_price) / @previous_down_price * 100
     end
   end
 
-  def changed_sell_percent
-    if @previous_price == 0.0
+  def changed_up_percent
+    if @previous_up_price == 0.0
       0.0
     else
-      (@current_sell_price - @previous_price) / @previous_price * 100
+      (@current_up_price - @previous_up_price) / @previous_up_price * 100
     end
   end
 
-  def current_sell_changed_with_floor_percent # gia muon mua mua cua VH
+  def current_up_changed_with_floor_percent # gia muon mua mua cua VH
     if @floor_price == 0.0
       0.0
     else
-      (@current_sell_price - @floor_price) / @floor_price * 100
+      (@current_up_price - @floor_price) / @floor_price * 100
     end
   end
 
-  def current_buy_changed_with_ceil_percent # gia muon ban cua VH
+  def current_down_changed_with_ceil_percent # gia muon ban cua VH
     if @ceil_price == 0.0
       0.0
     else
-      (@current_buy_price - @ceil_price) / @ceil_price * 100
+      (@current_down_price - @ceil_price) / @ceil_price * 100
     end
-  end
-
-  def current_buy_changed_with_vh_bought_price
-    (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
   end
 
     # Can create many algorithms and watching for better
   def analysis
-    analysis_price()
+
+    if @trading_type == 'up'
+      if @current_up_price < @previous_up_price # Doi chieu
+        @trading_type == 'down'
+        @ceil_price = @current_down_price
+        get_price_24h()
+      end
+    elsif @trading_type =='down'
+      if @current_down_price > @previous_down_price # Doi chieu
+        @trading_type == 'up'
+        @floor_price = @current_up_price
+        get_price_24h()
+      end
+    end
+
+    if @trading_type == 'up' # SELL
+      analysis_price_up()
+    elsif @trading_type == 'down' # BUY
+      analysis_price_down()
+    end
   end
   
-  def analysis_price
-    # TODO: check khi nao gia ban va gia mua chenh lech ko qua 0.5% thi moi mua
+  def get_price_24h
+    ico_info = IcoInfo.find_by(currency_pair_id: @trade_info.currency_pair_id)
 
-    # do nothing when downing
-    puts "#{@trade_info.currency_pair_name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
-    if @floor_price == 0.0 || @current_sell_price < @floor_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
-      @floor_price = @current_sell_price
+    @min_24h = ico_info.low_24hr
+    @max_24h = ico_info.high_24hr
+  end
+
+  def analysis_price_down
+    puts "#{@trade_info.currency_pair_name} DOWN -> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_down_price} - current_price: #{'%.8f' % @current_down_price} (#{current_down_changed_with_ceil_percent.round(2)}% | #{changed_down_percent.round(2)})%"
+    if @floor_price == 0.0 || @current_down_price < @floor_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
+      @floor_price = @current_down_price
     end
     
-    DumpLog.analysis_buy(@trade_info, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
+    @price_24h_percent = ((@current_down_price - @min_24h) - (@max_24h - @min_24h)) / (@max_24h - @min_24h) * 100
+
+    DumpLog.analysis_down(@trade_info, @floor_price, @previous_price, @current_down_price, changed_down_percent.round(2), current_down_changed_with_ceil_percent.round(2), @price_24h_percent)
+  end
+
+  def analysis_price_up
+    puts "#{@trade_info.currency_pair_name} UP -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_price: #{'%.8f' % @current_up_price} (#{current_up_changed_with_floor_percent.round(2)}% | #{changed_up_percent.round(2)})%"
+    if @floor_price == 0.0 || @current_up_price < @floor_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
+      @floor_price = @current_up_price
+    end
+    
+    @price_24h_percent = ((@current_up_price - @min_24h) - (@max_24h - @min_24h)) / (@max_24h - @min_24h) * 100
+
+    DumpLog.analysis_up(@trade_info, @floor_price, @previous_price, @current_up_price, changed_up_percent.round(2), current_up_changed_with_floor_percent.round(2), price_24h_percent)
   end
 
   def update_current_price  
     # Backup previous price
-    @previous_price = @current_sell_price if @trading_type == 'BUY'
-    @previous_price = @current_buy_price if @trading_type == 'SELL'
+    @previous_down_price = @current_down_price
+    @previous_up_price = @current_up_price
 
     # Get new price
     data = ApiTemp.get_current_trading_price(@trade_info)
-    @current_buy_price  = data[:buy_price]
-    @current_sell_price = data[:sell_price]
-    # puts "Get current price - Buy: #{@current_buy_price} - Sell: #{@current_sell_price} at #{Time.now}"
+    @current_down_price  = data[:sell_price]
+    @current_up_price = data[:buy_price]
   end
 end
