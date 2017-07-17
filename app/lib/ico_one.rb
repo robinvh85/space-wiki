@@ -137,10 +137,10 @@ class IcoOne
       max_change = ico_info.high_24hr - ico_info.low_24hr
       current_percent = (@current_sell_price - ico_info.low_24hr) / (ico_info.high_24hr - ico_info.low_24hr) * 100
 
-      if current_percent > 90
-        puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% in 24h => NOT BUY"
-        return
-      end
+      # if current_percent > 90
+      #   puts "===> #{@trade_info.currency_pair_name} price to high #{current_percent.round(2)}% in 24h => NOT BUY"
+      #   return
+      # end
     end
 
     if changed_sell_percent >= 0 # when price up
@@ -175,9 +175,10 @@ class IcoOne
     if changed_buy_percent <= 0 # when price down
 
       # Profit for sell: chot loi
-      if profit > @config[:limit_good_profit]
+      if profit > @config[:limit_good_profit]        
         @count_profit_force_sell += 1
 
+        puts "===> COUNT FORCE SELL #{@count_profit_force_sell}"
         if @count_profit_force_sell > @config[:limit_verify_times]
           sell()
         end
