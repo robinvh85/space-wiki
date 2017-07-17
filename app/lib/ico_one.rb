@@ -18,7 +18,8 @@ class IcoOne
     @config = {
       buy_amount: config[:buy_amount],
       limit_good_profit: config[:limit_good_profit], # limit enough for sell or buy
-      limit_changed_percent: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
+      limit_invert_when_buy: config[:limit_invert_when_buy], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
+      limit_invert_when_sell: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
       limit_losses_profit: config[:limit_losses_profit],    # force sell when price down too high 
       interval_time: config[:interval_time],
       limit_verify_times: config[:limit_verify_times],  # Limit times for verify true value price,
@@ -150,7 +151,7 @@ class IcoOne
         return
       end
 
-      if current_sell_changed_with_floor_percent > @config[:limit_changed_percent] # buy khi gia tang lon hon nguong VHI
+      if current_sell_changed_with_floor_percent > @config[:limit_invert_when_buy] # buy khi gia tang lon hon nguong VHI
         @verify_times += 1
 
         puts "#{@trade_info.currency_pair_name}  CALL BUY at times: #{@verify_times}"
@@ -185,7 +186,7 @@ class IcoOne
       end
 
 
-      if -current_buy_changed_with_ceil_percent > @config[:limit_changed_percent] # Co the sell khi dao chieu vuot nguong cho phep ~0.3 VHI
+      if -current_buy_changed_with_ceil_percent > @config[:limit_invert_when_sell] # Co the sell khi dao chieu vuot nguong cho phep ~0.3 VHI
         if current_buy_changed_with_vh_bought_price > @config[:limit_good_profit] # Khi dang loi ~>2% VHI
           @verify_times += 1
           puts "#{@trade_info.currency_pair_name}  CALL SELL at times: #{@verify_times}"

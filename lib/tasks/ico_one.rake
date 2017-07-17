@@ -22,7 +22,7 @@ namespace :ico_main_one do
             config = {
               trade_info: trade_info,
               buy_amount: trade_info.buy_amount,
-              limit_invert_when_buy: trade_info.limit_invert_when_sell || 0.3, # VHI
+              limit_invert_when_buy: trade_info.limit_invert_when_buy || 0.3, # VHI
               limit_invert_when_sell: trade_info.limit_invert_when_sell || 0.3, # VHI
               limit_good_profit: trade_info.limit_good_profit || 1.5, # VHI
               limit_losses_profit: trade_info.limit_losses_profit || 1.5, # VHI
