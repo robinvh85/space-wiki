@@ -3,7 +3,7 @@
 
 # BotTradeInfo.status: -1: disabled, 0:ready, 1: running
 
-namespace :ico_one do
+namespace :ico_main_one do
   task :start_trading, [] => :environment do |_cmd, args|
     puts "Run rake ico:start_trading"
     
@@ -40,9 +40,12 @@ namespace :ico_one do
             # trade_info.save!
           end
 
-          sleep(60)
+          sleep(30)
         end
       }
+
+      sleep(5)
+      threads << thread
     end
 
     threads.each do |t|
