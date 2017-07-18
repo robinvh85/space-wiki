@@ -46,7 +46,7 @@ namespace :ico_main_one3 do
         end
       }
 
-      sleep(5)
+      sleep(15)
       threads << thread
     end
 
@@ -206,6 +206,7 @@ class IcoOne3
         odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
         if odd_price_percent > @limit_odd_price_percent
           puts "===> #{@trade_info.currency_pair_name} - DIFFERENCE BUY AND SELL : #{'%.8f' % @current_sell_price} > #{'%.8f' % @current_buy_price} : #{odd_price_percent.round(2)}% too high"
+          Log.difference_buy_sell(@trade_info, @current_buy_price, @current_sell_price, odd_price_percent)
           return
         end
 
@@ -224,7 +225,7 @@ class IcoOne3
             break
           end
 
-          sleep(20)
+          sleep(30)
         end
       end 
     end      
@@ -259,7 +260,7 @@ class IcoOne3
             break
           end
 
-          sleep(20)
+          sleep(30)
         end
       elsif -current_buy_changed_with_ceil_percent > @config[:limit_losses_profit]  # VHI
         5.times do |index|
@@ -277,7 +278,7 @@ class IcoOne3
             break
           end
 
-          sleep(20)
+          sleep(30)
         end      
       end    
     else # Khi dang tiep tuc di len      

@@ -38,5 +38,15 @@ module Log
       bot_trade_history.profit = profit
       bot_trade_history.save!
     end
+
+    def difference_buy_sell(trade_info, buy_price, sell_price, difference_percent)
+      BotDumpTradeLog.create({
+        currency_pair_id: trade_info.currency_pair_id,
+        currency_pair_name: trade_info.currency_pair_name,
+        buy_price: buy_price,
+        sell_price: sell_price,
+        difference_percent: difference_percent
+      })
+    end
   end
 end
