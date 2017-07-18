@@ -40,7 +40,7 @@ module Log
     end
 
     def difference_buy_sell(trade_info, buy_price, sell_price, difference_percent)
-      BotDumpTradeLog.create({
+      DifferenceBuySell.create({
         currency_pair_id: trade_info.currency_pair_id,
         currency_pair_name: trade_info.currency_pair_name,
         buy_price: buy_price,
