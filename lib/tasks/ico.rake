@@ -116,6 +116,7 @@ module Api
       data['bids'].each do |bid|
         if bid[1].to_f > trade_info.buy_amount
           buy_price = bid[0].to_f
+          break
         end
       end
 
@@ -123,6 +124,7 @@ module Api
       data['asks'].each do |ask|
         if ask[1].to_f > trade_info.buy_amount
           sell_price = ask[0].to_f
+          break
         end
       end
 
