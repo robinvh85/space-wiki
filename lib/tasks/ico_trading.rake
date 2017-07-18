@@ -38,12 +38,12 @@ namespace :ico_trading do
               trade_info: trade_info,
               buy_amount: trade_info.buy_amount,
               limit_invert_when_buy: trade_info.limit_invert_when_buy || 1, # VHI
-              limit_invert_when_sell: trade_info.limit_invert_when_sell || 1, # VHI
+              # limit_invert_when_sell: trade_info.limit_invert_when_sell || 1, # VHI
               limit_good_profit: trade_info.limit_good_profit || 2, # VHI
               limit_losses_profit: trade_info.limit_losses_profit || 2, # VHI
-              interval_time: trade_info.interval_time || 120, # 2 min
+              # interval_time: trade_info.interval_time || 120, # 2 min
               limit_verify_times_buy: trade_info.limit_verify_times_buy || 2,  # Limit times for buy
-              limit_verify_times_sell: trade_info.limit_verify_times_buy || 2,  # Limit times for sell
+              limit_verify_times_sell: trade_info.limit_verify_times_sell || 2,  # Limit times for sell
               limit_difference_price: trade_info.limit_difference_price || 0.6
             }  
 
@@ -102,11 +102,11 @@ class Ico4
 
     @config = {
       buy_amount: config[:buy_amount],
-      limit_good_profit: config[:limit_good_profit], # limit enough for sell or buy
+      limit_good_profit: config[:limit_good_profit], # limit enough for sell
       limit_invert_when_buy: config[:limit_invert_when_buy], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
-      limit_invert_when_sell: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
+      # limit_invert_when_sell: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
       limit_losses_profit: config[:limit_losses_profit],    # force sell when price down too high 
-      interval_time: config[:interval_time],
+      # interval_time: config[:interval_time],
       limit_verify_times_buy: config[:limit_verify_times_buy]  # Limit times for buy
       limit_verify_times_sell: config[:limit_verify_times_sell]  # Limit times for sell
       limit_difference_price: config[:limit_difference_price]
