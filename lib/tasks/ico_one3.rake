@@ -16,7 +16,9 @@ namespace :ico_main_one3 do
       thread = Thread.new{
         while true
           puts "Start a new trade for #{ico_name} at #{Time.now}"
-          trade_info = BotTradeInfo.find_by(currency_pair_name: ico_name)
+          trade_info = BotTradeInfo.find_by("currency_pair_name = ? AND status = 0", ico_name)
+          trade_info.status = 1 # Set running
+          trade_info.save!
 
           if trade_info.present?
             config = {
@@ -36,8 +38,8 @@ namespace :ico_main_one3 do
             ico_obj = IcoOne3.new(config)
             ico_obj.start_trading()
 
-            # trade_info.status = 0 # Set available for ico
-            # trade_info.save!
+            trade_info.status = 0 # Set available for ico
+            trade_info.save!
           end
 
           sleep(30)
@@ -198,15 +200,15 @@ class IcoOne3
     #   end
     # end
 
-    if changed_sell_percent >= 0 # when price up
-      # Kiem tra chenh lech gia
-      odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
-      if odd_price_percent > @limit_odd_price_percent
-        puts "===> #{@trade_info.currency_pair_name} - DIFFERENCE BUY AND SELL : #{'%.8f' % @current_sell_price} > #{'%.8f' % @current_buy_price} : #{odd_price_percent.round(2)}% too high"
-        return
-      end
-
+    if changed_sell_percent >= 0 # when price up     
       if current_sell_changed_with_floor_percent > @config[:limit_invert_when_buy] # buy khi gia tang lon hon nguong VHI
+        # Kiem tra chenh lech gia
+        odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
+        if odd_price_percent > @limit_odd_price_percent
+          puts "===> #{@trade_info.currency_pair_name} - DIFFERENCE BUY AND SELL : #{'%.8f' % @current_sell_price} > #{'%.8f' % @current_buy_price} : #{odd_price_percent.round(2)}% too high"
+          return
+        end
+
         5.times do |index|
           puts "===> #{@trade_info.currency_pair_name}  COUNT BUY #{index + 1} at #{Time.now}"
           if index > 0
