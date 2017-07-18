@@ -112,9 +112,23 @@ module Api
       response = PoloniexVh.order_book(trade_info.currency_pair_name)
       data = JSON.parse(response.body)
 
+      buy_price = 0
+      data['bids'].each do |bid|
+        if bid[1].to_f > trade_info.buy_amount
+          buy_price = bid[0].to_f
+        end
+      end
+
+      sell_price = 0
+      data['asks'].each do |ask|
+        if ask[1].to_f > trade_info.buy_amount
+          sell_price = ask[0].to_f
+        end
+      end
+
       {
-        buy_price: data['bids'][0][0].to_f,
-        sell_price: data['asks'][0][0].to_f
+        buy_price: buy_price,
+        sell_price: sell_price
       }
     end
 

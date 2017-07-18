@@ -147,7 +147,7 @@ class IcoOne
     if changed_sell_percent >= 0 # when price up
       odd_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
       if odd_price_percent > @limit_odd_price_percent
-        puts "===> DIFFERENCE BUY AND SELL : #{@current_sell_price} > #{@current_buy_price} : #{odd_price_percent.round(2)}% too high"
+        puts "===> #{@trade_info.currency_pair_name} - DIFFERENCE BUY AND SELL : #{@current_sell_price} > #{@current_buy_price} : #{odd_price_percent.round(2)}% too high"
         return
       end
 
