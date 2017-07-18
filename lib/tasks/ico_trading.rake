@@ -9,18 +9,18 @@ namespace :ico_trading do
 
     cycle_time = 120 # 2p
     thread_num = 4
-    thread_id = 0
 
     thread_num.times do |index|
-      thread_id = index + 1
-      puts "Create thread #{thread_id}"
+      puts "Create thread #{index + 1}"
       thread = Thread.new{
         ico_list = []
+        thread_id = index + 1
 
         while true
           start_time = Time.now
           
           # Step 1: find new ico
+          puts "Thread #{thread_id}: find new trade_info at #{Time.now}"
           trade_info = BotTradeInfo.find_by("status = 0 AND run_times <> 0")
 
           if trade_info.present?
@@ -71,7 +71,7 @@ namespace :ico_trading do
         end
       }
 
-      sleep(5)
+      sleep(cycle_time / thread_num)
       threads << thread
     end
 
@@ -82,6 +82,8 @@ namespace :ico_trading do
 end
 
 class Ico4
+  attr_accessor :trade_info, :is_sold
+
   def initialize(config)
     @trading_type = "BUY" # BUY or SELL
     
@@ -107,8 +109,8 @@ class Ico4
       # limit_invert_when_sell: config[:limit_invert_when_sell], # limit khi doi chieu de xac dinh co thuc hien buy or sell hay khong
       limit_losses_profit: config[:limit_losses_profit],    # force sell when price down too high 
       # interval_time: config[:interval_time],
-      limit_verify_times_buy: config[:limit_verify_times_buy]  # Limit times for buy
-      limit_verify_times_sell: config[:limit_verify_times_sell]  # Limit times for sell
+      limit_verify_times_buy: config[:limit_verify_times_buy],  # Limit times for buy
+      limit_verify_times_sell: config[:limit_verify_times_sell],  # Limit times for sell
       limit_difference_price: config[:limit_difference_price]
     }
 
@@ -232,12 +234,12 @@ class Ico4
     if changed_buy_percent <= 0 # when price down
       if profit > @config[:limit_good_profit] # Khi dang du loi
         @count_verify_sell += 1
-        puts "===> #{@trade_info.currency_pair_name} COUNT SELL #{@count_verify_sell} at #{Time.now} "
+        puts "===> #{@trade_info.currency_pair_name} COUNT SELL #{@count_verify_sell} at #{Time.now}"
 
-        sell() if @count_verify_sell == @config[:limit_verify_times_sell]        end
+        sell() if @count_verify_sell == @config[:limit_verify_times_sell]
       elsif -current_buy_changed_with_ceil_percent > @config[:limit_losses_profit]  # Khi giam qua nhieu, toi nguong
         @count_verify_force_sell += 1
-        puts "===> #{@trade_info.currency_pair_name} COUNT FORCE SELL #{@count_verify_force_sell} at #{Time.now} "
+        puts "===> #{@trade_info.currency_pair_name} COUNT FORCE SELL #{@count_verify_force_sell} at #{Time.now}"
         sell() if @count_verify_force_sell == @config[:limit_verify_times_sell]
       end    
     else # Khi dang tiep tuc di len
