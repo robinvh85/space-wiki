@@ -1,9 +1,10 @@
 module Log
   class << self
-    def analysis_buy(trade_info, floor_price, previous_price, current_sell_price, changed_sell_percent, changed_with_floor_percent)
+    def analysis_buy(bot_trade_history, floor_price, previous_price, current_sell_price, changed_sell_percent, changed_with_floor_percent)
       BotTradeLog.create({
-        currency_pair_id: trade_info.currency_pair_id,
-        currency_pair_name: trade_info.currency_pair_name,
+        bot_trade_history_id: bot_trade_history.id,
+        currency_pair_id: bot_trade_history.currency_pair_id,
+        currency_pair_name: bot_trade_history.currency_pair_name,
         trade_type: 'buy',
         floor_price: floor_price,
         previous_price: previous_price,
@@ -13,10 +14,11 @@ module Log
       })
     end
 
-    def analysis_sell(trade_info, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent, profit)
+    def analysis_sell(bot_trade_history, ceil_price, previous_price, current_buy_price, changed_buy_percent, changed_with_ceil_percent, profit)
       BotTradeLog.create({
-        currency_pair_id: trade_info.currency_pair_id,
-        currency_pair_name: trade_info.currency_pair_name,
+        bot_trade_history_id: bot_trade_history.id,
+        currency_pair_id: bot_trade_history.currency_pair_id,
+        currency_pair_name: bot_trade_history.currency_pair_name,
         trade_type: 'sell',
         ceil_price: ceil_price,
         previous_price: previous_price,

@@ -154,7 +154,6 @@ class Ico4
 
   # Method
   def buy
-    # TODO: call API for sell
     @vh_bought_price = Api.buy(@trade_info, @config[:buy_amount], @current_sell_price)
 
     Log.buy(@bot_trade_history, @config[:buy_amount], @vh_bought_price)
@@ -169,7 +168,6 @@ class Ico4
   end
   
   def sell
-    # TODO: call API for buy
     Api.sell(@trade_info, @config[:buy_amount], @current_buy_price, @vh_bought_price)
     
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
@@ -194,7 +192,7 @@ class Ico4
   
   def analysis_for_buy
     puts "#{@trade_info.currency_pair_name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
-    Log.analysis_buy(@trade_info, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
+    Log.analysis_buy(@bot_trade_history, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
     if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
       @floor_price = @previous_price
@@ -206,7 +204,7 @@ class Ico4
         diff_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
         if diff_price_percent > @config[:limit_difference_price]
           puts "===> #{@trade_info.currency_pair_name} - DIFFERENCE BUY AND SELL : #{'%.8f' % @current_sell_price} > #{'%.8f' % @current_buy_price} : #{diff_price_percent.round(2)}% too high"
-          Log.difference_buy_sell(@trade_info, @current_buy_price, @current_sell_price, diff_price_percent)
+          Log.difference_buy_sell(@bot_trade_history, @current_buy_price, @current_sell_price, diff_price_percent)
           return
         end
 
