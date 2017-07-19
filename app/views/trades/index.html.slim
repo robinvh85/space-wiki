@@ -59,7 +59,7 @@ div#trades.container
       | Log
     div.panel-block
       div
-        table.table style="width: 800px;"
+        table.table style="width: 1000px;"
           thead
             tr
               th Pair
@@ -67,6 +67,7 @@ div#trades.container
               th Changed price
               th Changed with floor
               th Changed with ceil
+              th Profit
               th Time
           tbody
             tr v-for="item in traing_history_logs"
@@ -80,6 +81,8 @@ div#trades.container
                 | {{ item.changed_with_floor_percent }} 
               td 
                 | {{ item.changed_with_ceil_percent }} 
+              td
+                | {{ item.profit }} 
               td
                 | {{ item.created_at }} 
                
