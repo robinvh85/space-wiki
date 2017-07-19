@@ -65,6 +65,28 @@ var app = new Vue({
         });
       }
     },
+    force_buy_trading: function(trade){
+      if(confirm("Do you want to force buy this trading ?")){
+        this.$http.get('/ajax/trades/force_buy', {params: {bot_trade_history_id: trade.id} }).then(function (res){
+          if(res.data.status == 1){
+            alert("Force buy successfully !")
+          } else {
+            alert("Can not force buy !")
+          }
+        });
+      }
+    },
+    force_sell_trading: function(trade){
+      if(confirm("Do you want to force sell this trading ?")){
+        this.$http.get('/ajax/trades/force_sell', {params: {bot_trade_history_id: trade.id} }).then(function (res){
+          if(res.data.status == 1){
+            alert("Force sell successfully !")
+          } else {
+            alert("Can not force sell !")
+          }
+        });
+      }
+    },
     call_get_history_log: function(){
       trade_id = null;
       if(this.selected_trade_history != null){

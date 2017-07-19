@@ -58,7 +58,7 @@ namespace :ico_trading do
           ico_list.each do |ico|
 
             # Check cancel trading
-            ico.bot_trade_history.reload!
+            ico.bot_trade_history.reload
             if ico.bot_trade_history.status == -1
               ico.trade_info.status = 0 # Set available for ico
               ico.trade_info.save!
@@ -217,6 +217,11 @@ class Ico4
       @floor_price = @previous_price
     end
 
+    if @bot_trade_history.status == 3 # FORCE BUY
+      buy()
+      return
+    end
+
     if changed_sell_percent >= 0 # when price up
 
       # Check for cancel buying
@@ -255,6 +260,11 @@ class Ico4
 
     if @ceil_price == 0.0 || @ceil_price < @previous_price
       @ceil_price = @previous_price
+    end
+
+    if @bot_trade_history.status == 4 # FORCE SELL
+      sell()
+      return
     end
 
     if changed_buy_percent <= 0 # when price down

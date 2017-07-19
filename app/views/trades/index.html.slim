@@ -46,10 +46,10 @@ div#trades.container
               td 
                 | {{ item.buy_at }} 
               td
-                a href="#"
+                a @click="force_buy_trading(item)"
                   | Force Buy
               td 
-                a href="#"
+                a @click="force_sell_trading(item)"
                   | Force Sell
               td 
                 a @click="get_history_logs(item)"

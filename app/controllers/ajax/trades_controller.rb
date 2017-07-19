@@ -32,6 +32,26 @@ module Ajax
       }
     end
 
+    def force_buy
+      obj = BotTradeHistory.find(params[:bot_trade_history_id])
+      obj.status = 3
+      obj.save!
+
+      render json: {
+        status: 1
+      }
+    end
+
+    def force_sell
+      obj = BotTradeHistory.find(params[:bot_trade_history_id])
+      obj.status = 4
+      obj.save!
+
+      render json: {
+        status: 1
+      }
+    end
+
     private
     def polo_params
       params.require(:polo).permit(:note)
