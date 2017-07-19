@@ -35,6 +35,7 @@ namespace :ico_trading do
             # Init ico
             puts "Start a new trade for #{trade_info.currency_pair_name} at #{Time.now}"
             config = {
+              thread_id: thread_id,
               trade_info: trade_info,
               buy_amount: trade_info.buy_amount,
               limit_invert_when_buy: trade_info.limit_invert_when_buy || 1, # VHI
@@ -101,6 +102,7 @@ class Ico4
     @count_verify_sell = 0
 
     @trade_info = config[:trade_info]
+    @thread_id = config[:thread_id]
 
     @config = {
       buy_amount: config[:buy_amount],
@@ -193,7 +195,7 @@ class Ico4
   end
   
   def analysis_for_buy
-    puts "#{@trade_info.currency_pair_name} ana_buy -> floor_price: #{'%.8f' % @floor_price} - previous_price: #{'%.8f' % @previous_price} - current_sell_price: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
+    puts "Thread #{@thread_id} - #{@trade_info.currency_pair_name} ana_buy -> floor: #{'%.8f' % @floor_price} - previous: #{'%.8f' % @previous_price} - current_sell: #{'%.8f' % @current_sell_price} (#{current_sell_changed_with_floor_percent.round(2)}% | #{changed_sell_percent.round(2)})%"
     Log.analysis_buy(@bot_trade_history, @floor_price, @previous_price, @current_sell_price, changed_sell_percent.round(2), current_sell_changed_with_floor_percent.round(2))
 
     if @floor_price == 0.0 || @floor_price > @previous_price  # xac dinh duoc gia tri day khi chua co gia tri day hoac khi tiep tuc giam
@@ -224,8 +226,8 @@ class Ico4
 
   def analysis_for_sell
     profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    puts "#{@trade_info.currency_pair_name}  ana_sell-> ceil_price: #{'%.8f' % @ceil_price} - previous_price: #{'%.8f' % @previous_price} - current_buy_price: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
-    Log.analysis_sell(@trade_info, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
+    puts "Thread #{@thread_id} - #{@trade_info.currency_pair_name}  ana_sell-> ceil: #{'%.8f' % @ceil_price} - previous: #{'%.8f' % @previous_price} - current_buy: #{'%.8f' % @current_buy_price}  (#{current_buy_changed_with_ceil_percent.round(2)}% | #{changed_buy_percent.round(2)}% => #{profit.round(2)}%)"
+    Log.analysis_sell(@bot_trade_history, @ceil_price, @previous_price, @current_buy_price, changed_buy_percent.round(2), current_buy_changed_with_ceil_percent.round(2), profit)
 
     if @ceil_price == 0.0 || @ceil_price < @previous_price
       @ceil_price = @previous_price
