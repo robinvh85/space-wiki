@@ -164,3 +164,7 @@ table.scroll tbody td, table.scroll thead > tr> th {
   font-size: 0.9em;
   right: 10px;
 }
+
+tr.selected{
+  background-color: bisque;
+}

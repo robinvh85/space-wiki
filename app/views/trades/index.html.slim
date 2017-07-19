@@ -1,0 +1,85 @@
+= content_for :javascripts
+  = javascript_include_tag 'trades/app'
+
+div#trades.container
+  div.panel style="margin-bottom: 20px;"
+    div.panel-heading
+      | Scheduling
+    div.panel-block
+      div
+        table.table style="width: 800px;"
+          thead
+            tr
+              th Pair
+              th Status
+              th Remain times
+          tbody
+            tr v-for="item in trading_setting_list"
+              td
+                | {{ item.currency_pair_name }}
+              td 
+                | {{ item.status }} 
+              td 
+                | {{ item.run_times }}
+    
+    div.panel style="margin-bottom: 20px;"
+    div.panel-heading
+      | Trading
+    div.panel-block
+      div
+        table.table style="width: 800px;"
+          thead
+            tr
+              th Pair
+              th Start at
+              th Buy at
+              th 
+              th 
+              th
+          tbody
+            tr v-for="item in trading_list" v-bind:class="{ selected: item.selected }"
+              td
+                | {{ item.currency_pair_name }}
+              td 
+                | {{ item.created_at }} 
+              td 
+                | {{ item.buy_at }} 
+              td
+                a href="#"
+                  | Force Buy
+              td 
+                a href="#"
+                  | Force Sell
+              td 
+                a @click="get_history_logs(item)"
+                  | Logs
+
+    div.panel style="margin-bottom: 20px;"
+    div.panel-heading
+      | Log
+    div.panel-block
+      div
+        table.table style="width: 800px;"
+          thead
+            tr
+              th Pair
+              th Trade type
+              th Changed price
+              th Changed with floor
+              th Changed with ceil
+              th Time
+          tbody
+            tr v-for="item in traing_history_logs"
+              td
+                | {{ item.currency_pair_name }}
+              td 
+                | {{ item.trade_type }} 
+              td 
+                | {{ item.changed_price_percent }} 
+              td 
+                | {{ item.changed_with_floor_percent }} 
+              td 
+                | {{ item.changed_with_ceil_percent }} 
+              td
+                | {{ item.created_at }} 
+               

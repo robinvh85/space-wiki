@@ -30,6 +30,9 @@ Rails.application.routes.draw do
   get 'poloniex/analysis' => 'poloniex#analysis'
   resources :poloniex
 
+  # Trades
+  get 'trades' => 'trades#index'
+
   namespace :ajax do
 
     post 'orders/update_buy_price' => 'orders#update_buy_price'
@@ -60,6 +63,11 @@ Rails.application.routes.draw do
     get 'chartso/get_1d' => 'chartso#get_1d'
     get 'chartso/get_30m_full' => 'chartso#get_30m_full'
     resources :polos
+
+    get 'trades/get_trading_list' => 'trades#get_trading_list'
+    get 'trades/get_trading_history_list' => 'trades#get_trading_history_list'
+    get 'trades/get_traing_history_logs' => 'trades#get_traing_history_logs'
+    
   end
 
 end
