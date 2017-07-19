@@ -67,7 +67,7 @@ Rails.application.routes.draw do
     get 'trades/get_trading_list' => 'trades#get_trading_list'
     get 'trades/get_trading_history_list' => 'trades#get_trading_history_list'
     get 'trades/get_traing_history_logs' => 'trades#get_traing_history_logs'
-    
+    get 'trades/cancel_trade' => 'trades#cancel_trade'
   end
 
 end

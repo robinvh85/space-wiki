@@ -46,7 +46,8 @@ namespace :ico_trading do
               limit_verify_times_buy: trade_info.limit_verify_times_buy || 2,  # Limit times for buy
               limit_verify_times_sell: trade_info.limit_verify_times_sell || 2,  # Limit times for sell
               limit_difference_price: trade_info.limit_difference_price || 0.6,
-              limit_dump_up: trade_info.limit_dump_up || 1
+              limit_dump_up: trade_info.limit_dump_up || 1,
+              limit_cancel_buy_percent: trade_info.limit_cancel_buy_percent || 2
             }  
 
             ico_obj = Ico4.new(config)
@@ -55,6 +56,16 @@ namespace :ico_trading do
 
           # Step 2: analysis each ico
           ico_list.each do |ico|
+
+            # Check cancel trading
+            ico.bot_trade_history.reload!
+            if ico.bot_trade_history.status == -1
+              ico.trade_info.status = 0 # Set available for ico
+              ico.trade_info.save!
+              ico_list.delete(ico)  # Remove ico from ico_list
+              next
+            end
+
             ico.update_current_price()
             ico.analysis()
 
@@ -84,7 +95,7 @@ namespace :ico_trading do
 end
 
 class Ico4
-  attr_accessor :trade_info, :is_sold
+  attr_accessor :trade_info, :is_sold, :bot_trade_history
 
   def initialize(config)
     @trading_type = "BUY" # BUY or SELL
@@ -115,10 +126,11 @@ class Ico4
       limit_verify_times_buy: config[:limit_verify_times_buy],  # Limit times for buy
       limit_verify_times_sell: config[:limit_verify_times_sell],  # Limit times for sell
       limit_difference_price: config[:limit_difference_price],
-      limit_dump_up: config[:limit_dump_up]
+      limit_dump_up: config[:limit_dump_up],
+      limit_cancel_buy_percent: config[:limit_cancel_buy_percent]
     }
 
-    @bot_trade_history = BotTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name})
+    @bot_trade_history = BotTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name, status: 1})
   end
 
   # Properties
@@ -170,6 +182,7 @@ class Ico4
     @ceil_price = @vh_bought_price
 
     @bot_trade_history.buy_at = Time.now
+    @bot_trade_history.status = 2
     @bot_trade_history.save!
   end
   
@@ -205,6 +218,13 @@ class Ico4
     end
 
     if changed_sell_percent >= 0 # when price up
+
+      # Check for cancel buying
+      if changed_buy_percent > @config[:limit_cancel_buy_percent]
+        @bot_trade_history.status = -1
+        @bot_trade_history.save!
+      end
+
       @count_verify_buy = 0 if changed_sell_percent > @config[:limit_dump_up]
 
       if current_sell_changed_with_floor_percent > @config[:limit_invert_when_buy] # buy khi gia tang lon hon nguong VHI

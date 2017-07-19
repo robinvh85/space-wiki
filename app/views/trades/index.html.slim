@@ -36,6 +36,7 @@ div#trades.container
               th 
               th 
               th
+              th
           tbody
             tr v-for="item in trading_list" v-bind:class="{ selected: item.selected }"
               td
@@ -53,6 +54,9 @@ div#trades.container
               td 
                 a @click="get_history_logs(item)"
                   | Logs
+              td 
+                a @click="cancel_trading(item)"
+                  | Cancel
 
     div.panel style="margin-bottom: 20px;"
     div.panel-heading

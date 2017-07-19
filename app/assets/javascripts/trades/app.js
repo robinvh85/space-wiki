@@ -57,6 +57,17 @@ var app = new Vue({
           obj.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
         }
       });
+    },
+    cancel_trading: function(trade){
+      if(confirm("Do you want to cancel this trading ?")){
+        this.$http.get('/ajax/trades/cancel_trade', {params: {bot_trade_history_id: trade.id} }).then(function (res){
+          if(res.data.status == 1){
+            alert("Cancel successfully !")
+          } else {
+            alert("Can not cancel !")
+          }
+        });
+      }
     }
   },
   watch: {
