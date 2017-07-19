@@ -11,12 +11,16 @@ var app = new Vue({
     trading_setting_list: [],
     trading_list: [],
     traing_history_logs: [],
+    selected_trade_history: null
   },
   methods: {
     init: function(){
       console.log("INIT");
       this.get_trading_setting_list();
       this.get_trading_list();
+      this.call_get_history_log();
+
+      setInterval(this.call_get_history_log, 20 * 1000);
     },
     get_trading_setting_list: function(){
       var self = this;
@@ -41,22 +45,14 @@ var app = new Vue({
       });
     },
     get_history_logs: function(trade){
-      var self = this;
-
       // Reset selected      
-      for(var i=0; i< self.trading_list.length; i++){
-        self.trading_list[i].selected = false;
+      for(var i=0; i< this.trading_list.length; i++){
+        this.trading_list[i].selected = false;
       }
       trade.selected = true;
+      this.selected_trade_history = trade;
 
-      this.$http.get('/ajax/trades/get_traing_history_logs', {params: {bot_trade_history_id: trade.id} }).then(function (res){
-        self.traing_history_logs = res.data;
-
-        for(var i=0; i< self.traing_history_logs.length; i++){
-          obj =  self.traing_history_logs[i];
-          obj.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
-        }
-      });
+      this.call_get_history_log();
     },
     cancel_trading: function(trade){
       if(confirm("Do you want to cancel this trading ?")){
@@ -68,6 +64,23 @@ var app = new Vue({
           }
         });
       }
+    },
+    call_get_history_log: function(){
+      trade_id = null;
+      if(this.selected_trade_history != null){
+        trade_id = this.selected_trade_history.id;
+      }
+
+      var self = this;
+
+      this.$http.get('/ajax/trades/get_traing_history_logs', {params: {bot_trade_history_id: trade_id} }).then(function (res){
+        self.traing_history_logs = res.data;
+
+        for(var i=0; i< self.traing_history_logs.length; i++){
+          obj =  self.traing_history_logs[i];
+          obj.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
+        }
+      });
     }
   },
   watch: {

@@ -14,7 +14,11 @@ module Ajax
     end
 
     def get_traing_history_logs
-      list = BotTradeLog.where("bot_trade_history_id = ?", params[:bot_trade_history_id]).order(created_at: 'DESC')
+      if params[:bot_trade_history_id].present?
+        list = BotTradeLog.where("bot_trade_history_id = ?", params[:bot_trade_history_id]).order(created_at: 'DESC')
+      else
+        list = BotTradeLog.where("").order(created_at: 'DESC').take(50)
+      end
       render json: list
     end
 
