@@ -45,7 +45,8 @@ namespace :ico_trading do
               # interval_time: trade_info.interval_time || 120, # 2 min
               limit_verify_times_buy: trade_info.limit_verify_times_buy || 2,  # Limit times for buy
               limit_verify_times_sell: trade_info.limit_verify_times_sell || 2,  # Limit times for sell
-              limit_difference_price: trade_info.limit_difference_price || 0.6
+              limit_difference_price: trade_info.limit_difference_price || 0.6,
+              limit_dump_up: trade_info.limit_dump_up || 1
             }  
 
             ico_obj = Ico4.new(config)
@@ -113,7 +114,8 @@ class Ico4
       # interval_time: config[:interval_time],
       limit_verify_times_buy: config[:limit_verify_times_buy],  # Limit times for buy
       limit_verify_times_sell: config[:limit_verify_times_sell],  # Limit times for sell
-      limit_difference_price: config[:limit_difference_price]
+      limit_difference_price: config[:limit_difference_price],
+      limit_dump_up: config[:limit_dump_up]
     }
 
     @bot_trade_history = BotTradeHistory.create!({currency_pair_id: @trade_info.currency_pair_id, currency_pair_name: @trade_info.currency_pair_name})
@@ -202,7 +204,9 @@ class Ico4
       @floor_price = @previous_price
     end
 
-    if changed_sell_percent >= 0 # when price up     
+    if changed_sell_percent >= 0 # when price up
+      @count_verify_buy = 0 if changed_sell_percent > @config[:limit_dump_up]
+
       if current_sell_changed_with_floor_percent > @config[:limit_invert_when_buy] # buy khi gia tang lon hon nguong VHI
         # Kiem tra chenh lech gia
         diff_price_percent = (@current_sell_price - @current_buy_price) / @current_buy_price * 100
