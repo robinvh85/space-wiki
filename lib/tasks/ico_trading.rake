@@ -195,6 +195,7 @@ class Ico4
     @is_sold = true
 
     @bot_trade_history.sell_at = Time.now
+    @bot_trade_history.status = 5
     @bot_trade_history.save!
   end
 

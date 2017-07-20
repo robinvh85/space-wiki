@@ -2,7 +2,7 @@ module Ajax
   class TradesController < ActionController::Base
     
     def get_trading_list
-      trade_list = BotTradeInfo.where(status: 1)
+      trade_list = BotTradeInfo.where(is_trading: 1)
 
       render json: trade_list
     end
