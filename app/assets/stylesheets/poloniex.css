@@ -168,3 +168,11 @@ table.scroll tbody td, table.scroll thead > tr> th {
 tr.selected{
   background-color: bisque;
 }
+
+td.right{
+  text-align: right;
+}
+
+tr.sell{
+  background-color: honeydew
+}

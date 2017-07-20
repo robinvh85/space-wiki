@@ -274,7 +274,8 @@ class Ico4
         puts "===> #{@trade_info.currency_pair_name} COUNT SELL #{@count_verify_sell} at #{Time.now}"
 
         sell() if @count_verify_sell == @config[:limit_verify_times_sell]
-      elsif -current_buy_changed_with_ceil_percent > @config[:limit_losses_profit]  # Khi giam qua nhieu, toi nguong
+      # elsif -current_buy_changed_with_ceil_percent > @config[:limit_losses_profit]  # Khi giam qua nhieu, toi nguong
+      elsif -profit > @config[:limit_losses_profit]  # Khi giam qua nhieu, toi nguong
         @count_verify_force_sell += 1
         puts "===> #{@trade_info.currency_pair_name} COUNT FORCE SELL #{@count_verify_force_sell} at #{Time.now}"
         sell() if @count_verify_force_sell == @config[:limit_verify_times_sell]

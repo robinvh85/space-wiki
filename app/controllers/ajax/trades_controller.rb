@@ -8,7 +8,7 @@ module Ajax
     end
 
     def get_trading_history_list
-      list = BotTradeHistory.where("status = 1 OR status = 2")
+      list = BotTradeHistory.where("status >= 1 AND status <= 4").order(buy_at: 'ASC')
 
       render json: list
     end

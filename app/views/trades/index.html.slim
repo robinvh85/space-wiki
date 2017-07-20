@@ -63,7 +63,7 @@ div#trades.container
       | Log
     div.panel-block
       div
-        table.table style="width: 1000px;"
+        table.table style="width: 1200px;"
           thead
             tr
               th Pair
@@ -72,21 +72,24 @@ div#trades.container
               th Changed with floor
               th Changed with ceil
               th Profit
+              th Current price
               th Time
           tbody
-            tr v-for="item in traing_history_logs"
+            tr v-for="item in traing_history_logs" v-bind:class="{ sell : item.trade_type == 'sell' }"
               td
                 | {{ item.currency_pair_name }}
               td 
                 | {{ item.trade_type }} 
-              td 
+              td.right
                 | {{ item.changed_price_percent }} 
-              td 
+              td.right
                 | {{ item.changed_with_floor_percent }} 
-              td 
+              td.right
                 | {{ item.changed_with_ceil_percent }} 
-              td
+              td.right v-bind:class="{ warn : item.profit > 2 }"
                 | {{ item.profit }} 
+              td.right
+                | {{ item.current_price }} 
               td
                 | {{ item.created_at }} 
                
