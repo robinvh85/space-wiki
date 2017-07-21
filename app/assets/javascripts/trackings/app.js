@@ -17,16 +17,16 @@ var app = new Vue({
 
       setInterval(this.get_tracking_price_list, 20 * 1000);
     },
-    get_trading_setting_list: function(){
+    get_tracking_price_list: function(){
       var self = this;
 
-      this.$http.get('/ajax/trackings/get_trading_setting_list').then(function (res){
+      this.$http.get('/ajax/trackings/get_tracking_price_list').then(function (res){
         self.tracking_list = res.data;
 
         var item = null;
         for(var i=0 ;i < self.tracking_list.length; i++){
           item = self.tracking_list[i];
-          item.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
+          item.created_at = moment(item.created_at).format("YYYY-MM-DD HH:mm:ss");
 
           if(Math.abs(item.changed_buy) > 2 || Math.abs(item.changed_sell) > 2 ){
             item.is_high_changed = true;
