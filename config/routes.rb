@@ -33,6 +33,9 @@ Rails.application.routes.draw do
   # Trades
   get 'trades' => 'trades#index'
 
+  # Tracking price
+  get 'trakings' => 'trackings#index'
+
   namespace :ajax do
 
     post 'orders/update_buy_price' => 'orders#update_buy_price'
@@ -70,6 +73,8 @@ Rails.application.routes.draw do
     get 'trades/cancel_trade' => 'trades#cancel_trade'
     get 'trades/force_buy' => 'trades#force_buy'
     get 'trades/force_sell' => 'trades#force_sell'
+
+    get 'trackings/get_tracking_price_list' => 'trackings#get_tracking_price_list'
   end
 
 end
