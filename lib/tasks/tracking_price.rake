@@ -98,11 +98,18 @@ class IcoTrackingPrice
     end
   end
 
+  def difference_price
+    if @current_buy_price == 0
+      0.0
+    else
+      ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
+    end
+  end
+
  
   # Can create many algorithms and watching for better
   def analysis
-    puts "#{@trade_info.currency_pair_name} -> Current Buy (#{@current_buy_price} | #{changed_buy_percent}) - Current Sell (#{@current_buy_price} | #{changed_buy_percent}) - Diff #{difference_price}"
-    difference_price = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
+    puts "#{@trade_info.currency_pair_name} -> Current Buy (#{@current_buy_price} | #{changed_buy_percent}) - Current Sell (#{@current_buy_price} | #{changed_buy_percent}) - Diff #{difference_price}"    
 
     params = {
       currency_pair_id: @trade_info.currency_pair_id,
