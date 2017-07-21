@@ -46,6 +46,7 @@ namespace :tracking_price do
 
             ico.update_current_price()
             ico.analysis()
+            sleep(1)
           end
 
           # Step3 : Sleep for next cyclce
