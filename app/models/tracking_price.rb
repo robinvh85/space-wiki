@@ -1,0 +1,2 @@
+class TrackingPrice < ApplicationRecord
+end

@@ -38,8 +38,8 @@ module PoloniexVh
     get 'return24hVolume'
   end
 
-  def self.order_book( currency_pair )
-    get 'returnOrderBook', currencyPair: currency_pair
+  def self.order_book( currency_pair, depth = 30 )
+    get 'returnOrderBook', currencyPair: currency_pair, depth: depth
   end
 
   def self.active_loans

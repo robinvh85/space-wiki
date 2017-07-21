@@ -50,5 +50,9 @@ module Log
         difference_percent: difference_percent
       })
     end
+
+    def tracking_price(params)
+      DifferenceBuySell.create(params)
+    end
   end
 end
