@@ -52,7 +52,7 @@ module Log
     end
 
     def tracking_price(params)
-      DifferenceBuySell.create(params)
+      TrackingPrice.create(params)
     end
   end
 end

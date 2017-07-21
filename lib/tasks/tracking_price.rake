@@ -1,7 +1,7 @@
 #
 namespace :tracking_price do
   task :start, [] => :environment do |_cmd, args|
-    puts "Run rake ico_trading4:start"
+    puts "Run rake tracking_price:start"
     
     threads = []
 
