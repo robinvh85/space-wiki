@@ -34,7 +34,7 @@ Rails.application.routes.draw do
   get 'trades' => 'trades#index'
 
   # Tracking price
-  get 'trakings' => 'trackings#index'
+  get 'trackings' => 'trackings#index'
 
   namespace :ajax do
 
