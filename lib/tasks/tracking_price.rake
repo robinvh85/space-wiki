@@ -111,7 +111,7 @@ class IcoTrackingPrice
       current_sell_price: @current_sell_price,
       changed_buy: changed_buy_percent,
       changed_sell: changed_sell_percent,
-      difference_price: difference_price),
+      difference_price: difference_price,
       previous_buy_price: @previous_buy_price,
       previous_sell_price: @previous_sell_price
     }
