@@ -101,7 +101,7 @@ class IcoTrackingPrice
  
   # Can create many algorithms and watching for better
   def analysis
-    puts "#{@trade_info.currency_pair_name} -> Current Buy (#{@current_buy_price} | #{changed_buy_percent}) - Current Sell (#{@current_buy_price} | #{changed_buy_percent})"
+    puts "#{@trade_info.currency_pair_name} -> Current Buy (#{@current_buy_price} | #{changed_buy_percent}) - Current Sell (#{@current_buy_price} | #{changed_buy_percent}) - Diff #{difference_price}"
     difference_price = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
 
     params = {
