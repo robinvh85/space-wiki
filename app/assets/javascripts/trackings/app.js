@@ -28,7 +28,7 @@ var app = new Vue({
           item = self.tracking_list[i];
           item.created_at = moment(item.created_at).format("YYYY-MM-DD HH:mm:ss");
 
-          if(Math.abs(item.changed_buy) > 2 || Math.abs(item.changed_sell) > 2 ){
+          if(Math.abs(item.changed_buy) > 0.5 || Math.abs(item.changed_sell) > 0.5 ){
             item.is_high_changed = true;
           }
         }
