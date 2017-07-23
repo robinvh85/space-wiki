@@ -17,6 +17,20 @@ class PoloniexController < PoloniexBaseController
 		@polo = Poloni.first
 	end
 
+	def predict
+		@base_unit = params[:base_unit]
+		@base_unit = 'USDT' if @base_unit.nil? || @base_unit.empty?
+
+		@currency_pairs = CurrencyPair.all.order(sort: 'asc')
+
+		if params['all'] == 1
+			@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit).order(percent_min_24h: 'asc')
+		else
+			@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit, is_disabled: 0).order(percent_min_24h: 'asc')
+		end
+		@polo = Poloni.first
+	end
+
 	def chart
 		@currency_pairs = CurrencyPair.all.order(sort: 'asc')
 	end

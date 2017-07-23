@@ -16,6 +16,50 @@ module Ajax
       render json: data
     end
 
+    def get_5m_predict
+      pair_id = params[:pair_id]
+      date = params[:date]
+      step_percent = params[:step_percent] || 0.04
+
+      date_time = DateTime.strptime(date, '%Y/%m/%d')
+
+      pair_id = CurrencyPair.find_by(name: 'USDT_BTC') unless pair_id.present?
+
+      start_time = (date_time - 1.days).to_i
+      end_time = (date_time + 1.days).to_i
+      
+      list = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time)
+      data = create_data_5m(list)
+
+      btc_list = ChartData5m.where("currency_pair_id = 4 AND time_at > ? AND time_at < ?", start_time, end_time)
+      data['btc_value'] = create_btc_data(btc_list)
+
+      # Get duong trung binh of yesterday
+      start_time = (date_time - 1.days).to_i
+      end_time = (date_time).to_i
+      max_value = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time).maximum('min_value')
+      min_value = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time).minimum('min_value')
+
+      yesterday_avg_value = (max_value - min_value) / 2 + min_value
+      low1_value = yesterday_avg_value - yesterday_avg_value * step_percent
+      low2_value = yesterday_avg_value - yesterday_avg_value * step_percent * 2
+      high1_value = yesterday_avg_value + yesterday_avg_value * step_percent
+      high2_value = yesterday_avg_value + yesterday_avg_value * step_percent * 2
+
+      render json: {
+        pair_data: data,
+        predict: {
+          yesterday_avg_value: yesterday_avg_value,
+          max_value: max_value,
+          min_value: min_value,
+          low1_value: low1_value,
+          low2_value: low2_value,
+          high1_value: high1_value,
+          high2_value: high2_value
+        }
+      }
+    end
+
     def get_30m_full
       pair_id = params[:pair_id]
       pair_id = CurrencyPair.first.id if pair_id.nil? || pair_id.empty?
