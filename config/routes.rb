@@ -29,6 +29,7 @@ Rails.application.routes.draw do
   get 'poloniex/realtime' => 'poloniex#realtime'
   get 'poloniex/analysis' => 'poloniex#analysis'
   get 'poloniex/predict' => 'poloniex#predict'
+  get 'poloniex/predict_btc' => 'poloniex#predict_btc'
   resources :poloniex
 
   # Trades
@@ -49,6 +50,7 @@ Rails.application.routes.draw do
     resources :orders
 
     post 'currency_pairs/update_note' => 'currency_pairs#update_note'
+    get 'currency_pairs/get_current_price' => 'currency_pairs#get_current_price'
     resources :currency_pairs
 
     get 'charts/get_5m' => 'charts#get_5m'

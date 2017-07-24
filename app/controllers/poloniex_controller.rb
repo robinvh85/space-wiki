@@ -24,11 +24,14 @@ class PoloniexController < PoloniexBaseController
 		@currency_pairs = CurrencyPair.all.order(sort: 'asc')
 
 		if params['all'] == 1
-			@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit).order(percent_min_24h: 'asc')
+			@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit).order(sort: 'asc')
 		else
-			@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit, is_disabled: 0).order(percent_min_24h: 'asc')
+			@all_currency_pairs = CurrencyPair.where(base_unit: @base_unit, is_disabled: 0).order(sort: 'asc')
 		end
 		@polo = Poloni.first
+	end
+
+	def predict_btc
 	end
 
 	def chart
