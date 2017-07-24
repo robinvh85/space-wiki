@@ -363,5 +363,7 @@ javascript:
     get_data();
     addPlotHover();
     get_current_price();
+
+    setInterval(get_current_price, 15 * 1000);
   });
 

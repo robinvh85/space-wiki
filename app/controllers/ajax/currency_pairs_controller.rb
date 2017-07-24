@@ -37,8 +37,8 @@ module Ajax
       obj = IcoInfo.find_by(currency_pair_name: "USDT_BTC")
 
       render json: {
-        current_buy: obj.current_buy_price,
-        current_sell: obj.current_sell_price
+        current_buy: obj.current_buy_price.round(1),
+        current_sell: obj.current_sell_price.round(1)
       }
     end
 

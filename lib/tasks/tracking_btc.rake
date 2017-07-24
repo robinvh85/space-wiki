@@ -3,7 +3,7 @@ namespace :tracking_btc do
   task :start, [] => :environment do |_cmd, args|
     puts "Run rake tracking_btc:get_price"
     
-    cycle_time = 30
+    cycle_time = 15
 
     while true
       puts "Get price of BTC at #{Time.now}"
@@ -39,5 +39,6 @@ namespace :tracking_btc do
       inteval = (end_time - start_time).to_i
 
       sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    end
   end
 end
