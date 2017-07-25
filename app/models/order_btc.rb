@@ -1,0 +1,2 @@
+class OrderBtc < ApplicationRecord
+end

@@ -19,6 +19,46 @@ div.container
             | Current Buy
           td
             label#current_buy.warn style="font-size: 1.1em"
+  div#orders.panel
+    div.panel-heading
+      | Orders
+    div.panel-block      
+      table.table.is-bordered style="width: 750px;"
+        tr
+          th Sell price
+          th Amount
+          th
+            | {{ test }}
+          th Profit
+          th Buy price
+          th
+        tr
+          th 
+            input type="text"
+          th
+            input type="text"
+          th
+            a href="#"
+              | Sell
+          th
+            | profit
+          th
+          th
+        tr v-for="item in order_list"
+          td 
+            | {{ item.sell_price }}
+          td
+            | {{ item.amount }}
+          td
+            a href="#"
+              | Cancel
+          td
+            | {{ item.profit }}%
+          td
+            input type="text"
+          td
+            a href="#"
+              | Buy
   div.panel
     div.panel-heading
       | Chart
@@ -287,15 +327,6 @@ javascript:
     }
   }
 
-  var array_to_hash = function(arr, key){
-    var hash = {};
-    for(var i=0; i<arr.length; i++){
-      hash[arr[i][key]] = arr[i];
-    }
-
-    return hash;
-  }
-
   var addPlotHover = function(){
     $('#chart').mousemove(function(e){    
       // var chart = Highcharts.charts[Highcharts.charts.length - 1];
@@ -351,7 +382,8 @@ javascript:
     axios.get(url).then(function (res){
       $("#current_sell").html(res.data.current_sell);
       $("#current_buy").html(res.data.current_buy);
-
+      console.log(app);
+      app.current_price = res.data.current_buy;
       document.title = res.data.current_sell + " - " + res.data.current_buy;
     });
   }
@@ -365,5 +397,56 @@ javascript:
     get_current_price();
 
     setInterval(get_current_price, 15 * 1000);
+  });
+
+  // Vue
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+
+  Vue.prototype.$http = axios;
+
+  var app = new Vue({
+    el: '#orders',
+    data: {
+      test: "hello",
+      order_list: [],
+      current_price: 0
+    },
+    methods: {
+      getOpenOrders: function(){
+        var self = this;
+        this.$http.get('/ajax/orders/get_open_order_btc').then(function (res){
+          self.order_list = res.data
+          console.log(res.data);
+        });
+      },
+      getCurrentPrice: function(){
+        var self = this;
+        this.$http.get('/ajax/orders/get_open_order_btc').then(function (res){
+          self.order_list = res.data
+          console.log(res.data);
+        });
+      },
+      init: function(){
+        console.log("INIT");
+        this.getOpenOrders();
+      }    
+    },
+    watch: {
+      current_price: function (value) {
+        for(var i=0; i < this.order_list.length; i++){
+          var obj = this.order_list[i];
+          obj.profit = (obj.sell_price - parseFloat(value)) / parseFloat(value) * 100;
+          obj.profit = obj.profit.toFixed(2);
+        }
+      },
+    },
+    created: function() {
+      console.log("created");
+    },
+    mounted: function() {
+      console.log("mounted");
+      this.init();
+    }
   });
 

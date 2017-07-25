@@ -48,6 +48,7 @@ Rails.application.routes.draw do
     get 'orders/get_current_price' => 'orders#get_current_price'
     get 'orders/get_history_trade' => 'orders#get_history_trade'
     get 'orders/get_history_trading' => 'orders#get_history_trading'
+    get 'orders/get_open_order_btc' => 'orders#get_open_order_btc'
     resources :orders
 
     post 'currency_pairs/update_note' => 'currency_pairs#update_note'

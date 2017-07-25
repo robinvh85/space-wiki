@@ -145,6 +145,12 @@ module Ajax
       render json: list
     end
 
+    def get_open_order_btc
+      list = OrderBtc.all
+      
+      render json: list
+    end
+
     private    
   end
 end
