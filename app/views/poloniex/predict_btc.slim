@@ -53,7 +53,8 @@ div.container
             a v-show="item.sell_order_id != null && item.sold_order_id == null" href="#"
               | Cancel
           td
-            | {{ item.profit }}%
+            label v-show="item.sold_order_id != null"
+              | {{ item.profit }}%
           td
             input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text"
             label v-show="item.buy_order_id != null"
