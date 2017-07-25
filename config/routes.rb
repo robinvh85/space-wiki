@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   get 'poloniex/analysis' => 'poloniex#analysis'
   get 'poloniex/predict' => 'poloniex#predict'
   get 'poloniex/predict_btc' => 'poloniex#predict_btc'
+  get 'poloniex/predict_percent' => 'poloniex#predict_percent'
   resources :poloniex
 
   # Trades
@@ -69,6 +70,7 @@ Rails.application.routes.draw do
     get 'chartso/get_1d' => 'chartso#get_1d'
     get 'chartso/get_30m_full' => 'chartso#get_30m_full'
     get 'chartso/get_5m_predict' => 'chartso#get_5m_predict'
+    get 'chartso/get_5m_percent' => 'chartso#get_5m_percent'    
     resources :polos
 
     get 'trades/get_trading_list' => 'trades#get_trading_list'
