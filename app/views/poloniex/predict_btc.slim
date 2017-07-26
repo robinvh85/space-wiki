@@ -58,7 +58,7 @@ div.container
             label v-show="item.sold_order_id != null && item.bought_order_id == null"
               | {{ item.current_profit }}%
           td style="text-align: left;"
-            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text" style="width: 120px;"
+            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text" style="width: 120px;" v-for="item.buy_price"
             label v-show="item.buy_order_id != null"
               | {{ item.buy_price }}
             label v-show="item.buy_order_id != null"
@@ -474,6 +474,32 @@ javascript:
               this.getOpenOrders();
             } else {
               alert("Can not cancel sell, please check !!!");
+            }            
+          });
+        }
+      },
+      buyOrder: function(item){
+        var self = this;
+
+        if(confirm("Do you want to buy " + item.amount + " at price " + item.buy_price )){
+          this.$http.post('/ajax/orders/call_buy_btc', item).then(function (res){
+            if(res.data != null){
+              alert("Sell successfully !");
+            } else {
+              alert("Can not buy, please check !!!");
+            }            
+          });
+        }
+      },
+      cancelBuyOrder: function(item){
+        var self = this;
+
+        if(confirm("Do you want to cancel buy order [amount " + item.amount + " at price " + item.buy_price + "]")){
+          this.$http.post('/ajax/orders/call_cancel_sell_btc', item).then(function (res){
+            if(res.data != null){
+              alert("Cancel buy successfully !");
+            } else {
+              alert("Can not cancel buy, please check !!!");
             }            
           });
         }

@@ -182,6 +182,36 @@ module Ajax
       }
     end
 
+    def call_buy_btc
+      price = params[:buy_price]
+      pair = "USDT_BTC"
+      amount = params[:amount].to_f - params[:amount].to_f * 0.151
+
+      result = JSON.parse(`python script/python/buy.py #{pair} #{'%.8f' % price} #{amount}`)
+      order_btc = nil
+
+      if result.present?
+        order_btc = OrderBtc.find(params[:id])
+        order_btc.buy_order_id = result["orderNumber"]
+      end
+
+      render json: order_btc
+    end
+
+    def call_cancel_buy_btc
+      result = JSON.parse(`python script/python/cancel_order.py #{params['buy_order_id']}`)
+
+      if result['success'] == 1
+        obj = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
+        obj.buy_order_id = nil
+        obj.save
+      end
+
+      render json: {
+        success: result['success']
+      }
+    end
+
     private    
   end
 end

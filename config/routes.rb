@@ -51,7 +51,9 @@ Rails.application.routes.draw do
     get 'orders/get_open_order_btc' => 'orders#get_open_order_btc'
     post 'orders/call_sell_btc' => 'orders#call_sell_btc'
     post 'orders/call_cancel_sell_btc' => 'orders#call_cancel_sell_btc'
-    
+    post 'orders/call_buy_btc' => 'orders#call_buy_btc'
+    post 'orders/call_cancel_buy_btc' => 'orders#call_cancel_buy_btc'
+
     resources :orders
 
     post 'currency_pairs/update_note' => 'currency_pairs#update_note'
