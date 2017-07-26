@@ -146,7 +146,7 @@ module Ajax
     end
 
     def get_open_order_btc
-      list = OrderBtc.where("").order(id: "desc")
+      list = OrderBtc.where(bought_order_id: nil).order(id: "desc")
       
       render json: list
     end
@@ -171,7 +171,7 @@ module Ajax
     end
 
     def call_cancel_sell_btc
-      result = JSON.parse(`python script/python/cancel_order.py #{params['order_number']}`)
+      result = JSON.parse(`python script/python/cancel_order.py #{params['sell_order_id']}`)
 
       if result['success'] == 1
         OrderBtc.find_by(sell_order_id: params['sell_order_id']).delete()

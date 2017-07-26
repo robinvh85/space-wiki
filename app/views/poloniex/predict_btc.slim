@@ -23,7 +23,7 @@ div.container
     div.panel-heading
       | Orders
     div.panel-block      
-      table.table.is-bordered style="width: 750px;"
+      table.table.is-bordered style="width: 800px;"
         tr
           th Date
           th Sell price
@@ -58,7 +58,7 @@ div.container
             label v-show="item.sold_order_id != null && item.bought_order_id == null"
               | {{ item.current_profit }}%
           td style="text-align: left;"
-            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text"
+            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text" style="width: 120px;"
             label v-show="item.buy_order_id != null"
               | {{ item.buy_price }}
             label v-show="item.buy_order_id != null"
@@ -406,7 +406,7 @@ javascript:
     addPlotHover();
     get_current_price();
 
-    setInterval(get_current_price, 15 * 1000);
+    setInterval(get_current_price, 5 * 1000);
   });
 
   // Vue
@@ -418,7 +418,6 @@ javascript:
   var app = new Vue({
     el: '#orders',
     data: {
-      test: "hello",
       order_list: [],
       current_price: 0,
       sell_obj: {
@@ -435,6 +434,7 @@ javascript:
           for(var i=0; i<self.order_list.length; i++){
             var obj = self.order_list[i];
             obj.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
+            obj.current_profit = 0;
           }
         });
       },
@@ -448,10 +448,16 @@ javascript:
       sellOrder: function(){
         var self = this;
 
+        if(parseFloat(this.sell_obj.price) < parseFloat(this.current_price) || parseFloat(this.sell_obj.price) >  5000){
+          alert("Price is not valid");
+          return;
+        }
+
         if(confirm("Do you want to sell " + this.sell_obj.amount + " at price " + this.sell_obj.price )){
           this.$http.post('/ajax/orders/call_sell_btc', this.sell_obj).then(function (res){
             if(res.data != null){
               alert("Sell successfully !");
+              this.getOpenOrders();
             } else {
               alert("Can not sell, please check !!!");
             }            
@@ -461,10 +467,11 @@ javascript:
       cancelSellOrder: function(item){
         var self = this;
 
-        if(confirm("Do you want to cancel order [amount " + this.item.amount + " at price " + this.item.price + "]")){
-          this.$http.post('/ajax/orders/call_cancel_sell_btc', this.item).then(function (res){
+        if(confirm("Do you want to cancel order [amount " + item.amount + " at price " + item.sell_price + "]")){
+          this.$http.post('/ajax/orders/call_cancel_sell_btc', item).then(function (res){
             if(res.data != null){
               alert("Cancel sell successfully !");
+              this.getOpenOrders();
             } else {
               alert("Can not cancel sell, please check !!!");
             }            
@@ -491,6 +498,8 @@ javascript:
             obj.profit = obj.profit.toFixed(2);
           }
         }
+
+        this.$forceUpdate();
       },
     },
     created: function() {
