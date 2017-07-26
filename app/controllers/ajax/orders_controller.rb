@@ -183,18 +183,15 @@ module Ajax
     end
 
     def call_buy_btc
-      price = params[:buy_price]
-      pair = "USDT_BTC"
-      amount = params[:amount].to_f - params[:amount].to_f * 0.151
+      pair = "USDT_BTC"      
+      order_btc = OrderBtc.find(params[:id])
+      order_btc.buy_price = params[:buy_price]
+      new_amount = order_btc.amount * (order_btc.sell_price.to_f / order_btc.buy_price)
+      amount = order_btc.amount - order_btc.amount * 0.16
+      result = JSON.parse(`python script/python/buy.py #{pair} #{'%.8f' % order_btc.buy_price} #{new_amount}`)
 
-      result = JSON.parse(`python script/python/buy.py #{pair} #{'%.8f' % price} #{amount}`)
-      order_btc = nil
-
-      if result.present?
-        order_btc = OrderBtc.find(params[:id])
-        order_btc.buy_order_id = result["orderNumber"]
-      end
-
+      order_btc.buy_order_id = result["orderNumber"] if result.present?
+      order_btc.save
       render json: order_btc
     end
 
@@ -204,6 +201,7 @@ module Ajax
       if result['success'] == 1
         obj = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
         obj.buy_order_id = nil
+        obj.buy_price = nil
         obj.save
       end
 

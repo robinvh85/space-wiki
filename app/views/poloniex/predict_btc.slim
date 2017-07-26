@@ -58,16 +58,16 @@ div.container
             label v-show="item.sold_order_id != null && item.bought_order_id == null"
               | {{ item.current_profit }}%
           td style="text-align: left;"
-            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text" style="width: 120px;" v-for="item.buy_price"
+            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text" style="width: 120px;" v-model="item.buy_price"
             label v-show="item.buy_order_id != null"
               | {{ item.buy_price }}
             label v-show="item.buy_order_id != null"
               | &nbsp;({{ item.profit }}%)
           td style="text-align: center;"
             div v-show="item.sell_order_id != null"
-              a v-show="item.sold_order_id != null && item.buy_order_id == null" href="#"
+              a v-show="item.sold_order_id != null && item.buy_order_id == null" @click="buyOrder(item)"
                 | Buy
-              a v-show="item.buy_order_id != null && item.bought_order_id == null" href="#"
+              a v-show="item.buy_order_id != null && item.bought_order_id == null" @click="cancelBuyOrder(item)"
                 | Cancel
   div.panel
     div.panel-heading
@@ -485,6 +485,7 @@ javascript:
           this.$http.post('/ajax/orders/call_buy_btc', item).then(function (res){
             if(res.data != null){
               alert("Sell successfully !");
+              this.getOpenOrders();
             } else {
               alert("Can not buy, please check !!!");
             }            
@@ -495,9 +496,10 @@ javascript:
         var self = this;
 
         if(confirm("Do you want to cancel buy order [amount " + item.amount + " at price " + item.buy_price + "]")){
-          this.$http.post('/ajax/orders/call_cancel_sell_btc', item).then(function (res){
+          this.$http.post('/ajax/orders/call_cancel_buy_btc', item).then(function (res){
             if(res.data != null){
               alert("Cancel buy successfully !");
+              this.getOpenOrders();
             } else {
               alert("Can not cancel buy, please check !!!");
             }            
