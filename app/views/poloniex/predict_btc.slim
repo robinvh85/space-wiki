@@ -54,11 +54,13 @@ div.container
               | Cancel
           td
             label v-show="item.sold_order_id != null"
-              | {{ item.profit }}%
+              | {{ item.current_profit }}%
           td
             input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text"
             label v-show="item.buy_order_id != null"
               | {{ item.buy_price }}
+            label v-show="item.buy_order_id != null"
+              | ({{ item.profit }}%)
           td
             div v-show="item.sell_order_id != null"
               a v-show="item.sold_order_id != null && item.buy_order_id == null" href="#"
@@ -443,10 +445,10 @@ javascript:
         for(var i=0; i < this.order_list.length; i++){
           var obj = this.order_list[i];
 
-          if(obj.buy_price == null){
-            obj.profit = (obj.sell_price - parseFloat(value)) / parseFloat(value) * 100;
-            obj.profit = obj.profit.toFixed(2);
-          } else {
+          if(obj.buy_order_id == null){ // Chua mua
+            obj.current_profit = (obj.sell_price - parseFloat(value)) / parseFloat(value) * 100;
+            obj.current_profit = obj.current_profit.toFixed(2);
+          } else { // Da mua
             obj.profit = (obj.sell_price - obj.buy_price) / obj.buy_price * 100;
             obj.profit = obj.profit.toFixed(2);
           }

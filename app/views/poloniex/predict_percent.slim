@@ -95,20 +95,21 @@ javascript:
         //xDateFormat: 'Y'
       },
 
-      series: [{
+      series: [
+        /*{
         name: 'min',
         data: data.min_value,
         yAxis: 1,
         id: 'data_min'
-      },{
+      },*/{
         name: 'Increase Percent',
         data: data.increase_percent,
         yAxis: 1
       },{
         name: 'BTC',
         data: data.btc_value,
-        yAxis: 2,
-        visible: false
+        yAxis: 1,
+        visible: true
       },{
         type: 'flags',
         name: 'Flags on series',
@@ -168,6 +169,7 @@ javascript:
 
       predict = res.data.predict;
       chart = createChart5m(res.data.pair_data, pair)
+      addZeroLine(chart);
     });
   }
 
@@ -285,7 +287,7 @@ javascript:
   }
 
   var changeBaseUnit = function(obj){
-    document.location = "/poloniex/predict?base_unit=" + obj.value
+    document.location = "/poloniex/predict_percent?base_unit=" + obj.value
   }
 
   var getRangeSelector = function(chart_type){
@@ -406,6 +408,17 @@ javascript:
   });
   }
 
+  var addZeroLine = function(){
+    var yaxis = chart.yAxis[1];
+
+    yaxis.addPlotLine({
+      value: 0,
+      color: 'green',
+      width: 1,
+      id: 'zero_line'        
+    });
+  }
+
   $(function(){
 
     if(base_unit == 'BTC'){
@@ -419,6 +432,6 @@ javascript:
     $("#date_input").val(moment().format("Y/MM/DD"));
     $($('[name="rdo_pair"]')[0]).trigger( "click" );
 
-    // addPlotHover();
+    // addPlotHover();    
   });
 

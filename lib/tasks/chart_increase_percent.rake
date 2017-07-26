@@ -7,24 +7,23 @@ namespace :chart_increase_percent do
       date_start = DateTime.strptime("2017/07/01", '%Y/%m/%d')
       # current_pair = CurrencyPair.find_by(name: "BTC_NXT")
 
-      26.times do |index|
-        date = date_start + index.days
+      1.times do |index|
+        date = date_start + 24.days
         puts "#{current_pair.name} - Get start_percent_min for #{date} at #{Time.now}"
 
         start_time = date
         end_time = start_time + 1.days
-        previous = nil
+        sample_data = nil
 
         data_5m_list = ChartData5m.where("currency_pair_id = ? AND date_time >= ? AND date_time < ?", current_pair.id, start_time, end_time)
         data_5m_list.each do |item|
-          if previous.nil?
-            previous = item
-            previous.increase_percent = 0
-            previous.save!
+          if sample_data.nil?
+            sample_data = item
+            sample_data.increase_percent = 0
+            sample_data.save!
           else
-            item.increase_percent = ((item.min_value - previous.min_value) / previous.min_value * 100).round(4)
+            item.increase_percent = ((item.min_value - sample_data.min_value) / sample_data.min_value * 100).round(4)
             item.save!
-            previous = item
           end
         end
       end

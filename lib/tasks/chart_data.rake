@@ -18,22 +18,42 @@ namespace :chart_data do
       ChartData.get_data_chart_5m(currency_pair)
       ChartData.get_percent_min_24h(currency_pair)
       
-      ChartData.get_data_chart_15m(currency_pair)
-      ChartData.get_percent_min_15m_24h(currency_pair)
+      # ChartData.get_data_chart_15m(currency_pair)
+      # ChartData.get_percent_min_15m_24h(currency_pair)
 
       ChartData.get_data_chart_30m(currency_pair)
       ChartData.get_percent_min_30m_24h(currency_pair)
       
-      ChartData.get_data_chart_2h(currency_pair)
+      # ChartData.get_data_chart_2h(currency_pair)
     end
 
+    ChartData.get_increase_percent()
+
     puts "End rake chart_data:get at #{Time.now}"
+  end
+
+  task get1: :environment do
+    ChartData.get_increase_percent()
   end
 end
 
 module ChartData
   class << self
     attr_accessor :start, :end
+
+    def get_increase_percent
+      date = Time.now.strftime("%Y/%m/%d")
+
+      CurrencyPair.where(is_init: 1).each do |current_pair|
+        puts "#{current_pair.name} - Get start_percent_min for #{date} at #{Time.now}"
+
+        sample_data = ChartData5m.find_by("currency_pair_id = ? AND date_time > ?", current_pair.id, date)
+
+        data_5m = ChartData5m.where(currency_pair_id: current_pair.id).last
+        data_5m.increase_percent = ((data_5m.min_value - sample_data.min_value) / sample_data.min_value * 100).round(4)
+        data_5m.save!
+      end
+    end
 
     # 5m
     def get_data_chart_5m(currency_pair, period = 300)  

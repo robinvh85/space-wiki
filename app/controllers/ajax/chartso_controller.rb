@@ -69,7 +69,8 @@ module Ajax
 
       pair_id = CurrencyPair.find_by(name: 'USDT_BTC') unless pair_id.present?
 
-      start_time = (date_time - 1.days).to_i
+      # start_time = (date_time - 1.days).to_i
+      start_time = date_time.to_i
       end_time = (date_time + 1.days).to_i
       
       list = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at < ?", pair_id, start_time, end_time)
@@ -267,7 +268,7 @@ module Ajax
       btc_data = []
 
       list.each do |item|
-        btc_data.push([item.time_at * 1000, item.increase_percent.to_f])
+        btc_data.push([item.time_at * 1000, item.increase_percent.to_f]) if item.increase_percent.present?
       end
 
       btc_data
