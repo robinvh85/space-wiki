@@ -25,43 +25,45 @@ div.container
     div.panel-block      
       table.table.is-bordered style="width: 750px;"
         tr
+          th Date
           th Sell price
           th Amount
           th
-            | {{ test }}
           th Profit
           th Buy price
           th
         tr
+          th
           th 
-            input type="text"
+            input type="text" style="width: 120px;" v-model="sell_obj.price"
           th
-            input type="text"
+            input type="text" style="width: 120px;" v-model="sell_obj.price"
           th
-            a href="#"
+            a @click="sellOrder()"
               | Sell
           th
-            | profit
           th
           th
         tr v-for="item in order_list"
-          td 
+          td style="text-align: left;"
+            | {{ item.created_at }}
+          td style="text-align: left;"
             | {{ item.sell_price }}
-          td
+          td style="text-align: left;"
             | {{ item.amount }}
-          td
+          td style="text-align: center;"
             a v-show="item.sell_order_id != null && item.sold_order_id == null" href="#"
               | Cancel
           td
-            label v-show="item.sold_order_id != null"
+            label v-show="item.sold_order_id != null && item.bought_order_id == null"
               | {{ item.current_profit }}%
-          td
+          td style="text-align: left;"
             input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text"
             label v-show="item.buy_order_id != null"
               | {{ item.buy_price }}
             label v-show="item.buy_order_id != null"
-              | ({{ item.profit }}%)
-          td
+              | &nbsp;({{ item.profit }}%)
+          td style="text-align: center;"
             div v-show="item.sell_order_id != null"
               a v-show="item.sold_order_id != null && item.buy_order_id == null" href="#"
                 | Buy
@@ -418,14 +420,22 @@ javascript:
     data: {
       test: "hello",
       order_list: [],
-      current_price: 0
+      current_price: 0,
+      sell_obj: {
+        price: 0,
+        amount: 0
+      }
     },
     methods: {
       getOpenOrders: function(){
         var self = this;
         this.$http.get('/ajax/orders/get_open_order_btc').then(function (res){
           self.order_list = res.data
-          console.log(res.data);
+          
+          for(var i=0; i<self.order_list.length; i++){
+            var obj = self.order_list[i];
+            obj.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
+          }
         });
       },
       getCurrentPrice: function(){
@@ -434,6 +444,19 @@ javascript:
           self.order_list = res.data
           console.log(res.data);
         });
+      },
+      sellOrder: function(){
+        var self = this;
+
+        if(confirm("Do you want to sell " + this.sell_obj.amount + " at price " + this.sell_obj.price )){
+          this.$http.get('/ajax/orders/call_sell_btc').then(function (res){
+            if(res.data != null){
+              alert("Sell successfully !");
+            } else {
+              alert("Can not sell, please check !!!");
+            }            
+          });
+        }
       },
       init: function(){
         console.log("INIT");
@@ -445,10 +468,12 @@ javascript:
         for(var i=0; i < this.order_list.length; i++){
           var obj = this.order_list[i];
 
-          if(obj.buy_order_id == null){ // Chua mua
+          if(obj.sold_order_id != null && obj.bought_order_id == null){ // Sold and not bought
             obj.current_profit = (obj.sell_price - parseFloat(value)) / parseFloat(value) * 100;
             obj.current_profit = obj.current_profit.toFixed(2);
-          } else { // Da mua
+          } 
+          
+          if(obj.buy_order_id != null) { // Da mua
             obj.profit = (obj.sell_price - obj.buy_price) / obj.buy_price * 100;
             obj.profit = obj.profit.toFixed(2);
           }

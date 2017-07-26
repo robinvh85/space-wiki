@@ -146,9 +146,29 @@ module Ajax
     end
 
     def get_open_order_btc
-      list = OrderBtc.all
+      list = OrderBtc.where("").order(id: "desc")
       
       render json: list
+    end
+
+    def call_sell_btc
+      order_btc_id = params[:order_btc_id]
+      price = params[:price]
+      amount = params[:amount]
+      pair = "USDT_BTC"
+
+      result = JSON.parse(`python script/python/sell.py #{pair} #{'%.8f' % price} #{amount}`)
+      order_btc = nil
+
+      if result.present?
+        order_btc = OrderBtc.find(order_btc_id)
+        if order_btc.present?
+          order_btc.sell_order_id = result["orderNumber"]
+          order_btc.save!
+        end
+      end
+
+      render json: order_btc
     end
 
     private    
