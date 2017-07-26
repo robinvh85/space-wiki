@@ -37,7 +37,7 @@ div.container
           th 
             input type="text" style="width: 120px;" v-model="sell_obj.price"
           th
-            input type="text" style="width: 120px;" v-model="sell_obj.price"
+            input type="text" style="width: 120px;" v-model="sell_obj.amount"
           th
             a @click="sellOrder()"
               | Sell
@@ -52,7 +52,7 @@ div.container
           td style="text-align: left;"
             | {{ item.amount }}
           td style="text-align: center;"
-            a v-show="item.sell_order_id != null && item.sold_order_id == null" href="#"
+            a v-show="item.sell_order_id != null && item.sold_order_id == null" @click="cancelSellOrder(item)"
               | Cancel
           td
             label v-show="item.sold_order_id != null && item.bought_order_id == null"
@@ -449,11 +449,24 @@ javascript:
         var self = this;
 
         if(confirm("Do you want to sell " + this.sell_obj.amount + " at price " + this.sell_obj.price )){
-          this.$http.get('/ajax/orders/call_sell_btc').then(function (res){
+          this.$http.post('/ajax/orders/call_sell_btc', this.sell_obj).then(function (res){
             if(res.data != null){
               alert("Sell successfully !");
             } else {
               alert("Can not sell, please check !!!");
+            }            
+          });
+        }
+      },
+      cancelSellOrder: function(item){
+        var self = this;
+
+        if(confirm("Do you want to cancel order [amount " + this.item.amount + " at price " + this.item.price + "]")){
+          this.$http.post('/ajax/orders/call_cancel_sell_btc', this.item).then(function (res){
+            if(res.data != null){
+              alert("Cancel sell successfully !");
+            } else {
+              alert("Can not cancel sell, please check !!!");
             }            
           });
         }

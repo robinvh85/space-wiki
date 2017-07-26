@@ -152,7 +152,6 @@ module Ajax
     end
 
     def call_sell_btc
-      order_btc_id = params[:order_btc_id]
       price = params[:price]
       amount = params[:amount]
       pair = "USDT_BTC"
@@ -161,14 +160,26 @@ module Ajax
       order_btc = nil
 
       if result.present?
-        order_btc = OrderBtc.find(order_btc_id)
-        if order_btc.present?
-          order_btc.sell_order_id = result["orderNumber"]
-          order_btc.save!
-        end
+        order_btc = OrderBtc.create({
+          sell_price: price,
+          amount: amount,
+          sell_order_id: result["orderNumber"]
+        })
       end
 
       render json: order_btc
+    end
+
+    def call_cancel_sell_btc
+      result = JSON.parse(`python script/python/cancel_order.py #{params['order_number']}`)
+
+      if result['success'] == 1
+        OrderBtc.find_by(sell_order_id: params['sell_order_id']).delete()
+      end
+
+      render json: {
+        success: result['success']
+      }
     end
 
     private    
