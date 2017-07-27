@@ -41,4 +41,61 @@ namespace :tracking_btc do
       sleep(cycle_time - inteval) if cycle_time - inteval > 0
     end
   end
+
+  task :check_orders, [] => :environment do |_cmd, args|
+    puts "Run rake tracking_btc:check_orders"
+
+    cycle_time = 15
+    while true
+      start_time = Time.now
+
+      TrackingBtc.check_orders()
+
+      end_time = Time.now
+      inteval = (end_time - start_time).to_i
+
+      sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    end
+  end
+end
+
+module TrackingBtc
+  class << self
+    def check_orders
+      query = """
+        (sell_order_id IS NOT NULL AND sold_order_id IS NULL) OR (buy_order_id IS NOT NULL AND bought_order_id IS NULL)
+      """
+      order_list = OrderBtc.where(query)
+
+      order_list.each do |order|
+        if !order.buy_order_id.nil? and order.bought_order_id.nil? # check buy order
+          puts "Check buy order #{order.buy_order_id} at #{Time.now}"
+
+          begin
+            result = JSON.parse(`python script/python/check_trade_order.py #{order.buy_order_id}`)
+            if result.present?
+              order.bought_order_id = 1
+              order.save
+            end
+          rescue
+            puts "Buy order #{order.buy_order_id} is not existed!"
+          end
+        end
+        
+        if !order.sell_order_id.nil? and order.sold_order_id.nil?
+          puts "Check sell order #{order.sell_order_id} at #{Time.now}"
+
+          begin
+            result = JSON.parse(`python script/python/check_trade_order.py #{order.sell_order_id}`)
+            if result.present?
+              order.sold_order_id = 1
+              order.save
+            end
+          rescue
+            puts "Sell order #{order.sell_order_id} is not existed!"
+          end
+        end
+      end
+    end
+  end
 end
