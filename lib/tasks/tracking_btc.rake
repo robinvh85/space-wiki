@@ -9,30 +9,12 @@ namespace :tracking_btc do
       puts "Get price of BTC at #{Time.now}"
       start_time = Time.now
       result = {}
-      pair_name = "USDT_BTC"
-      response = PoloniexVh.order_book(pair_name)
-      data = JSON.parse(response.body)
-
-      limit_btc = 0.01
-      buy_price = 0
-      data['bids'].each do |bid|
-        if bid[1].to_f > limit_btc
-          buy_price = bid[0].to_f
-          break
-        end
-      end
-
-      sell_price = 0
-      data['asks'].each do |ask|
-        if ask[1].to_f > limit_btc
-          sell_price = ask[0].to_f
-          break
-        end
-      end
+      
+      price_obj = TrackingBtc.get_price()
 
       ico_info = IcoInfo.find_by(currency_pair_name: "USDT_BTC")
-      ico_info.current_buy_price = buy_price
-      ico_info.current_sell_price = sell_price
+      ico_info.current_buy_price = price_obj[:buy_price]
+      ico_info.current_sell_price = price_obj[:sell_price]
       ico_info.save!
 
       end_time = Time.now
@@ -55,6 +37,44 @@ namespace :tracking_btc do
       inteval = (end_time - start_time).to_i
 
       sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    end
+  end
+
+  task :log_price, [] => :environment do |_cmd, args|
+    puts "Run rake tracking_btc:log_price"
+
+    cycle_time_list = [10, 20, 30, 40]
+    period_type_list = ['10s', '20s', '30s', '40s']
+    
+    threads = []
+    thread_num = 4
+    thread_num.times do |index|
+      puts "Create thread #{index + 1}"
+      thread = Thread.new{
+        thread_id = index + 1
+        cycle_time = cycle_time_list[index]
+        previous_price = nil
+        period_type = period_type_list[index]
+        while true
+          puts "Thread #{thread_id} - Write log at #{Time.now}"
+          start_time = Time.now
+
+          price_obj = TrackingBtc.save_price_log(period_type, previous_price)
+          previous_price = price_obj
+
+          end_time = Time.now
+          inteval = (end_time - start_time).to_i
+
+          sleep(cycle_time - inteval) if cycle_time - inteval > 0
+        end
+      }
+    
+      sleep(2)
+      threads << thread
+    end
+
+    threads.each do |t|
+      t.join
     end
   end
 end
@@ -96,6 +116,55 @@ module TrackingBtc
           end
         end
       end
+    end
+
+    def save_price_log(period_type, previous_price)
+      price_obj = TrackingBtc.get_price()
+      return price_obj if previous_price.nil?
+
+      change_buy_percent = ((price_obj[:buy_price] - previous_price[:buy_price]) / previous_price[:buy_price] * 100).round(2)
+      change_sell_percent = ((price_obj[:sell_price] - previous_price[:sell_price]) / previous_price[:sell_price] * 100).round(2)
+      diff_price_percent = ((price_obj[:sell_price] - price_obj[:buy_price]) / price_obj[:buy_price] * 100).round(2)
+
+      BtcPriceLog.create({
+        buy_price: price_obj[:buy_price],
+        sell_price: price_obj[:sell_price],
+        change_buy_percent: change_buy_percent,
+        change_sell_percent: change_sell_percent,
+        diff_price_percent: diff_price_percent,
+        period_type: period_type,
+        time_at: Time.now.to_i
+      })
+      
+      price_obj
+    end
+
+    def get_price
+      pair_name = "USDT_BTC"
+      response = PoloniexVh.order_book(pair_name)
+      data = JSON.parse(response.body)
+
+      limit_btc = 0.01
+      buy_price = 0
+      data['bids'].each do |bid|
+        if bid[1].to_f > limit_btc
+          buy_price = bid[0].to_f
+          break
+        end
+      end
+
+      sell_price = 0
+      data['asks'].each do |ask|
+        if ask[1].to_f > limit_btc
+          sell_price = ask[0].to_f
+          break
+        end
+      end
+
+      {
+        buy_price: buy_price,
+        sell_price: sell_price
+      }
     end
   end
 end
