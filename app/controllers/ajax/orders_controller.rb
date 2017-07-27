@@ -187,7 +187,7 @@ module Ajax
       order_btc = OrderBtc.find(params[:id])
       order_btc.buy_price = params[:buy_price]
       new_amount = order_btc.amount * (order_btc.sell_price.to_f / order_btc.buy_price)
-      amount = order_btc.amount - order_btc.amount * 0.16
+      new_amount = new_amount - new_amount * 0.0016
       result = JSON.parse(`python script/python/buy.py #{pair} #{'%.8f' % order_btc.buy_price} #{new_amount}`)
 
       order_btc.buy_order_id = result["orderNumber"] if result.present?
