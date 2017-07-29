@@ -1,86 +1,42 @@
 # 
-namespace :tracking_btc do
+namespace :bot_btc do
   task :start, [] => :environment do |_cmd, args|
-    puts "Run rake tracking_btc:get_price"
+    puts "Run rake bot_btc:start"
     
     cycle_time = 15
+    trade_amount = 5
+
+    config = {
+      amount: 0.001
+    }
+    bot1 = BotBtc.new(config)
 
     while true
-      puts "Get price of BTC at #{Time.now}"
       start_time = Time.now
       result = {}
       
-      price_obj = TrackingBtc.get_price()
-
-      ico_info = IcoInfo.find_by(currency_pair_name: "USDT_BTC")
-      ico_info.current_buy_price = price_obj[:buy_price]
-      ico_info.current_sell_price = price_obj[:sell_price]
-      ico_info.save!
+      bot1.update_current_price()
+      bot1.analysis()
 
       end_time = Time.now
       inteval = (end_time - start_time).to_i
 
       sleep(cycle_time - inteval) if cycle_time - inteval > 0
-    end
-  end
 
-  task :check_orders, [] => :environment do |_cmd, args|
-    puts "Run rake tracking_btc:check_orders"
-
-    cycle_time = 15
-    while true
-      start_time = Time.now
-
-      TrackingBtc.check_orders()
-
-      end_time = Time.now
-      inteval = (end_time - start_time).to_i
-
-      sleep(cycle_time - inteval) if cycle_time - inteval > 0
-    end
-  end
-
-  task :log_price, [] => :environment do |_cmd, args|
-    puts "Run rake tracking_btc:log_price"
-
-    cycle_time_list = [10, 20, 30, 40]
-    period_type_list = ['10s', '20s', '30s', '40s']
-    
-    threads = []
-    thread_num = 4
-    thread_num.times do |index|
-      puts "Create thread #{index + 1}"
-      thread = Thread.new{
-        thread_id = index + 1
-        cycle_time = cycle_time_list[index]
-        previous_price = nil
-        period_type = period_type_list[index]
-        while true
-          puts "Thread #{thread_id} - Write log at #{Time.now}"
-          start_time = Time.now
-
-          price_obj = TrackingBtc.save_price_log(period_type, previous_price)
-          previous_price = price_obj
-
-          end_time = Time.now
-          inteval = (end_time - start_time).to_i
-
-          sleep(cycle_time - inteval) if cycle_time - inteval > 0
+      if bot1.finish_trade
+        sleep(60 * 5) # delay 5m
+        bot1.finish_trade = false
+        
+        trade_amount =- 1
+        if trade_amount < 0
+          break
         end
-      }
-    
-      sleep(2)
-      threads << thread
-    end
-
-    threads.each do |t|
-      t.join
+      end
     end
   end
-end
 
 class BotBtc
-  attr_accessor :thread_id
+  attr_accessor :finish_trade
   
   def initialize(config)
     @trading_type = 'SELLING'
@@ -91,73 +47,41 @@ class BotBtc
     @previous_sell_price = 0
     @sell_price_list = []
     @buy_price_list = []
-    @bought_price = 0
     @limit_amount_price_list = 5
     @limit_active_sell_percent = 0.15
     @limit_active_buy_percent = 0.15
+    @limit_profit_for_buy = 1
+    @limit_profit_force_buy = 1
 
     @is_active_sell = false
     @is_active_buy = false
+    @btc_pair_id = 4
+    @btc_pair_name = 'USDT_BTC'
+    @current_order = nil
+    @finish_trade = false
   end
 
-  def change_buy_percent
-    if @previous_buy_price == 0
-      0.0
-    else 
-      ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)).to_f
-    end
-  end
+  # def change_buy_percent
+  #   if @previous_buy_price == 0
+  #     0.0
+  #   else 
+  #     ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)).to_f
+  #   end
+  # end
 
-  def change_sell_percent
-    if @previous_sell_price == 0
-      0.0
-    else 
-      ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)).to_f
-    end
-  end
+  # def change_sell_percent
+  #   if @previous_sell_price == 0
+  #     0.0
+  #   else 
+  #     ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)).to_f
+  #   end
+  # end
 
   # Method
-  def buy
-    @bought_price = ApiBtc.buy(@amount, @current_sell_price)
-
-    # Log.buy(@bot_trade_history, @config[:buy_amount], @vh_bought_price)
-
-    # @vh_bought_price = @current_sell_price
-    @trading_type = "SELLING"
-    @floor_price = 0.0
-    @ceil_price = @bought_price
-    @verify_times = 0
-
-    @bot_trade_history.buy_at = Time.now
-    @bot_trade_history.save!
-  end
-  
-  def sell
-    # TODO: call API for buy
-    Api.sell(@trade_info, @config[:buy_amount], @current_buy_price, @vh_bought_price)
-    
-    profit = (@current_buy_price - @vh_bought_price) / @vh_bought_price * 100
-    Log.sell(@bot_trade_history, @config[:buy_amount], @current_buy_price, profit)
-
-    @trading_type = "BUY"
-    @floor_price = 0.0
-    @ceil_price = 0.0
-    @verify_times = 0
-    @count_profit_force_sell = 0
-    
-    # sleep(@config[:delay_time_after_sold])
-    @is_sold = true
-
-    @bot_trade_history.sell_at = Time.now
-    @bot_trade_history.save!
-
-    # @trade_info.priority = 0  # Reset priority to active
-    # @trade_info.save!
-  end
 
   # Can create many algorithms and watching for better
   def analysis
-    return 0 if @previous_price == 0 # next for the first time
+    return 0 if @previous_buy_price == 0 # next for the first time
 
     if @trading_type == "BUYING"
       analysis_for_buy()
@@ -167,37 +91,63 @@ class BotBtc
   end
   
   def analysis_for_buy
-    @sell_price_list << change_sell_percent
-    @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
+    # @sell_price_list << change_sell_percent
+    # @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
 
-    # TODO - check dieu kien de sell
-    sell()
+    chart_data = ChartData5m.where(currency_pair_id: @btc_pair_id).last
+    open_price = chart_data.open
 
-    # TODO - Reset nhung data can thiet khi doi trang thai tu sell sang buy
-    @trading_type = "SELLING"    
+    profit = (@current_order.sell_price - @current_sell_price) / @current_sell_price * 100
+
+    if(@current_sell_price > open_price and (profit > @limit_profit_for_buy or -profit > @limit_profit_force_buy ))
+      result = ApiBtc.buy(@amount, @current_sell_price)
+
+      @current_order.buy_order_id = result['orderNumber']
+      @current_order.bought_order_id = 1
+      @current_order.buy_price = @current_sell_price
+      @current_order.profit = profit
+      @current_order.save
+    
+      @trading_type = "SELLING"
+      @finish_trade = true
+      @current_order = nil
+    end
+
   end
 
   def analysis_for_sell
-    @sell_price_list << change_buy_percent
-    @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
+    # @sell_price_list << change_buy_percent
+    # @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
 
-    # TODO - check dieu kien de sell
+    # # TODO - check dieu kien de sell
 
-    unless @is_active_sell
-      if -change_buy_percent > @limit_active_sell_percent
-        @is_active_sell = true
-        return
-      end
-    end
+    # unless @is_active_sell
+    #   if -change_buy_percent > @limit_active_sell_percent
+    #     @is_active_sell = true
+    #     return
+    #   end
+    # end
 
-    if @is_active_sell
+    # if @is_active_sell
       
+    # end
+
+    chart_data = ChartData5m.where(currency_pair_id: @btc_pair_id).last
+    close_price = chart_data.close
+
+    if(@current_buy_price < close_price)
+      obj_sell = ApiBtc.sell(@amount, @current_buy_price)
+      
+      @current_order = OrderBtc.create({
+        sell_price: @current_buy_price,
+        amount: @amount,
+        sell_order_id: obj_sell['orderNumber'],
+        sold_order_id: 1
+      })
+      
+      @trading_type = "BUYING"
     end
-
-    sell()
-
-    # TODO - Reset nhung data can thiet khi doi trang thai tu sell sang buy
-    @trading_type = "BUYING"
+    
   end
 
   def update_current_price  
@@ -206,7 +156,7 @@ class BotBtc
     @previous_buy_price = @current_buy_price
 
     # Get new price
-    data = ApiBtc.get_current_trading_price(@trade_info)
+    data = ApiBtc.get_current_trading_price()
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
   end
@@ -267,23 +217,24 @@ module ApiBtc
     def buy(amount, price)
       puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
       result = JSON.parse(`python script/python/buy.py #{@pair_name} #{'%.8f' % price} #{amount}`)
-      trade = result["resultingTrades"][0]
       
       puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
-      true
+      result
     end
 
     def sell(amount, price)
       puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
       result = JSON.parse(`python script/python/sell.py #{@pair_name} #{'%.8f' % price} #{amount}`)
 
-      if result["resultingTrades"].length > 0
-        trade = result["resultingTrades"][0]
-        puts "=======> SELL FINISH with Price: #{'%.8f' % price} at #{Time.now}"
-        true
-      else
-        false
-      end
+      puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+      # if result["resultingTrades"].length > 0
+      #   trade = result["resultingTrades"][0]
+      #   puts "=======> SELL FINISH with Price: #{'%.8f' % price} at #{Time.now}"
+      #   result
+      # else
+      #   false
+      # end
+      result
     end
   end
 end
