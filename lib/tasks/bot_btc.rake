@@ -27,31 +27,32 @@ namespace :bot_btc do
         sleep(60 * 5) # delay 5m
         bot1.finish_trade = false
         
-        trade_amount =- 1
+        trade_amount -= 1
         if trade_amount < 0
           break
         end
       end
     end
   end
+end
 
 class BotBtc
   attr_accessor :finish_trade
   
   def initialize(config)
-    @trading_type = 'SELLING'
+    @trading_type = ''
     @amount = config[:amount] # amount of BTC use to run
     @current_buy_price = 0
     @current_sell_price = 0
     @previous_buy_price = 0
     @previous_sell_price = 0
-    @sell_price_list = []
-    @buy_price_list = []
-    @limit_amount_price_list = 5
-    @limit_active_sell_percent = 0.15
-    @limit_active_buy_percent = 0.15
+    # @sell_price_list = []
+    # @buy_price_list = []
+    # @limit_amount_price_list = 5
+    # @limit_active_sell_percent = 0.15
+    # @limit_active_buy_percent = 0.15
     @limit_profit_for_buy = 1
-    @limit_profit_force_buy = 1
+    @limit_profit_force_buy = 0.8
 
     @is_active_sell = false
     @is_active_buy = false
@@ -81,16 +82,21 @@ class BotBtc
 
   # Can create many algorithms and watching for better
   def analysis
+    puts "Analysis at #{Time.now}"
     return 0 if @previous_buy_price == 0 # next for the first time
 
     if @trading_type == "BUYING"
       analysis_for_buy()
     elsif @trading_type == "SELLING"
       analysis_for_sell()
-    end    
+    else
+      analysis_catch_up_price()
+    end
   end
   
   def analysis_for_buy
+    
+
     # @sell_price_list << change_sell_percent
     # @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
 
@@ -99,8 +105,14 @@ class BotBtc
 
     profit = (@current_order.sell_price - @current_sell_price) / @current_sell_price * 100
 
+    puts "Tracking for buy at price #{@current_sell_price} - profit: #{profit}%"
+
+    # Verified for buy
     if(@current_sell_price > open_price and (profit > @limit_profit_for_buy or -profit > @limit_profit_force_buy ))
-      result = ApiBtc.buy(@amount, @current_sell_price)
+      new_amount = @current_order.amount * (@current_order.sell_price.to_f / @current_order.buy_price)
+      new_amount = new_amount - new_amount * 0.0025
+
+      result = ApiBtc.buy(new_amount, @current_sell_price)
 
       @current_order.buy_order_id = result['orderNumber']
       @current_order.bought_order_id = 1
@@ -108,14 +120,14 @@ class BotBtc
       @current_order.profit = profit
       @current_order.save
     
-      @trading_type = "SELLING"
+      @trading_type = ""
       @finish_trade = true
       @current_order = nil
     end
-
   end
 
   def analysis_for_sell
+    puts "Tracking for buy at price #{@current_buy_price}"
     # @sell_price_list << change_buy_percent
     # @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
 
@@ -147,7 +159,15 @@ class BotBtc
       
       @trading_type = "BUYING"
     end
-    
+  end
+
+  # Use to catch up price time
+  def analysis_catch_up_price
+    chart_data = ChartData5m.where(currency_pair_id: @btc_pair_id).last
+    if chart_data.close > chart_data.open and @current_buy_price > @chart_data.close
+      @trading_type = "SELLING"
+    end
+
   end
 
   def update_current_price  
@@ -183,15 +203,14 @@ end
 
 module ApiBtc
   class << self
-    @limit_price = 0.01
-    @pair_name = "USDT_BTC"
+    
 
     def get_current_trading_price()
       result = {}
-      
+      @limit_price = 0.01
+      @pair_name = "USDT_BTC"
       response = PoloniexVh.order_book(@pair_name)
       data = JSON.parse(response.body)
-
       buy_price = 0
       data['bids'].each do |bid|
         if bid[1].to_f > @limit_price
@@ -215,6 +234,7 @@ module ApiBtc
     end
 
     def buy(amount, price)
+      @pair_name = "USDT_BTC"
       puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
       result = JSON.parse(`python script/python/buy.py #{@pair_name} #{'%.8f' % price} #{amount}`)
       
@@ -223,6 +243,7 @@ module ApiBtc
     end
 
     def sell(amount, price)
+      @pair_name = "USDT_BTC"
       puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
       result = JSON.parse(`python script/python/sell.py #{@pair_name} #{'%.8f' % price} #{amount}`)
 
