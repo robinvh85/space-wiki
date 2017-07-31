@@ -7,7 +7,7 @@ namespace :bot_btc do
     trade_amount = 5
 
     config = {
-      amount: 0.0135
+      amount: 0.0133
     }
     bot1 = BotBtc.new(config)
 
@@ -94,9 +94,7 @@ class BotBtc
     end
   end
   
-  def analysis_for_buy
-    
-
+  def analysis_for_buy    
     # @sell_price_list << change_sell_percent
     # @sell_price_list.shift if @sell_price_list.length > @limit_amount_price_list
 
@@ -105,11 +103,11 @@ class BotBtc
 
     profit = (@current_order.sell_price - @current_sell_price) / @current_sell_price * 100
 
-    puts "Tracking for buy at price #{@current_sell_price} - profit: #{profit}%"
+    puts "Tracking for buy at price #{@current_sell_price} - profit: #{'%.2f' % profit}%"
 
     # Verified for buy
     if(@current_sell_price > open_price and (profit > @limit_profit_for_buy or -profit > @limit_profit_force_buy ))
-      new_amount = @current_order.amount * (@current_order.sell_price.to_f / @current_order.buy_price)
+      new_amount = @current_order.amount * (@current_order.sell_price / @current_sell_price)
       new_amount = new_amount - new_amount * 0.0025
 
       result = ApiBtc.buy(new_amount, @current_sell_price)
@@ -147,6 +145,8 @@ class BotBtc
     chart_data = ChartData5m.where(currency_pair_id: @btc_pair_id).last
     close_price = chart_data.close
 
+    # TODO: can check neu khoang open và close it thi se check theo kieu khac
+    # - Check theo chu kì 5m tiếp theo, neu giam thi se sell
     if(@current_buy_price < close_price)
       obj_sell = ApiBtc.sell(@amount, @current_buy_price)
       
@@ -162,10 +162,10 @@ class BotBtc
   end
 
   # Use to catch up price time
-  def analysis_catch_up_price
-    puts "Tracking catch up at price #{@current_buy_price}"
-
+  def analysis_catch_up_price    
     chart_data = ChartData5m.where(currency_pair_id: @btc_pair_id).last
+    puts "Tracking catch up with last #{chart_data.open} -> #{chart_data.close} at price #{@current_buy_price}"
+
     if chart_data.close > chart_data.open and @current_buy_price > chart_data.close
       @trading_type = "SELLING"
     end
@@ -205,8 +205,6 @@ end
 
 module ApiBtc
   class << self
-    
-
     def get_current_trading_price()
       result = {}
       @limit_price = 0.01
