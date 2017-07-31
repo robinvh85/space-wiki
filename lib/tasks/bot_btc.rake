@@ -7,7 +7,7 @@ namespace :bot_btc do
     trade_amount = 5
 
     config = {
-      amount: 0.001
+      amount: 0.0135
     }
     bot1 = BotBtc.new(config)
 
@@ -163,8 +163,10 @@ class BotBtc
 
   # Use to catch up price time
   def analysis_catch_up_price
+    puts "Tracking catch up at price #{@current_buy_price}"
+
     chart_data = ChartData5m.where(currency_pair_id: @btc_pair_id).last
-    if chart_data.close > chart_data.open and @current_buy_price > @chart_data.close
+    if chart_data.close > chart_data.open and @current_buy_price > chart_data.close
       @trading_type = "SELLING"
     end
 
