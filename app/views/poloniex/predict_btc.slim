@@ -54,7 +54,7 @@ div.container
           td style="text-align: left;"
             | {{ bot1.order_btc.buy_price }}
           td style="text-align: center;"
-            a v-show="bot1.order_btc.sold_order_id == null" @click="cancel_sell(bot1.order_btc)"
+            a v-show="bot1.order_btc.sell_order_id != null && bot1.order_btc.sold_order_id == null" @click="cancel_sell(bot1.order_btc)"
               | Change sell
             a v-show="bot1.order_btc.buy_order_id != null" @click="cancel_buy(bot1.order_btc)"
               | Change buy
