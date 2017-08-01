@@ -25,50 +25,39 @@ div.container
     div.panel-block      
       table.table.is-bordered style="width: 800px;"
         tr
-          th Date
-          th Sell price
+          th ID
           th Amount
-          th
-          th Profit
+          th Sell price
           th Buy price
-          th
+          th Action
         tr
           th
           th 
-            input type="text" style="width: 120px;" v-model="sell_obj.price"
+            input type="text" style="width: 120px;" v-model="bot1.amount"
           th
-            input type="text" style="width: 120px;" v-model="sell_obj.amount"
+            input type="text" style="width: 120px;" v-model="bot1.sell_price"
           th
-            a @click="sellOrder()"
-              | Sell
+            input type="text" style="width: 120px;" v-model="bot1.buy_price"
           th
-          th
-          th
-        tr v-for="item in order_list"
-          td style="text-align: left;"
-            | {{ item.created_at }}
-          td style="text-align: left;"
-            | {{ item.sell_price }}
-          td style="text-align: left;"
-            | {{ item.amount }}
-          td style="text-align: center;"
-            a v-show="item.sell_order_id != null && item.sold_order_id == null" @click="cancelSellOrder(item)"
-              | Cancel
+            button @click="update_bot(bot1)"
+              | Update
+            button @click="start_bot(bot1)"
+              | Start
+            button @click="stop_bot(bot1)"
+              | Stop
+        tr v-show="bot1.order_btc != null"
           td
-            label v-show="item.sold_order_id != null && item.bought_order_id == null"
-              | {{ item.current_profit }}%
           td style="text-align: left;"
-            input v-show="item.sold_order_id != null && item.buy_order_id == null" type="text" style="width: 120px;" v-model="item.buy_price"
-            label v-show="item.buy_order_id != null"
-              | {{ item.buy_price }}
-            label v-show="item.buy_order_id != null"
-              | &nbsp;({{ item.profit }}%)
+            | {{ bot1.order_btc.amount }}
+          td style="text-align: left;"
+            | {{ bot1.order_btc.sell_price }}
+          td style="text-align: left;"
+            | {{ bot1.order_btc.buy_price }}
           td style="text-align: center;"
-            div v-show="item.sell_order_id != null"
-              a v-show="item.sold_order_id != null && item.buy_order_id == null" @click="buyOrder(item)"
-                | Buy
-              a v-show="item.buy_order_id != null && item.bought_order_id == null" @click="cancelBuyOrder(item)"
-                | Cancel
+            a v-show="bot1.order_btc.sold_order_id == null" @click="cancel_sell(bot1.order_btc)"
+              | Change sell
+            a v-show="bot1.order_btc.buy_order_id != null" @click="cancel_buy(bot1.order_btc)"
+              | Change buy
   div.panel
     div.panel-heading
       | Chart
@@ -418,25 +407,49 @@ javascript:
   var app = new Vue({
     el: '#orders',
     data: {
-      order_list: [],
-      current_price: 0,
-      sell_obj: {
-        price: 0,
-        amount: 0
-      }
+      bot1: {
+        order_btc: {}
+      },
+      current_price: 0
     },
     methods: {
-      getOpenOrders: function(){
+      get_bot_info: function(){
         var self = this;
-        this.$http.get('/ajax/orders/get_open_order_btc').then(function (res){
-          self.order_list = res.data
-          
-          for(var i=0; i<self.order_list.length; i++){
-            var obj = self.order_list[i];
-            obj.created_at = moment(obj.created_at).format("YYYY-MM-DD HH:mm:ss");
-            obj.current_profit = 0;
-          }
+        this.$http.get('/ajax/orders/get_bot_info', {params: {bot_id: 1}} ).then(function (res){
+          self.bot1 = res.data
         });
+      },
+      update_bot: function(bot){
+        var self = this;
+
+        if(confirm("Do you want to update ?"))
+        {
+          this.$http.put('/ajax/orders/update_bot_info', { bot: bot } ).then(function (res){
+            alert("Update " + res.data.status);
+          });
+        }
+      },
+      start_bot: function(bot){
+        var self = this;
+        bot.status = 1;
+
+        if(confirm("Do you want to start bot ?"))
+        {
+          this.$http.put('/ajax/orders/update_bot_info', { bot: bot } ).then(function (res){
+            alert("Start " + res.data.status);
+          });
+        }        
+      },
+      stop_bot: function(bot){
+        var self = this;
+
+        if(confirm("Do you want to stop bot ?"))
+        {
+          bot.status = -1;
+          this.$http.put('/ajax/orders/update_bot_info', { bot: bot } ).then(function (res){
+            alert("Stop " + res.data.status);
+          });
+        }        
       },
       getCurrentPrice: function(){
         var self = this;
@@ -464,14 +477,13 @@ javascript:
           });
         }
       },
-      cancelSellOrder: function(item){
+      cancel_sell: function(item){
         var self = this;
 
-        if(confirm("Do you want to cancel order [amount " + item.amount + " at price " + item.sell_price + "]")){
+        if(confirm("Do you want to change sell order ?")){
           this.$http.post('/ajax/orders/call_cancel_sell_btc', item).then(function (res){
             if(res.data != null){
               alert("Cancel sell successfully !");
-              this.getOpenOrders();
             } else {
               alert("Can not cancel sell, please check !!!");
             }            
@@ -492,14 +504,13 @@ javascript:
           });
         }
       },
-      cancelBuyOrder: function(item){
+      cancel_buy: function(item){
         var self = this;
 
-        if(confirm("Do you want to cancel buy order [amount " + item.amount + " at price " + item.buy_price + "]")){
+        if(confirm("Do you want to cancel buy order ?")){
           this.$http.post('/ajax/orders/call_cancel_buy_btc', item).then(function (res){
             if(res.data != null){
               alert("Cancel buy successfully !");
-              this.getOpenOrders();
             } else {
               alert("Can not cancel buy, please check !!!");
             }            
@@ -508,10 +519,11 @@ javascript:
       },
       init: function(){
         console.log("INIT");
-        this.getOpenOrders();
+        this.get_bot_info();
       }    
     },
     watch: {
+      /*
       current_price: function (value) {
         for(var i=0; i < this.order_list.length; i++){
           var obj = this.order_list[i];
@@ -529,6 +541,7 @@ javascript:
 
         this.$forceUpdate();
       },
+      */
     },
     created: function() {
       console.log("created");

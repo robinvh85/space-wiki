@@ -53,6 +53,8 @@ Rails.application.routes.draw do
     post 'orders/call_cancel_sell_btc' => 'orders#call_cancel_sell_btc'
     post 'orders/call_buy_btc' => 'orders#call_buy_btc'
     post 'orders/call_cancel_buy_btc' => 'orders#call_cancel_buy_btc'
+    get 'orders/get_bot_info' => 'orders#get_bot_info'
+    put 'orders/update_bot_info' => 'orders#update_bot_info'
 
     resources :orders
 

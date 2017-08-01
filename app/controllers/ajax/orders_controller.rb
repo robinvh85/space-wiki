@@ -171,6 +171,7 @@ module Ajax
     end
 
     def call_cancel_sell_btc
+      binding.pry
       result = JSON.parse(`python script/python/cancel_order.py #{params['sell_order_id']}`)
 
       if result['success'] == 1
@@ -211,6 +212,28 @@ module Ajax
       }
     end
 
-    private    
+    def get_bot_info
+      bot = BotBtc.find(params[:bot_id])
+      # bot
+
+      render json: bot.to_json(
+        :include => :order_btc
+      )
+    end
+
+    def update_bot_info
+      bot = BotBtc.find(params[:bot][:id])
+      bot.update(bot_info_params)
+
+      render json: {
+        status: 'OK'
+      }
+    end
+
+    private
+
+    def bot_info_params
+      params.require(:bot).permit(:amount, :sell_price, :buy_price, :status)
+    end
   end
 end
