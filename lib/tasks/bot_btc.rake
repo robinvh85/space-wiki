@@ -27,7 +27,7 @@ end
 
 class BotBtcRunning
   def initialize(config)
-    @trading_type = ''
+    @trading_type = 'SELLING' # Default SELLING
     @bot_btc = BotBtc.find(config[:bot_id])
     @current_buy_price = 0
     @current_sell_price = 0
@@ -39,6 +39,7 @@ class BotBtcRunning
 
     @btc_pair_id = 4
     @btc_pair_name = 'USDT_BTC'
+    # @current_order = OrderBtc.find(@bot_btc.order_btc_id)
     @current_order = nil
   end
 
@@ -69,7 +70,8 @@ class BotBtcRunning
   end
   
   def check_for_buy    
-    puts "Tracking for buy at price #{@current_sell_price}"
+    puts "check_for_buy() with price #{@current_sell_price} at #{Time.now}"
+    
     if @current_sell_price < @bot_btc.sell_price
       result = ApiBtc.buy(buy_amount, @bot_btc.buy_price)
 
@@ -85,7 +87,7 @@ class BotBtcRunning
   end
 
   def check_set_order_sell
-    puts "Tracking for sell at price #{@current_buy_price}"
+    puts "check_set_order_sell() with price #{@current_buy_price} at #{Time.now}"
 
     @bot_btc.reload
     if @bot_btc.status == 1
@@ -104,6 +106,8 @@ class BotBtcRunning
   end
 
   def check_finish_order_sell
+    puts "check_finish_order_sell() with price #{@current_buy_price} at #{Time.now}"
+
     begin
       result = JSON.parse(`python script/python/check_trade_order.py #{@current_order.sell_order_id}`)
       if result.present?
@@ -117,6 +121,8 @@ class BotBtcRunning
   end
 
   def check_finish_order_buy
+    puts "check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
+
     lose_percent = (@current_sell_price - @bot_btc.sell_price) / @bot_btc.sell_price * 100
     if lose_percent > 0.75
       cancel_buy_order()
@@ -138,6 +144,8 @@ class BotBtcRunning
   end
 
   def cancel_buy_order
+    puts "cancel_buy_order() with price #{@current_sell_price} at #{Time.now}"
+
     result = JSON.parse(`python script/python/cancel_order.py #{@current_order.buy_order_id}`)
 
     if result['success'] == 1
@@ -147,8 +155,14 @@ class BotBtcRunning
   end
 
   def set_lose_order
+    puts "set_lose_order() with price #{@current_sell_price} at #{Time.now}"
+
     lose_price = @bot_btc.sell_price + (@bot_btc.sell_price * 0.01 )
-    result = ApiBtc.buy(buy_amount, lose_price)
+    
+    new_amount = @bot_btc.amount * (@bot_btc.sell_price / lose_price)
+    new_amount = new_amount - new_amount * 0.0016
+
+    result = ApiBtc.buy(new_amount, lose_price)
 
     profit = (@bot_btc.sell_price - lose_price) / lose_price * 100
     @current_order.buy_order_id = result['orderNumber']
@@ -158,6 +172,8 @@ class BotBtcRunning
   end
 
   def check_finish_lose_order
+    puts "check_finish_lose_order() with price #{@current_sell_price} at #{Time.now}"
+
     if @current_sell_price < @bot_btc.sell_price
       cancel_buy_order() # Cancel lose_buy order
       @trading_type = "BUYING"
