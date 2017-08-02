@@ -31,7 +31,8 @@ div.container
           th Buy price
           th Action
         tr
-          th
+          th rowspan="2"
+            | {{ bot1.id }}
           th 
             input type="text" style="width: 120px;" v-model="bot1.amount"
           th
@@ -46,7 +47,6 @@ div.container
             button @click="stop_bot(bot1)"
               | Stop
         tr v-show="bot1.order_btc != null"
-          td
           td style="text-align: left;"
             | {{ bot1.order_btc.amount }}
           td style="text-align: left;"
@@ -58,6 +58,34 @@ div.container
               | Cancel sell
             a v-show="bot1.order_btc.buy_order_id != null" @click="cancel_buy(bot1.order_btc)"
               | Change buy
+          tr
+            th rowspan="2"
+              | {{ bot2.id }}
+            th 
+              input type="text" style="width: 120px;" v-model="bot2.amount"
+            th
+              input type="text" style="width: 120px;" v-model="bot2.sell_price"
+            th
+              input type="text" style="width: 120px;" v-model="bot2.buy_price"
+            th
+              button @click="update_bot(bot2)"
+                | Update
+              button @click="start_bot(bot2)"
+                | Start
+              button @click="stop_bot(bot2)"
+                | Stop
+          tr v-show="bot2.order_btc != null"
+            td style="text-align: left;"
+              | {{ bot2.order_btc.amount }}
+            td style="text-align: left;"
+              | {{ bot2.order_btc.sell_price }}
+            td style="text-align: left;"
+              | {{ bot2.order_btc.buy_price }}
+            td style="text-align: center;"
+              a v-show="bot2.order_btc.sell_order_id != null && bot2.order_btc.sold_order_id == null" @click="cancel_sell(bot2.order_btc)"
+                | Cancel sell
+              a v-show="bot2.order_btc.buy_order_id != null" @click="cancel_buy(bot2.order_btc)"
+                | Change buy
   div.panel
     div.panel-heading
       | Chart
@@ -410,13 +438,16 @@ javascript:
       bot1: {
         order_btc: {}
       },
+      bot2: {
+        order_btc: {}
+      },
       current_price: 0
     },
     methods: {
-      get_bot_info: function(){
+      get_bot_info: function(bot_id){
         var self = this;
-        this.$http.get('/ajax/orders/get_bot_info', {params: {bot_id: 1}} ).then(function (res){
-          self.bot1 = res.data
+        this.$http.get('/ajax/orders/get_bot_info', {params: {bot_id: bot_id}} ).then(function (res){
+          self["bot" + bot_id] = res.data
         });
       },
       update_bot: function(bot){
@@ -521,7 +552,8 @@ javascript:
       },
       init: function(){
         console.log("INIT");
-        this.get_bot_info();
+        this.get_bot_info(1);
+        this.get_bot_info(2);
       }    
     },
     watch: {

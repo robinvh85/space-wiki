@@ -3,24 +3,62 @@ namespace :bot_btc do
   task :start, [] => :environment do |_cmd, args|
     puts "Run rake bot_btc:start"
     
-    cycle_time = 15
+    # cycle_time = 15
 
-    config = {
-      bot_id: 1
-    }
-    bot1 = BotBtcRunning.new(config)
+    # config = {
+    #   bot_id: 1
+    # }
+    # bot1 = BotBtcRunning.new(config)
 
-    while true
-      start_time = Time.now
-      result = {}
+    # while true
+    #   start_time = Time.now
+    #   result = {}
       
-      bot1.update_current_price()
-      bot1.analysis()
+    #   bot1.update_current_price()
+    #   bot1.analysis()
 
-      end_time = Time.now
-      inteval = (end_time - start_time).to_i
+    #   end_time = Time.now
+    #   inteval = (end_time - start_time).to_i
 
-      sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    #   sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    # end
+
+    threads = []
+    thread_num = 2
+    thread_num.times do |index|
+      puts "Create thread #{index + 1}"
+      thread = Thread.new{
+        thread_id = index + 1
+        
+        cycle_time = 15
+
+        config = {
+          bot_id: thread_id
+        }
+        bot = BotBtcRunning.new(config)
+
+        while true
+          start_time = Time.now
+          result = {}
+          
+          puts "#Thread #{thread_id} ==========>"
+          bot.update_current_price()
+          bot.analysis()
+
+          end_time = Time.now
+          inteval = (end_time - start_time).to_i
+
+          sleep(cycle_time - inteval) if cycle_time - inteval > 0
+        end
+
+      }
+    
+      sleep(5)
+      threads << thread
+    end
+
+    threads.each do |t|
+      t.join
     end
   end
 end
