@@ -55,7 +55,7 @@ div.container
             | {{ bot1.order_btc.buy_price }}
           td style="text-align: center;"
             a v-show="bot1.order_btc.sell_order_id != null && bot1.order_btc.sold_order_id == null" @click="cancel_sell(bot1.order_btc)"
-              | Change sell
+              | Cancel sell
             a v-show="bot1.order_btc.buy_order_id != null" @click="cancel_buy(bot1.order_btc)"
               | Change buy
   div.panel
@@ -432,6 +432,7 @@ javascript:
       start_bot: function(bot){
         var self = this;
         bot.status = 1;
+        bot.trade_type = "SELLING";
 
         if(confirm("Do you want to start bot ?"))
         {
@@ -446,10 +447,11 @@ javascript:
         if(confirm("Do you want to stop bot ?"))
         {
           bot.status = -1;
+          bot.trade_type = "";
           this.$http.put('/ajax/orders/update_bot_info', { bot: bot } ).then(function (res){
             alert("Stop " + res.data.status);
           });
-        }        
+        }
       },
       getCurrentPrice: function(){
         var self = this;
@@ -480,7 +482,7 @@ javascript:
       cancel_sell: function(item){
         var self = this;
 
-        if(confirm("Do you want to change sell order ?")){
+        if(confirm("Do you want to cancel sell order ?")){
           this.$http.post('/ajax/orders/call_cancel_sell_btc', item).then(function (res){
             if(res.data != null){
               alert("Cancel sell successfully !");

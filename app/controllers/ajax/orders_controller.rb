@@ -172,9 +172,16 @@ module Ajax
 
     def call_cancel_sell_btc
       result = JSON.parse(`python script/python/cancel_order.py #{params['sell_order_id']}`)
-
+      
       if result['success'] == 1
-        OrderBtc.find_by(sell_order_id: params['sell_order_id']).delete()
+        order = OrderBtc.find_by(sell_order_id: params['sell_order_id'])
+        bot = BotBtc.find_by(order_btc_id: order.id)
+        # bot.status = 1
+        bot.trading_type = 'SELLING'
+        bot.order_btc_id = nil
+        bot.save
+
+        order.delete()
       end
 
       render json: {
@@ -200,10 +207,14 @@ module Ajax
       result = JSON.parse(`python script/python/cancel_order.py #{params['buy_order_id']}`)
 
       if result['success'] == 1
-        obj = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
-        obj.buy_order_id = nil
-        obj.buy_price = nil
-        obj.save
+        order = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
+        order.buy_order_id = nil
+        order.buy_price = nil
+        order.save
+
+        bot = BotBtc.find_by(order_btc_id: order.id)
+        bot.trading_type = 'BUYING'
+        bot.save
       end
 
       render json: {

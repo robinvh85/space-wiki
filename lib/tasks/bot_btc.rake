@@ -27,7 +27,7 @@ end
 
 class BotBtcRunning
   def initialize(config)
-    @trading_type = 'SELLING' # Default SELLING
+    # @trading_type = 'SELLING' # Default SELLING
     @bot_btc = BotBtc.find(config[:bot_id])
     @current_buy_price = 0
     @current_sell_price = 0
@@ -39,8 +39,8 @@ class BotBtcRunning
 
     @btc_pair_id = 4
     @btc_pair_name = 'USDT_BTC'
-    # @current_order = OrderBtc.find(@bot_btc.order_btc_id)
     @current_order = nil
+    @current_order = OrderBtc.find(@bot_btc.order_btc_id) if @bot_btc.order_btc_id.present?
   end
 
   def buy_amount
@@ -56,15 +56,17 @@ class BotBtcRunning
     puts "Analysis at #{Time.now}"
     return 0 if @previous_buy_price == 0 # next for the first time
 
-    if @trading_type == "SELLING"
+    @bot_btc.reload
+
+    if @bot_btc.trading_type == "SELLING"
       check_set_order_sell()
-    elsif @trading_type == "ORDER_SELL"
+    elsif @bot_btc.trading_type == "ORDER_SELL"
       check_finish_order_sell()
-    elsif @trading_type == "BUYING"
+    elsif @bot_btc.trading_type == "BUYING"
       check_for_buy()
-    elsif @trading_type == "ORDER_BUY"
+    elsif @bot_btc.trading_type == "ORDER_BUY"
       check_finish_order_buy()
-    elsif @trading_type == "LOSE_ORDER"
+    elsif @bot_btc.trading_type == "LOSE_ORDER"
       check_finish_lose_order()
     end
   end
@@ -81,7 +83,8 @@ class BotBtcRunning
       @current_order.profit = profit
       @current_order.save
 
-      @trading_type = "ORDER_BUY"
+      @bot_btc.trading_type = "ORDER_BUY"
+      @bot_btc.save
     end
 
   end
@@ -99,8 +102,9 @@ class BotBtcRunning
         sell_order_id: obj_sell['orderNumber']
       })
     
-      @trading_type = "ORDER_SELL"
+      @bot_btc.trading_type = "ORDER_SELL"
       @bot_btc.status = 0
+      @bot_btc.order_btc = @current_order
       @bot_btc.save
     end
   end
@@ -113,7 +117,8 @@ class BotBtcRunning
       if result.present?
         @current_order.sold_order_id = 1
         @current_order.save
-        @trading_type = "BUYING"
+        @bot_btc.trading_type = "BUYING"
+        @bot_btc.save
       end
     rescue
       puts "Sell order #{@current_order.sell_order_id} is not existed!"
@@ -124,18 +129,20 @@ class BotBtcRunning
     puts "check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
 
     lose_percent = (@current_sell_price - @bot_btc.sell_price) / @bot_btc.sell_price * 100
-    if lose_percent > 0.75
+    if lose_percent > 0.7
       cancel_buy_order()
       set_lose_order()
 
-      @trading_type = "LOSE_ORDER"
+      @bot_btc.trading_type = "LOSE_ORDER"
+      @bot_btc.save
     else
       begin
         result = JSON.parse(`python script/python/check_trade_order.py #{@current_order.buy_order_id}`)
         if result.present?
           @current_order.bought_order_id = 1
           @current_order.save
-          @trading_type = ""
+          @bot_btc.trading_type = ""
+          @bot_btc.save
         end
       rescue
         puts "Buy order #{@current_order.buy_order_id} is not existed!"
@@ -150,6 +157,8 @@ class BotBtcRunning
 
     if result['success'] == 1
       @current_order.buy_order_id = nil
+      @current_order.buy_price = nil
+      @current_order.profit = nil
       @current_order.save
     end
   end
@@ -176,14 +185,16 @@ class BotBtcRunning
 
     if @current_sell_price < @bot_btc.sell_price
       cancel_buy_order() # Cancel lose_buy order
-      @trading_type = "BUYING"
+      @bot_btc.trading_type = "BUYING"
+      @bot_btc.save
     else
       begin
         result = JSON.parse(`python script/python/check_trade_order.py #{@current_order.buy_order_id}`)
         if result.present?
           @current_order.bought_order_id = 1
           @current_order.save
-          @trading_type = ""
+          @bot_btc.trading_type = ""
+          @bot_btc.save
         end
       rescue
         puts "Buy order #{@current_order.buy_order_id} is not existed!"
