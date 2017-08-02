@@ -232,6 +232,7 @@ class BotBtcRunning
           @current_order.bought_order_id = 1
           @current_order.save
           @bot_btc.trading_type = ""
+          @bot_btc.order_btc_id = nil
           @bot_btc.save
         end
       rescue
