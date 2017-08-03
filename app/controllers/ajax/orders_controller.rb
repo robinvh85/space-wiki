@@ -171,21 +171,13 @@ module Ajax
     end
 
     def call_cancel_sell_btc
-      result = JSON.parse(`python script/python/cancel_order.py #{params['sell_order_id']}`)
-      
-      if result['success'] == 1
-        order = OrderBtc.find_by(sell_order_id: params['sell_order_id'])
-        bot = BotBtc.find_by(order_btc_id: order.id)
-        # bot.status = 1
-        bot.trading_type = 'SELLING'
-        bot.order_btc_id = nil
-        bot.save
-
-        order.delete()
-      end
+      order = OrderBtc.find_by(sell_order_id: params['sell_order_id'])
+      bot = BotBtc.find_by(order_btc_id: order.id)
+      bot.trading_type = 'CANCEL_SELL'
+      bot.save
 
       render json: {
-        success: result['success']
+        success: 'OK'
       }
     end
 
@@ -204,33 +196,26 @@ module Ajax
     end
 
     def call_cancel_buy_btc
-      result = JSON.parse(`python script/python/cancel_order.py #{params['buy_order_id']}`)
-
-      if result['success'] == 1
-        order = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
-        order.buy_order_id = nil
-        order.buy_price = nil
-        order.save
-
-        bot = BotBtc.find_by(order_btc_id: order.id)
-        bot.trading_type = 'BUYING'
-        bot.save
-      end
+      order = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
+      bot = BotBtc.find_by(order_btc_id: order.id)
+      bot.trading_type = 'CANCEL_BUY'
+      bot.save
 
       render json: {
-        success: result['success']
+        success: 'OK'
       }
     end
 
     def get_bot_info
-      bot = BotBtc.find(params[:bot_id])
-      # bot
+      bot_list = BotBtc.where('status <> -1')
 
-      if bot.order_btc.nil?
-        bot.order_btc = OrderBtc.new
+      bot_list.each do |bot|
+        if bot.order_btc.nil?
+          bot.order_btc = OrderBtc.new
+        end
       end
 
-      render json: bot.to_json(
+      render json: bot_list.to_json(
         :include => :order_btc
       )
     end

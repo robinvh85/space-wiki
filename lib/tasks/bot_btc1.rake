@@ -87,10 +87,14 @@ class BotBtcRunning1
       check_set_order_sell()
     elsif @bot_btc.trading_type == "ORDER_SELL"
       check_finish_order_sell()
+    elsif @bot_btc.trading_type == "CANCEL_SELL"
+      cancel_order_sell()
     elsif @bot_btc.trading_type == "BUYING"
       check_for_buy()
     elsif @bot_btc.trading_type == "ORDER_BUY"
       check_finish_order_buy()
+    elsif @bot_btc.trading_type == "CANCEL_BUY"
+      cancel_order_buy()
     elsif @bot_btc.trading_type == "LOSE_ORDER"
       check_finish_lose_order()
     end
@@ -229,6 +233,9 @@ class BotBtcRunning1
 
     # Get new price
     data = Bitfi.get_current_trading_price()
+
+    return nil if data.nil?
+
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
   end
@@ -251,6 +258,37 @@ class BotBtcRunning1
       end      
     end
   end
+
+  def cancel_order_sell
+    puts "Cancel order sell"
+    
+    result = Bitfi.cancel_order(@current_order.sell_order_id)
+
+    if result.present?
+      @current_order.delete
+
+      @bot_btc.trading_type = 'SELLING'
+      @bot_btc.order_btc_id = nil
+      @bot_btc.save
+    end
+  end
+
+  def cancel_order_buy
+    puts "Cancel order buy"
+    
+    result = Bitfi.cancel_order(@current_order.buy_order_id)
+
+    if result.present?
+      @current_order.buy_order_id = nil
+      @current_order.buy_price = nil
+      @current_order.profit = nil
+      @current_order.save
+
+      @bot_btc.trading_type = 'BUYING'
+      @bot_btc.save
+    end
+  end
+
 end
 
 class Bitfi
@@ -273,6 +311,12 @@ class Bitfi
       data = @client.orderbook(@pair_name)
       
       buy_price = 0
+
+      if data['bids'].nil?
+        puts "CAN NOT GET PRICE !!!!!"
+        return nil 
+      end
+
       data['bids'].each do |bid|
         if bid["amount"].to_f > @limit_price
           buy_price = bid["price"].to_f
