@@ -1,4 +1,6 @@
 # 
+require 'bitfinex-api-rb'
+
 namespace :bot_btc1 do
   task :start, [] => :environment do |_cmd, args|
     puts "Run rake bot_btc:start"
@@ -18,7 +20,7 @@ namespace :bot_btc1 do
         cycle_time = 15
 
         config = {
-          bot_id: thread_id
+          bot_id: 3
         }
         bot = BotBtcRunning1.new(config)
 
@@ -135,16 +137,13 @@ class BotBtcRunning1
   def check_finish_order_sell
     puts "check_finish_order_sell() with price #{@current_buy_price} at #{Time.now}"
 
-    begin
-      result = JSON.parse(`python script/python/check_trade_order.py #{@current_order.sell_order_id}`)
-      if result.present?
-        @current_order.sold_order_id = 1
-        @current_order.save
-        @bot_btc.trading_type = "BUYING"
-        @bot_btc.save
-      end
-    rescue
-      puts "Sell order #{@current_order.sell_order_id} is not existed!"
+    status = Bitfi.check_order(@current_order.sell_order_id)
+
+    if status == 1
+      @current_order.sold_order_id = 1
+      @current_order.save
+      @bot_btc.trading_type = "BUYING"
+      @bot_btc.save
     end
   end
 
@@ -159,16 +158,13 @@ class BotBtcRunning1
       @bot_btc.trading_type = "LOSE_ORDER"
       @bot_btc.save
     else
-      begin
-        result = JSON.parse(`python script/python/check_trade_order.py #{@current_order.buy_order_id}`)
-        if result.present?
-          @current_order.bought_order_id = 1
-          @current_order.save
-          @bot_btc.trading_type = ""
-          @bot_btc.save
-        end
-      rescue
-        puts "Buy order #{@current_order.buy_order_id} is not existed!"
+      status = Bitfi.check_order(@current_order.sell_order_id)
+
+      if status == 1
+        @current_order.bought_order_id = 1
+        @current_order.save
+        @bot_btc.trading_type = ""
+        @bot_btc.save
       end
     end
   end
@@ -176,9 +172,9 @@ class BotBtcRunning1
   def cancel_buy_order
     puts "cancel_buy_order() with price #{@current_sell_price} at #{Time.now}"
 
-    result = JSON.parse(`python script/python/cancel_order.py #{@current_order.buy_order_id}`)
+    result = Bitfi.cancel_order(@current_order.buy_order_id)
 
-    if result['success'] == 1
+    if result.present?
       @current_order.buy_order_id = nil
       @current_order.buy_price = nil
       @current_order.profit = nil
@@ -274,7 +270,7 @@ class Bitfi
       result = {}
       @limit_price = 0.01
       @pair_name = "BTCUSD"
-      data = client.orderbook(@pair_name)
+      data = @client.orderbook(@pair_name)
       
       buy_price = 0
       data['bids'].each do |bid|
@@ -301,7 +297,7 @@ class Bitfi
     def buy(amount, price)
       @pair_name = "BTCUSD"
       puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
-      result = client.new_order(@pair_name, amount, "exchange limit", "buy", price)
+      result = @client.new_order(@pair_name, amount, "exchange limit", "buy", price)
 
       puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
       result
@@ -310,7 +306,7 @@ class Bitfi
     def sell(amount, price)
       @pair_name = "BTCUSD"
       puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
-      result = client.new_order(@pair_name, amount, "exchange limit", "sell", price)
+      result = @client.new_order(@pair_name, amount, "exchange limit", "sell", price)
 
       puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
       result
@@ -318,9 +314,23 @@ class Bitfi
 
     def cancel_order(order_id)
       puts "====> Cancel order at #{Time.now}"
-      result = client.cancel_orders(order_id)
+      result = @client.cancel_orders(order_id)
       
       result
     end
+
+    # @return status =1: sold or Bought | =0 : still alive
+    def check_order(order_id)
+      puts "====> Check order #{order_id} at #{Time.now}"
+      result = @client.order_status(order_id)
+      
+      status = 0
+      if result["is_cancelled"] == false and result["is_live"] == false
+        status = 1
+      end
+      
+      status
+    end
+    
   end
 end
