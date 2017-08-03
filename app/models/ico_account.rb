@@ -1,0 +1,2 @@
+class IcoAccount < ApplicationRecord
+end
