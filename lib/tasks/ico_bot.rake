@@ -1,9 +1,9 @@
 # 
 require 'bitfinex-api-rb'
 
-namespace :bot_btc1 do
+namespace :ico_bot do
   task :start, [] => :environment do |_cmd, args|
-    puts "Run rake bot_btc:start"
+    puts "Run rake ico_bot:start"
     
     threads = []
     thread_num = 1
@@ -20,9 +20,9 @@ namespace :bot_btc1 do
         cycle_time = 15
 
         config = {
-          bot_id: 3
+          bot_id: 1
         }
-        bot = BotBtcRunning1.new(config)
+        bot = BotRunning.new(config)
 
         while true
           start_time = Time.now
@@ -50,10 +50,9 @@ namespace :bot_btc1 do
   end
 end
 
-class BotBtcRunning1
+class BotRunning
   def initialize(config)
-    # @trading_type = 'SELLING' # Default SELLING
-    @bot_btc = BotBtc.find(config[:bot_id])
+    @ico_bot = IcoBot.find(config[:bot_id])
     @current_buy_price = 0
     @current_sell_price = 0
     @previous_buy_price = 0
@@ -62,14 +61,12 @@ class BotBtcRunning1
     @limit_profit_for_buy = 1
     @limit_profit_force_buy = 0.8
 
-    @btc_pair_id = 4
-    @btc_pair_name = 'USDT_BTC'
     @current_order = nil
-    @current_order = OrderBtc.find(@bot_btc.order_btc_id) if @bot_btc.order_btc_id.present?
+    @current_order = IcoOrder.find(@ico_bot.ico_order_id) if @ico_bot.ico_order_id.present?
   end
 
   def buy_amount
-    new_amount = @bot_btc.amount * (@bot_btc.sell_price / @bot_btc.buy_price)
+    new_amount = @ico_bot.amount * (@ico_bot.sell_price / @ico_bot.buy_price)
     new_amount = new_amount - new_amount * 0.0016
     new_amount
   end
@@ -81,39 +78,39 @@ class BotBtcRunning1
     puts "Analysis at #{Time.now}"
     return 0 if @previous_buy_price == 0 # next for the first time
 
-    @bot_btc.reload
+    @ico_bot.reload
 
-    if @bot_btc.trading_type == "SELLING"
+    if @ico_bot.trading_type == "SELLING"
       check_set_order_sell()
-    elsif @bot_btc.trading_type == "ORDER_SELL"
+    elsif @ico_bot.trading_type == "ORDER_SELL"
       check_finish_order_sell()
-    elsif @bot_btc.trading_type == "CANCEL_SELL"
+    elsif @ico_bot.trading_type == "CANCEL_SELL"
       cancel_order_sell()
-    elsif @bot_btc.trading_type == "BUYING"
+    elsif @ico_bot.trading_type == "BUYING"
       check_for_buy()
-    elsif @bot_btc.trading_type == "ORDER_BUY"
+    elsif @ico_bot.trading_type == "ORDER_BUY"
       check_finish_order_buy()
-    elsif @bot_btc.trading_type == "CANCEL_BUY"
+    elsif @ico_bot.trading_type == "CANCEL_BUY"
       cancel_order_buy()
-    elsif @bot_btc.trading_type == "LOSE_ORDER"
+    elsif @ico_bot.trading_type == "LOSE_ORDER"
       check_finish_lose_order()
     end
   end
   
   def check_for_buy    
-    puts "check_for_buy() with price #{@current_sell_price} at #{Time.now}"
+    current_profit = (@ico_bot.sell_price - @current_sell_price) / @current_sell_price * 100
+    puts "check_for_buy() with price #{@current_sell_price} (#{'%.2f' % current_profit}%) at #{Time.now}"
     
-    if @current_sell_price < @bot_btc.sell_price
-      result = Bitfi.buy(buy_amount, @bot_btc.buy_price)
-
-      profit = (@bot_btc.sell_price - @bot_btc.buy_price) / @bot_btc.buy_price * 100
+    if @current_sell_price < @ico_bot.sell_price
+      result = Bitfi.buy(@ico_bot.pair_name, buy_amount, @ico_bot.buy_price)
+      profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
       @current_order.buy_order_id = result['order_id']
-      @current_order.buy_price = @bot_btc.buy_price
+      @current_order.buy_price = @ico_bot.buy_price
       @current_order.profit = profit
       @current_order.save
 
-      @bot_btc.trading_type = "ORDER_BUY"
-      @bot_btc.save
+      @ico_bot.trading_type = "ORDER_BUY"
+      @ico_bot.save
     end
 
   end
@@ -121,20 +118,20 @@ class BotBtcRunning1
   def check_set_order_sell
     puts "check_set_order_sell() with price #{@current_buy_price} at #{Time.now}"
 
-    @bot_btc.reload
-    if @bot_btc.status == 1
-      obj_sell = Bitfi.sell(@bot_btc.amount, @bot_btc.sell_price)
+    @ico_bot.reload
+    if @ico_bot.status == 1
+      obj_sell = Bitfi.sell(@ico_bot.pair_name, @ico_bot.amount, @ico_bot.sell_price)
     
-      @current_order = OrderBtc.create({
-        sell_price: @bot_btc.sell_price,
-        amount: @bot_btc.amount,
+      @current_order = IcoOrder.create({
+        sell_price: @ico_bot.sell_price,
+        amount: @ico_bot.amount,
         sell_order_id: obj_sell['order_id']
       })
     
-      @bot_btc.trading_type = "ORDER_SELL"
-      @bot_btc.status = 0
-      @bot_btc.order_btc = @current_order
-      @bot_btc.save
+      @ico_bot.trading_type = "ORDER_SELL"
+      @ico_bot.status = 0
+      @ico_bot.ico_order = @current_order
+      @ico_bot.save
     end
   end
 
@@ -146,29 +143,29 @@ class BotBtcRunning1
     if status == 1
       @current_order.sold_order_id = 1
       @current_order.save
-      @bot_btc.trading_type = "BUYING"
-      @bot_btc.save
+      @ico_bot.trading_type = "BUYING"
+      @ico_bot.save
     end
   end
 
   def check_finish_order_buy
     puts "check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
 
-    lose_percent = (@current_sell_price - @bot_btc.sell_price) / @bot_btc.sell_price * 100
+    lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
     if lose_percent > 0.7
       cancel_buy_order()
       set_lose_order()
 
-      @bot_btc.trading_type = "LOSE_ORDER"
-      @bot_btc.save
+      @ico_bot.trading_type = "LOSE_ORDER"
+      @ico_bot.save
     else
       status = Bitfi.check_order(@current_order.sell_order_id)
 
       if status == 1
         @current_order.bought_order_id = 1
         @current_order.save
-        @bot_btc.trading_type = ""
-        @bot_btc.save
+        @ico_bot.trading_type = ""
+        @ico_bot.save
       end
     end
   end
@@ -189,14 +186,14 @@ class BotBtcRunning1
   def set_lose_order
     puts "set_lose_order() with price #{@current_sell_price} at #{Time.now}"
 
-    lose_price = @bot_btc.sell_price + (@bot_btc.sell_price * 0.01 )
+    lose_price = @ico_bot.sell_price + (@ico_bot.sell_price * 0.01 )
     
-    new_amount = @bot_btc.amount * (@bot_btc.sell_price / lose_price)
+    new_amount = @ico_bot.amount * (@ico_bot.sell_price / lose_price)
     new_amount = new_amount - new_amount * 0.0016
 
     result = Bitfi.buy(new_amount, lose_price)
 
-    profit = (@bot_btc.sell_price - lose_price) / lose_price * 100
+    profit = (@ico_bot.sell_price - lose_price) / lose_price * 100
     @current_order.buy_order_id = result['orderNumber']
     @current_order.buy_price = lose_price
     @current_order.profit = profit
@@ -206,19 +203,19 @@ class BotBtcRunning1
   def check_finish_lose_order
     puts "check_finish_lose_order() with price #{@current_sell_price} at #{Time.now}"
 
-    if @current_sell_price < @bot_btc.sell_price
+    if @current_sell_price < @ico_bot.sell_price
       cancel_buy_order() # Cancel lose_buy order
-      @bot_btc.trading_type = "BUYING"
-      @bot_btc.save
+      @ico_bot.trading_type = "BUYING"
+      @ico_bot.save
     else
       begin
-        result = JSON.parse(`python script/python/check_trade_order.py #{@current_order.buy_order_id}`)
-        if result.present?
+        status = Bitfi.check_order(@current_order.buy_order_id)
+        if status == 1
           @current_order.bought_order_id = 1
           @current_order.save
-          @bot_btc.trading_type = ""
-          @bot_btc.order_btc_id = nil
-          @bot_btc.save
+          @ico_bot.trading_type = ""
+          @ico_bot.ico_order_id = nil
+          @ico_bot.save
         end
       rescue
         puts "Buy order #{@current_order.buy_order_id} is not existed!"
@@ -232,7 +229,7 @@ class BotBtcRunning1
     @previous_buy_price = @current_buy_price
 
     # Get new price
-    data = Bitfi.get_current_trading_price()
+    data = Bitfi.get_current_trading_price(@ico_bot.pair_name)
 
     return nil if data.nil?
 
@@ -267,9 +264,9 @@ class BotBtcRunning1
     if result.present?
       @current_order.delete
 
-      @bot_btc.trading_type = 'SELLING'
-      @bot_btc.order_btc_id = nil
-      @bot_btc.save
+      @ico_bot.trading_type = 'SELLING'
+      @ico_bot.ico_order_id = nil
+      @ico_bot.save
     end
   end
 
@@ -284,8 +281,8 @@ class BotBtcRunning1
       @current_order.profit = nil
       @current_order.save
 
-      @bot_btc.trading_type = 'BUYING'
-      @bot_btc.save
+      @ico_bot.trading_type = 'BUYING'
+      @ico_bot.save
     end
   end
 
@@ -304,11 +301,9 @@ class Bitfi
       @client = Bitfinex::Client.new
     end
 
-    def get_current_trading_price()
-      result = {}
+    def get_current_trading_price(pair_name)
       @limit_price = 0.01
-      @pair_name = "BTCUSD"
-      data = @client.orderbook(@pair_name)
+      data = @client.orderbook(pair_name)
       
       buy_price = 0
 
@@ -338,19 +333,17 @@ class Bitfi
       }
     end
 
-    def buy(amount, price)
-      @pair_name = "BTCUSD"
+    def buy(pair_name, amount, price)
       puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
-      result = @client.new_order(@pair_name, amount, "exchange limit", "buy", price)
+      result = @client.new_order(pair_name, amount, "exchange limit", "buy", price)
 
       puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
       result
     end
 
-    def sell(amount, price)
-      @pair_name = "BTCUSD"
+    def sell(pair_name, amount, price)
       puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
-      result = @client.new_order(@pair_name, amount, "exchange limit", "sell", price)
+      result = @client.new_order(pair_name, amount, "exchange limit", "sell", price)
 
       puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
       result

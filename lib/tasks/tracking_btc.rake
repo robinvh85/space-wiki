@@ -5,6 +5,11 @@ namespace :tracking_btc do
     
     cycle_time = 15
 
+    ico_account = IcoAccount.find(1)
+    Bitfi.key = ico_account.key
+    Bitfi.secret = ico_account.secret
+    Bitfi.connect
+
     while true
       puts "Get price of BTC at #{Time.now}"
       start_time = Time.now
@@ -140,23 +145,29 @@ module TrackingBtc
     end
 
     def get_price
-      pair_name = "USDT_BTC"
-      response = PoloniexVh.order_book(pair_name)
-      data = JSON.parse(response.body)
-
-      limit_btc = 0.01
+      @client = Bitfinex::Client.new
+      @limit_price = 0.01
+      pair_name = "BTCUSD"
+      data = @client.orderbook(pair_name)
+      
       buy_price = 0
+
+      if data['bids'].nil?
+        puts "CAN NOT GET PRICE !!!!!"
+        return nil 
+      end
+
       data['bids'].each do |bid|
-        if bid[1].to_f > limit_btc
-          buy_price = bid[0].to_f
+        if bid["amount"].to_f > @limit_price
+          buy_price = bid["price"].to_f
           break
         end
       end
 
       sell_price = 0
       data['asks'].each do |ask|
-        if ask[1].to_f > limit_btc
-          sell_price = ask[0].to_f
+        if ask["amount"].to_f > @limit_price
+          sell_price = ask["price"].to_f
           break
         end
       end
