@@ -152,19 +152,19 @@ class BotRunning
     puts "check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
 
     lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
-    if lose_percent > 0.7
+    if lose_percent > @ico_bot.limit_cancel_for_lose_percent
       cancel_buy_order()
       set_lose_order()
 
       @ico_bot.trading_type = "LOSE_ORDER"
       @ico_bot.save
     else
-      status = Bitfi.check_order(@current_order.sell_order_id)
+      status = Bitfi.check_order(@current_order.buy_order_id)
 
       if status == 1
         @current_order.bought_order_id = 1
         @current_order.save
-        @ico_bot.trading_type = ""
+        @ico_bot.trading_type = "SELLING"
         @ico_bot.save
       end
     end
@@ -186,12 +186,12 @@ class BotRunning
   def set_lose_order
     puts "set_lose_order() with price #{@current_sell_price} at #{Time.now}"
 
-    lose_price = @ico_bot.sell_price + (@ico_bot.sell_price * 0.01 )
+    lose_price = @ico_bot.sell_price + (@ico_bot.sell_price * @ico_bot.force_buy_percent / 100 )
     
     new_amount = @ico_bot.amount * (@ico_bot.sell_price / lose_price)
-    new_amount = new_amount - new_amount * 0.0016
+    new_amount = new_amount - new_amount * 0.0011
 
-    result = Bitfi.buy(new_amount, lose_price)
+    result = Bitfi.buy(@ico_bot.pair_name, new_amount, lose_price)
 
     profit = (@ico_bot.sell_price - lose_price) / lose_price * 100
     @current_order.buy_order_id = result['orderNumber']
@@ -217,7 +217,7 @@ class BotRunning
           @ico_bot.ico_order_id = nil
           @ico_bot.save
         end
-      rescue
+      rescue Exception => e
         puts "Buy order #{@current_order.buy_order_id} is not existed!"
       end
     end
@@ -229,9 +229,13 @@ class BotRunning
     @previous_buy_price = @current_buy_price
 
     # Get new price
-    data = Bitfi.get_current_trading_price(@ico_bot.pair_name)
+    data = Bitfi.get_current_trading_price(@ico_bot.pair_name, @ico_bot.limit_amount_check_price)
 
     return nil if data.nil?
+
+    @ico_bot.current_buy_price = data[:buy_price]
+    @ico_bot.current_sell_price = data[:sell_price]
+    @ico_bot.save
 
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
@@ -301,8 +305,7 @@ class Bitfi
       @client = Bitfinex::Client.new
     end
 
-    def get_current_trading_price(pair_name)
-      @limit_price = 0.01
+    def get_current_trading_price(pair_name, limit_amount)
       data = @client.orderbook(pair_name)
       
       buy_price = 0
@@ -313,7 +316,7 @@ class Bitfi
       end
 
       data['bids'].each do |bid|
-        if bid["amount"].to_f > @limit_price
+        if bid["amount"].to_f > limit_amount
           buy_price = bid["price"].to_f
           break
         end
@@ -321,7 +324,7 @@ class Bitfi
 
       sell_price = 0
       data['asks'].each do |ask|
-        if ask["amount"].to_f > @limit_price
+        if ask["amount"].to_f > limit_amount
           sell_price = ask["price"].to_f
           break
         end

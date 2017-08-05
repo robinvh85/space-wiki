@@ -33,6 +33,8 @@ Rails.application.routes.draw do
   get 'poloniex/predict_percent' => 'poloniex#predict_percent'
   resources :poloniex
 
+  get 'icos' => 'icos#index'
+
   # Trades
   get 'trades' => 'trades#index'
 
@@ -57,6 +59,11 @@ Rails.application.routes.draw do
     put 'orders/update_bot_info' => 'orders#update_bot_info'
 
     resources :orders
+
+    get 'ico_orders/get_bot_list' => 'ico_orders#get_bot_list'
+    put 'ico_orders/update_bot' => 'ico_orders#update_bot'
+    post 'ico_orders/cancel_sell' => 'ico_orders#cancel_sell'
+    post 'ico_orders/cancel_buy' => 'ico_orders#cancel_buy'
 
     post 'currency_pairs/update_note' => 'currency_pairs#update_note'
     get 'currency_pairs/get_current_price' => 'currency_pairs#get_current_price'
