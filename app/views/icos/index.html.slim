@@ -1,0 +1,154 @@
+div.container
+  div#orders.panel
+    div.panel-heading
+      | Orders
+    div.panel-block      
+      table.table.is-bordered style="width: 800px;"
+        thead
+          tr
+            th ID
+            th Amount
+            th Sell price
+            th Buy price
+            th Action
+        tbody v-for="bot in bot_list"
+          tr
+            th rowspan="2"
+              | {{ bot.id }}
+            th 
+              input type="text" style="width: 120px;" v-model="bot.amount"
+            th
+              input type="text" style="width: 120px;" v-model="bot.sell_price"
+            th
+              input type="text" style="width: 120px;" v-model="bot.buy_price"
+            th
+              button @click="update_bot(bot)"
+                | Update
+              button @click="start_bot(bot)"
+                | Start
+              button @click="stop_bot(bot)"
+                | Stop
+          tr v-show="bot.ico_order != null"
+            td style="text-align: left;"
+              | {{ bot.ico_order.amount }}
+            td style="text-align: left;"
+              | {{ bot.ico_order.sell_price }}
+            td style="text-align: left;"
+              | {{ bot.ico_order.buy_price }}
+            td style="text-align: center;"
+              a v-show="bot.ico_order.sell_order_id != null && bot.ico_order.sold_order_id == null" @click="cancel_sell(bot.ico_order)"
+                | Cancel sell
+              a v-show="bot.ico_order.buy_order_id != null" @click="cancel_buy(bot.ico_order)"
+                | Change buy
+  div.panel
+    div.panel-heading
+      | Chart
+    div.panel-block      
+      div id='chart' style="width:100%;"
+
+javascript:
+  $(function(){
+    decimal = 8;
+    $("#date_input").val(moment().format("Y/MM/DD"));
+  });
+
+  // Vue
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+  Vue.prototype.$http = axios;
+
+  var app = new Vue({
+    el: '#orders',
+    data: {
+      bot: {
+        ico_order: {}
+      },
+      bot2: {
+        ico_order: {}
+      },
+      current_price: 0,
+      bot_list: []
+    },
+    methods: {
+      get_bot_list: function(){
+        var self = this;
+        this.$http.get('/ajax/ico_orders/get_bot_list').then(function (res){
+          self.bot_list = res.data;
+        });
+      },
+      update_bot: function(bot){
+        var self = this;
+
+        if(confirm("Do you want to update ?"))
+        {
+          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+            alert("Update " + res.data.status);
+          });
+        }
+      },
+      start_bot: function(bot){
+        var self = this;
+        bot.status = 1;
+        bot.trade_type = "SELLING";
+
+        if(confirm("Do you want to start bot ?"))
+        {
+          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+            alert("Start " + res.data.status);
+          });
+        }        
+      },
+      stop_bot: function(bot){
+        var self = this;
+
+        if(confirm("Do you want to stop bot ?"))
+        {
+          bot.status = -1;
+          bot.trade_type = "";
+          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+            alert("Stop " + res.data.status);
+          });
+        }
+      },
+      cancel_sell: function(item){
+        var self = this;
+
+        if(confirm("Do you want to cancel sell order ?")){
+          this.$http.post('/ajax/ico_orders/cancel_sell', item).then(function (res){
+            if(res.data != null){
+              alert("Cancel sell successfully !");
+            } else {
+              alert("Can not cancel sell, please check !!!");
+            }            
+          });
+        }
+      },
+      cancel_buy: function(item){
+        var self = this;
+
+        if(confirm("Do you want to cancel buy order ?")){
+          this.$http.post('/ajax/ico_orders/cancel_buy', item).then(function (res){
+            if(res.data != null){
+              alert("Cancel buy successfully !");
+            } else {
+              alert("Can not cancel buy, please check !!!");
+            }            
+          });
+        }
+      },
+      init: function(){
+        console.log("INIT");
+        this.get_bot_list();
+      }    
+    },
+    watch: {
+    },
+    created: function() {
+      console.log("created");
+    },
+    mounted: function() {
+      console.log("mounted");
+      this.init();
+    }
+  });
+
