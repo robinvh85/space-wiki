@@ -8,17 +8,16 @@ namespace :ico_bot do
     threads = []
     thread_num = 1
     
-    bot_list = IcoBot.all
+    bot_list = IcoBot.where('')
 
     index = 0
     bot_list.each do |bot|
       index += 1
       puts "Create thread #{index}"
       thread = Thread.new{
-        thread_id = index + 1
+        thread_id = index
         
         cycle_time = 15
-
 
         # Get api_obj
         ico_info = bot.ico_info
@@ -76,7 +75,7 @@ end
 
 class BotRunning
   def initialize(config)
-    @ico_bot = IcoBot.find(config[:bot_id])
+    @ico_bot = config[:ico_bot]
     @api_obj = config[:api_obj]
 
     @current_buy_price = 0
@@ -404,7 +403,6 @@ class Bitfi
 
     begin
       result = @client.order_status(order_id)
-      binding.pry
       status = 0
       if result["is_live"] == false and result["original_amount"] == result["executed_amount"]
         status = 1
@@ -435,114 +433,119 @@ class Bitfi
   end
 end
 
-module PoloObj
-  class << self
-    def get_current_trading_price(pair_name, limit_amount)
-      result = nil
+class PoloObj
+  def initialize()
+  end
 
-      begin
-        response = PoloniexVh.order_book(pair_name)
-        data = JSON.parse(response.body)
-        buy_price = 0
-        data['bids'].each do |bid|
-          if bid[1].to_f > limit_amount
-            buy_price = bid[0].to_f
-            break
-          end
+  def get_current_trading_price(pair_name, limit_amount)
+    result = nil
+
+    begin
+      response = PoloniexVh.order_book(pair_name)
+      data = JSON.parse(response.body)
+      buy_price = 0
+      data['bids'].each do |bid|
+        if bid[1].to_f > limit_amount
+          buy_price = bid[0].to_f
+          break
         end
-
-        sell_price = 0
-        data['asks'].each do |ask|
-          if ask[1].to_f > limit_amount
-            sell_price = ask[0].to_f
-            break
-          end
-        end
-
-        result = {
-          buy_price: buy_price,
-          sell_price: sell_price
-        }
-      rescue Exception => e
-        puts "Error #{e}"
       end
 
-      result
+      sell_price = 0
+      data['asks'].each do |ask|
+        if ask[1].to_f > limit_amount
+          sell_price = ask[0].to_f
+          break
+        end
+      end
+
+      result = {
+        buy_price: buy_price,
+        sell_price: sell_price
+      }
+    rescue Exception => e
+      puts "Error #{e}"
     end
 
-    def buy(pair_name, amount, price)
-      puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
+    result
+  end
 
-      begin
-        result = JSON.parse(`python script/python/buy.py #{pair_name} #{'%.8f' % price} #{amount}`)
-      rescue Exception => e
-        puts "Error #{e}"
-      end
+  def buy(pair_name, amount, price)
+    puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
+    result = nil
 
-      puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
-      result
+    begin
+      order = JSON.parse(`python script/python/buy.py #{pair_name} #{'%.8f' % price} #{amount}`)
+      result = {"order_id" => order["orderNumber"]}
+    rescue Exception => e
+      puts "Error #{e}"
     end
 
-    def sell(pair_name, amount, price)
-      puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
-      
-      begin
-        result = JSON.parse(`python script/python/sell.py #{pair_name} #{'%.8f' % price} #{amount}`)
-      rescue Exception => e
-        puts "Error #{e}"
-      end
+    puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+    result
+  end
 
-      puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
-      result
+  def sell(pair_name, amount, price)
+    puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
+    result = nil
+
+    begin
+      order = JSON.parse(`python script/python/sell.py #{pair_name} #{'%.8f' % price} #{amount}`)
+      result = {"order_id" => order["orderNumber"]}
+    rescue Exception => e
+      puts "Error #{e}"
     end
 
-    def cancel_order(order_id)
-      puts "====> Cancel order at #{Time.now}"
+    puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+    result
+  end
 
-      status = 0
-      begin
-        result = JSON.parse(`python script/python/cancel_order.py #{order_id}`)
+  def cancel_order(order_id)
+    puts "====> Cancel order at #{Time.now}"
 
-        if result['success'] == 1
-          status = 1
-        end
-      rescue Exception => e
-        puts "Error #{e}"
+    status = 0
+    begin
+      result = JSON.parse(`python script/python/cancel_order.py #{order_id}`)
+
+      if result['success'] == 1
+        status = 1
       end
-
-      status
+    rescue Exception => e
+      puts "Error #{e}"
     end
 
-    # @return status =1: sold or Bought | =0 : still alive
-    def check_order(order_id)
-      puts "====> Check order #{order_id} at #{Time.now}"
+    status
+  end
 
-      status = 0
-      begin
-        result = JSON.parse(`python script/python/check_trade_order.py #{order_id}`)
-        if result.present?
-          status = 1
-        end
-      rescue Exception => e
-        puts "Error #{e}"
-        status = -1
+  # @return status =1: sold or Bought | =0 : still alive
+  def check_order(order_id)
+    puts "====> Check order #{order_id} at #{Time.now}"
+
+    status = 0
+    begin
+      result = JSON.parse(`python script/python/check_trade_order.py #{order_id}`)
+      if result.present?
+        status = 1
       end
-      
-      status
+    rescue Exception => e
+      puts "Error #{e}"
+      status = -1
     end
     
-    def get_balances(currency)
-      puts "====> Get balances at #{Time.now}"
+    status
+  end
+  
+  def get_balances(currency)
+    puts "====> Get balances at #{Time.now}"
 
-      begin
-        result = JSON.parse(`python script/python/get_balances.py`)
-        return result[currency]
-      rescue Exception => e
-        puts "Error #{e}"
-      end
-
-      nil
+    begin
+      result = JSON.parse(`python script/python/get_balances.py`)
+      return result[currency]
+    rescue Exception => e
+      puts "Error #{e}"
     end
+
+    nil
   end
 end
 
