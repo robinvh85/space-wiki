@@ -102,7 +102,10 @@ class BotRunning
     puts "check_for_buy() with price #{@current_sell_price} (#{'%.2f' % current_profit}%) at #{Time.now}"
     
     if @current_sell_price < @ico_bot.sell_price
-      result = Bitfi.buy(@ico_bot.pair_name, buy_amount, @ico_bot.buy_price)
+      result = Bitfi.buy(@ico_bot.ico_info.name, buy_amount, @ico_bot.buy_price)
+
+      return if result.nil?
+
       profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
       @current_order.buy_order_id = result['order_id']
       @current_order.buy_price = @ico_bot.buy_price
@@ -120,8 +123,11 @@ class BotRunning
 
     @ico_bot.reload
     if @ico_bot.status == 1
-      obj_sell = Bitfi.sell(@ico_bot.pair_name, @ico_bot.amount, @ico_bot.sell_price)
+      update_balances()
+      obj_sell = Bitfi.sell(@ico_bot.ico_info.name, @ico_bot.amount, @ico_bot.sell_price)
     
+      return if obj_sell.nil?
+
       @current_order = IcoOrder.create({
         sell_price: @ico_bot.sell_price,
         amount: @ico_bot.amount,
@@ -133,6 +139,12 @@ class BotRunning
       @ico_bot.ico_order = @current_order
       @ico_bot.save
     end
+  end
+
+  def update_balances
+    amount = Bitfi.get_balances(@ico_bot.ico_info.currency)
+    @ico_bot.amount = amount
+    @ico_bot.save
   end
 
   def check_finish_order_sell
@@ -173,9 +185,9 @@ class BotRunning
   def cancel_buy_order
     puts "cancel_buy_order() with price #{@current_sell_price} at #{Time.now}"
 
-    result = Bitfi.cancel_order(@current_order.buy_order_id)
+    status = Bitfi.cancel_order(@current_order.buy_order_id)
 
-    if result.present?
+    if status == 1
       @current_order.buy_order_id = nil
       @current_order.buy_price = nil
       @current_order.profit = nil
@@ -191,7 +203,7 @@ class BotRunning
     new_amount = @ico_bot.amount * (@ico_bot.sell_price / lose_price)
     new_amount = new_amount - new_amount * 0.0011
 
-    result = Bitfi.buy(@ico_bot.pair_name, new_amount, lose_price)
+    result = Bitfi.buy(@ico_bot.ico_info.name, new_amount, lose_price)
 
     profit = (@ico_bot.sell_price - lose_price) / lose_price * 100
     @current_order.buy_order_id = result['orderNumber']
@@ -229,7 +241,7 @@ class BotRunning
     @previous_buy_price = @current_buy_price
 
     # Get new price
-    data = Bitfi.get_current_trading_price(@ico_bot.pair_name, @ico_bot.limit_amount_check_price)
+    data = Bitfi.get_current_trading_price(@ico_bot.ico_info.name, @ico_bot.limit_amount_check_price)
 
     return nil if data.nil?
 
@@ -241,31 +253,12 @@ class BotRunning
     @current_sell_price = data[:sell_price]
   end
 
-  def start_trading
-    puts "start_trading: #{@trade_info.currency_pair_name} at #{Time.now}"
-    while(true) do
-      start_time = Time.now
-
-      update_current_price()
-      analysis()
-
-      end_time = Time.now
-      inteval = (end_time - start_time).to_i
-
-      sleep(@config[:interval_time] - inteval) if @config[:interval_time] - inteval > 0
-
-      if @is_sold # If a trading cycle done
-        return
-      end      
-    end
-  end
-
   def cancel_order_sell
     puts "Cancel order sell"
     
-    result = Bitfi.cancel_order(@current_order.sell_order_id)
+    status = Bitfi.cancel_order(@current_order.sell_order_id)
 
-    if result.present?
+    if status == 1
       @current_order.delete
 
       @ico_bot.trading_type = 'SELLING'
@@ -277,9 +270,9 @@ class BotRunning
   def cancel_order_buy
     puts "Cancel order buy"
     
-    result = Bitfi.cancel_order(@current_order.buy_order_id)
+    status = Bitfi.cancel_order(@current_order.buy_order_id)
 
-    if result.present?
+    if status == 1
       @current_order.buy_order_id = nil
       @current_order.buy_price = nil
       @current_order.profit = nil
@@ -306,39 +299,50 @@ class Bitfi
     end
 
     def get_current_trading_price(pair_name, limit_amount)
-      data = @client.orderbook(pair_name)
-      
-      buy_price = 0
 
-      if data['bids'].nil?
-        puts "CAN NOT GET PRICE !!!!!"
-        return nil 
-      end
+      begin
+        data = @client.orderbook(pair_name)
+        
+        buy_price = 0
 
-      data['bids'].each do |bid|
-        if bid["amount"].to_f > limit_amount
-          buy_price = bid["price"].to_f
-          break
+        if data['bids'].nil?
+          puts "CAN NOT GET PRICE !!!!!"
+          return nil 
         end
-      end
 
-      sell_price = 0
-      data['asks'].each do |ask|
-        if ask["amount"].to_f > limit_amount
-          sell_price = ask["price"].to_f
-          break
+        data['bids'].each do |bid|
+          if bid["amount"].to_f > limit_amount
+            buy_price = bid["price"].to_f
+            break
+          end
         end
-      end
 
-      {
-        buy_price: buy_price,
-        sell_price: sell_price
-      }
+        sell_price = 0
+        data['asks'].each do |ask|
+          if ask["amount"].to_f > limit_amount
+            sell_price = ask["price"].to_f
+            break
+          end
+        end
+
+        {
+          buy_price: buy_price,
+          sell_price: sell_price
+        }
+      rescue Exception => e
+        puts "Error #{e}"
+        nil
+      end
     end
 
     def buy(pair_name, amount, price)
       puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
-      result = @client.new_order(pair_name, amount, "exchange limit", "buy", price)
+
+      begin
+        result = @client.new_order(pair_name, amount, "exchange limit", "buy", price)
+      rescue Exception => e
+        result = nil
+      end
 
       puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
       result
@@ -346,7 +350,12 @@ class Bitfi
 
     def sell(pair_name, amount, price)
       puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
-      result = @client.new_order(pair_name, amount, "exchange limit", "sell", price)
+
+      begin
+        result = @client.new_order(pair_name, amount, "exchange limit", "sell", price)
+      rescue Exception => e
+        result = nil
+      end
 
       puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
       result
@@ -354,23 +363,172 @@ class Bitfi
 
     def cancel_order(order_id)
       puts "====> Cancel order at #{Time.now}"
-      result = @client.cancel_orders(order_id)
-      
+
+      status = 0
+      begin
+        result = @client.cancel_orders(order_id)
+        status = 1
+      rescue Exception => e
+        puts "Error #{e}"
+      end
+
       result
     end
 
     # @return status =1: sold or Bought | =0 : still alive
     def check_order(order_id)
       puts "====> Check order #{order_id} at #{Time.now}"
-      result = @client.order_status(order_id)
-      
-      status = 0
-      if result["is_cancelled"] == false and result["is_live"] == false
-        status = 1
+
+      begin
+        result = @client.order_status(order_id)
+        
+        status = 0
+        if result["is_cancelled"] == false and result["is_live"] == false
+          status = 1
+        end
+      rescue Exception => e
+        puts "Error #{e}"
+        status = -1
       end
       
       status
     end
     
+    def get_balances(currency)
+      puts "====> Get balances at #{Time.now}"
+
+      begin
+        result = @client.balances
+        result.each do |item|
+          if item["currency"] == currency
+            return item["available"].to_f
+          end
+        end
+      rescue Exception => e
+        puts "Error #{e}"
+        status = -1
+      end
+
+      nil
+    end
+
   end
 end
+
+module PoloObj
+  class << self
+    def get_current_trading_price(pair_name, limit_amount)
+      result = nil
+
+      begin
+        response = PoloniexVh.order_book(pair_name)
+        data = JSON.parse(response.body)
+        buy_price = 0
+        data['bids'].each do |bid|
+          if bid[1].to_f > limit_amount
+            buy_price = bid[0].to_f
+            break
+          end
+        end
+
+        sell_price = 0
+        data['asks'].each do |ask|
+          if ask[1].to_f > limit_amount
+            sell_price = ask[0].to_f
+            break
+          end
+        end
+
+        result = {
+          buy_price: buy_price,
+          sell_price: sell_price
+        }
+      rescue Exception => e
+        puts "Error #{e}"
+      end
+
+      result
+    end
+
+    def buy(pair_name, amount, price)
+      puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
+
+      begin
+        result = JSON.parse(`python script/python/buy.py #{pair_name} #{'%.8f' % price} #{amount}`)
+      rescue Exception => e
+        puts "Error #{e}"
+      end
+
+      puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+      result
+    end
+
+    def sell(pair_name, amount, price)
+      puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
+      
+      begin
+        result = JSON.parse(`python script/python/sell.py #{pair_name} #{'%.8f' % price} #{amount}`)
+      rescue Exception => e
+        puts "Error #{e}"
+      end
+
+      puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+      result
+    end
+
+    def cancel_order(order_id)
+      puts "====> Cancel order at #{Time.now}"
+
+      status = 0
+      begin
+        result = JSON.parse(`python script/python/cancel_order.py #{order_id}`)
+
+        if result['success'] == 1
+          status = 1
+        end
+      rescue Exception => e
+        puts "Error #{e}"
+      end
+
+      status
+    end
+
+    # @return status =1: sold or Bought | =0 : still alive
+    def check_order(order_id)
+      puts "====> Check order #{order_id} at #{Time.now}"
+
+      status = 0
+      begin
+        result = JSON.parse(`python script/python/check_trade_order.py #{order_id}`)
+        if result.present?
+          status = 1
+        end
+      rescue Exception => e
+        puts "Error #{e}"
+        status = -1
+      end
+      
+      status
+    end
+    
+    def get_balances(currency)
+      puts "====> Get balances at #{Time.now}"
+
+      begin
+        result = @client.balances
+        result.each do |item|
+          if item["currency"] == currency
+            return item["available"].to_f
+          end
+        end
+      rescue Exception => e
+        puts "Error #{e}"
+        status = -1
+      end
+
+      nil
+    end
+  end
+end
+
+
