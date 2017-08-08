@@ -82,11 +82,9 @@ class BotRunning
     @previous_buy_price = 0
     @previous_sell_price = 0
     
-    @limit_profit_for_buy = 1
-    @limit_profit_force_buy = 0.8
-
     @current_order = nil
     @current_order = IcoOrder.find(@ico_bot.ico_order_id) if @ico_bot.ico_order_id.present?
+    @num_time_check_lose = 4 # 1m
   end
 
   def buy_amount
@@ -139,11 +137,19 @@ class BotRunning
       @ico_bot.save
     else
       lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
-      if lose_percent > @ico_bot.limit_cancel_for_lose_percent
-        set_lose_order()
 
-        @ico_bot.trading_type = "LOSE_ORDER"
-        @ico_bot.save
+      @num_time_check_lose.times do |index|
+        puts "#{@ico_bot.ico_info.name} => Check lose time at #{index}"
+        if lose_percent > @ico_bot.limit_cancel_for_lose_percent
+          if index == num_time - 1
+            set_lose_order()
+
+            @ico_bot.trading_type = "LOSE_ORDER"
+            @ico_bot.save
+          end
+        else
+          return
+        end
       end
     end
 
@@ -256,7 +262,7 @@ class BotRunning
         if status == 1
           @current_order.bought_order_id = 1
           @current_order.save
-          @ico_bot.trading_type = ""
+          @ico_bot.trading_type = "SELLING"
           @ico_bot.ico_order_id = nil
           @ico_bot.save
         end
@@ -481,7 +487,7 @@ class PoloObj
     result = nil
 
     begin
-      order = JSON.parse(`python script/python/buy.py #{pair_name} #{'%.8f' % price} #{amount}`)
+      order = JSON.parse(`python -W ignore script/python/buy.py #{pair_name} #{'%.8f' % price} #{amount}`)
       result = {"order_id" => order["orderNumber"]}
     rescue Exception => e
       puts "Error #{e}"
@@ -496,7 +502,7 @@ class PoloObj
     result = nil
 
     begin
-      order = JSON.parse(`python script/python/sell.py #{pair_name} #{'%.8f' % price} #{amount}`)
+      order = JSON.parse(`python -W ignore script/python/sell.py #{pair_name} #{'%.8f' % price} #{amount}`)
       result = {"order_id" => order["orderNumber"]}
     rescue Exception => e
       puts "Error #{e}"
@@ -511,7 +517,7 @@ class PoloObj
 
     status = 0
     begin
-      result = JSON.parse(`python script/python/cancel_order.py #{order_id}`)
+      result = JSON.parse(`python -W ignore script/python/cancel_order.py #{order_id}`)
 
       if result['success'] == 1
         status = 1
@@ -529,9 +535,12 @@ class PoloObj
 
     status = 0
     begin
-      result = JSON.parse(`python script/python/check_trade_order.py #{order_id}`)
-      if result.present?
-        status = 1
+      return_value = `python -W ignore script/python/check_trade_order.py #{order_id}`
+      if return_value.present?
+        result = JSON.parse(return_value)
+        if result.present?
+          status = 1
+        end
       end
     rescue Exception => e
       puts "Error #{e}"
@@ -545,7 +554,7 @@ class PoloObj
     puts "====> Get balances at #{Time.now}"
 
     begin
-      result = JSON.parse(`python script/python/get_balances.py`)
+      result = JSON.parse(`python -W ignore script/python/get_balances.py`)
       return result[currency]
     rescue Exception => e
       puts "Error #{e}"
