@@ -6,23 +6,28 @@ namespace :ico_tracking_price do
     cycle_time = 15
 
     ico_account = IcoAccount.find(1)
-    Bitfi.key = ico_account.key
-    Bitfi.secret = ico_account.secret
-    Bitfi.connect
+    
+    Bitfinex::Client.configure do |conf|
+      conf.api_key = ico_account.key
+      conf.secret = ico_account.secret
+    end
+
+    client = Bitfinex::Client.new
 
     pair_list = ['SANUSD', 'LTCUSD', 'BCHUSD']
     cycle_time = 15
     index = 0
+    previous_price_list = Array.new(pair_list.length)
 
     while true
       start_time = Time.now
 
-      pair_list.each do |pair_name|
-        previous_price = nil
+      pair_list.each_with_index do |pair_name, index|
+        puts "Get price for #{pair_name} at #{Time.now}"
         period_type = '15s'
 
-        price_obj = IcoTracking.save_price_log(pair_name, period_type, previous_price)
-        previous_price = price_obj
+        price_obj = IcoTracking.save_price_log(client, pair_name, period_type, previous_price_list[index])
+        previous_price_list[index] = price_obj
         sleep(1)        
       end
 
@@ -35,15 +40,15 @@ end
 
 module IcoTracking
   class << self
-    def save_price_log(pair_name, period_type, previous_price)
-      price_obj = IcoTracking.get_price(pair_name)
+    def save_price_log(client, pair_name, period_type, previous_price)
+      price_obj = IcoTracking.get_price(client, pair_name)
       return price_obj if previous_price.nil?
 
       change_buy_percent = ((price_obj[:buy_price] - previous_price[:buy_price]) / previous_price[:buy_price] * 100).round(2)
       change_sell_percent = ((price_obj[:sell_price] - previous_price[:sell_price]) / previous_price[:sell_price] * 100).round(2)
       diff_price_percent = ((price_obj[:sell_price] - price_obj[:buy_price]) / price_obj[:buy_price] * 100).round(2)
 
-      BtcPriceLog.create({
+      IcoPriceLog.create({
         pair_name: pair_name,
         buy_price: price_obj[:buy_price],
         sell_price: price_obj[:sell_price],
@@ -53,14 +58,13 @@ module IcoTracking
         period_type: period_type,
         time_at: Time.now.to_i
       })
-      
+
       price_obj
     end
 
-    def get_price(pair_name)
-      @client = Bitfinex::Client.new
+    def get_price(client, pair_name)      
       @limit_amount = 0
-      data = @client.orderbook(pair_name)
+      data = client.orderbook(pair_name)
       
       buy_price = 0
 
