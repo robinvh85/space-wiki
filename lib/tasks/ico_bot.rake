@@ -9,6 +9,7 @@ namespace :ico_bot do
     thread_num = 1
     
     bot_list = IcoBot.where('')
+    cycle_time = 20
 
     index = 0
     bot_list.each do |bot|
@@ -16,8 +17,6 @@ namespace :ico_bot do
       puts "Create thread #{index}"
       thread = Thread.new{
         thread_id = index
-        
-        cycle_time = 15
 
         # Get api_obj
         ico_info = bot.ico_info
@@ -51,7 +50,7 @@ namespace :ico_bot do
           start_time = Time.now
           result = {}
           
-          puts "#Thread #{thread_id} ==========>"
+          puts "\n#Thread #{thread_id} ==========> #{bot.ico_info.name} at #{Time.now}"
           bot_run.update_current_price()
           bot_run.analysis()
 
@@ -63,7 +62,7 @@ namespace :ico_bot do
 
       }
     
-      sleep(5)
+      sleep(cycle_time / bot_list.length)
       threads << thread
     end
 
@@ -100,7 +99,6 @@ class BotRunning
 
   # Can create many algorithms and watching for better
   def analysis
-    puts "Analysis at #{Time.now}"
     return 0 if @previous_buy_price == 0 # next for the first time
 
     @ico_bot.reload
@@ -124,7 +122,7 @@ class BotRunning
   
   def check_for_buy    
     current_profit = (@ico_bot.sell_price - @current_sell_price) / @current_sell_price * 100
-    puts "check_for_buy() with price #{@current_sell_price} (#{'%.2f' % current_profit}%) at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_for_buy() with price #{@current_sell_price} (#{'%.2f' % current_profit}%) at #{Time.now}"
     
     if @current_sell_price < @ico_bot.sell_price
       result = @api_obj.buy(@ico_bot.ico_info.name, buy_amount, @ico_bot.buy_price)
@@ -139,12 +137,20 @@ class BotRunning
 
       @ico_bot.trading_type = "ORDER_BUY"
       @ico_bot.save
+    else
+      lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
+      if lose_percent > @ico_bot.limit_cancel_for_lose_percent
+        set_lose_order()
+
+        @ico_bot.trading_type = "LOSE_ORDER"
+        @ico_bot.save
+      end
     end
 
   end
 
   def check_set_order_sell
-    puts "check_set_order_sell() with price #{@current_buy_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_set_order_sell() with price #{@current_buy_price} at #{Time.now}"
 
     @ico_bot.reload
     if @ico_bot.status == 1
@@ -173,7 +179,7 @@ class BotRunning
   end
 
   def check_finish_order_sell
-    puts "check_finish_order_sell() with price #{@current_buy_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_finish_order_sell() with price #{@current_buy_price} at #{Time.now}"
 
     status = @api_obj.check_order(@current_order.sell_order_id)
 
@@ -186,7 +192,7 @@ class BotRunning
   end
 
   def check_finish_order_buy
-    puts "check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
 
     lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
     if lose_percent > @ico_bot.limit_cancel_for_lose_percent
@@ -208,7 +214,7 @@ class BotRunning
   end
 
   def cancel_buy_order
-    puts "cancel_buy_order() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - cancel_buy_order() with price #{@current_sell_price} at #{Time.now}"
 
     status = @api_obj.cancel_order(@current_order.buy_order_id)
 
@@ -221,7 +227,7 @@ class BotRunning
   end
 
   def set_lose_order
-    puts "set_lose_order() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - set_lose_order() with price #{@current_sell_price} at #{Time.now}"
 
     lose_price = @ico_bot.sell_price + (@ico_bot.sell_price * @ico_bot.force_buy_percent / 100 )
     
@@ -238,7 +244,7 @@ class BotRunning
   end
 
   def check_finish_lose_order
-    puts "check_finish_lose_order() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_finish_lose_order() with price #{@current_sell_price} at #{Time.now}"
 
     if @current_sell_price < @ico_bot.sell_price
       cancel_buy_order() # Cancel lose_buy order
@@ -279,7 +285,7 @@ class BotRunning
   end
 
   def cancel_order_sell
-    puts "Cancel order sell"
+    puts "#{@ico_bot.ico_info.name} - Cancel order sell"
     
     status = @api_obj.cancel_order(@current_order.sell_order_id)
 
@@ -293,7 +299,7 @@ class BotRunning
   end
 
   def cancel_order_buy
-    puts "Cancel order buy"
+    puts "#{@ico_bot.ico_info.name} - Cancel order buy"
     
     status = @api_obj.cancel_order(@current_order.buy_order_id)
 
@@ -548,5 +554,3 @@ class PoloObj
     nil
   end
 end
-
-

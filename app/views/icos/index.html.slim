@@ -14,7 +14,7 @@ div.container
         tbody v-for="bot in bot_list"
           tr
             th rowspan="2"
-              | {{ bot.id }}
+              | {{ bot.id }} {{ bot.ico_info.name }}
             th 
               input type="text" style="width: 120px;" v-model="bot.amount"
             th
