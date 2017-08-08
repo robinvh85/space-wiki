@@ -32,8 +32,7 @@ module Ajax
       end
 
       render json: bot_list.to_json(
-        :include => :ico_order,
-        :include => :ico_info
+        :include => [:ico_order, :ico_info]
       )
     end
 

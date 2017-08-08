@@ -3,7 +3,7 @@ div.container
     div.panel-heading
       | Orders
     div.panel-block      
-      table.table.is-bordered style="width: 800px;"
+      table.table.is-bordered style="width: 900px;"
         thead
           tr
             th ID
@@ -16,11 +16,13 @@ div.container
             th rowspan="2"
               | {{ bot.id }} {{ bot.ico_info.name }}
             th 
-              input type="text" style="width: 120px;" v-model="bot.amount"
+              input type="text" style="width: 100px;" v-model="bot.amount"
             th
-              input type="text" style="width: 120px;" v-model="bot.sell_price"
+              input type="text" style="width: 90px;" v-model="bot.sell_price"
+              | {{ bot.current_buy_price }}
             th
-              input type="text" style="width: 120px;" v-model="bot.buy_price"
+              input type="text" style="width: 90px;" v-model="bot.buy_price"
+              | {{ bot.current_sell_price }}
             th
               button @click="update_bot(bot)"
                 | Update
