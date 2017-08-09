@@ -122,7 +122,7 @@ namespace :ico_bot do
           api_obj = polo_obj
         end
         
-        ico_bot = Icobot.find(ico_invest.ico_bot_id)
+        ico_bot = IcoBot.find(ico_invest.ico_bot_id)
         price_obj = api_obj.get_current_trading_price(ico_info.name, ico_bot.limit_amount_check_price)
         current_buy_price = price_obj[:buy_price]
 
