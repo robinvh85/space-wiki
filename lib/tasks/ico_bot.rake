@@ -70,6 +70,86 @@ namespace :ico_bot do
       t.join
     end
   end
+
+  task :check_lowest_price_1m, [] => :environment do |_cmd, args|
+    puts "Run rake ico_bot:check_lowest_price_1m"
+    pair_list = CurrencyPair.where("is_init = 1 AND is_disabled = 0")
+    #pair_list = CurrencyPair.where("")
+
+    pair_list.each do |pair|
+      
+      max_price = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", pair.id, (Time.now - 1.months).to_i).maximum(:min_value)
+      min_price = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", pair.id, (Time.now - 1.months).to_i).minimum(:min_value)
+      current_price = ChartData5m.where("currency_pair_id = ?", pair.id).last.min_value
+      pair.current_percent_1m = ((current_price - min_price) / (max_price - min_price) * 100).round(2)
+      pair.save
+      puts "#{pair.name} : #{min_price} - #{current_price} - #{max_price} : #{pair.current_percent_1m}%"
+    end
+  end
+
+  task :check_force_sell_when_profit_high, [] => :environment do |_cmd, args|
+    puts "Run rake ico_bot:check_force_sell_when_profit_high"
+
+    cycle_time = 20
+    bitfi_obj = nil
+    polo_obj = nil
+
+    while true
+      start_time = Time.now
+
+      ico_invest_list = IcoInvest.where("status = 1")
+      api_obj = nil
+
+      ico_invest_list.each do |ico_invest|
+        ico_info = IcoInfo.find(ico_invest.ico_info_id)
+
+        # identify api_obj
+        if ico_info.site == "Bitfi"
+          ico_account = IcoAccount.find_by(site: ico_info.site)
+
+          if bitfi_obj.nil?
+            bitfi_obj = Bitfi.new({
+              key: ico_account.key,
+              secret: ico_account.secret
+            })
+          end
+
+          api_obj = bitfi_obj
+        elsif ico_info.site == "Polo"
+          if polo_obj.nil?
+            polo_obj = PoloObj.new
+          end
+          api_obj = polo_obj
+        end
+        
+        ico_bot = Icobot.find(ico_invest.ico_bot_id)
+        price_obj = api_obj.get_current_trading_price(ico_info.name, ico_bot.limit_amount_check_price)
+        current_buy_price = price_obj[:buy_price]
+
+        binefit_percent = (current_buy_price - ico_invest.invest_price) / ico_invest.invest_price * 100
+        puts "#{ico_info.name} - check for buy with binefit (#{binefit_percent}%) at #{Time.now}"
+
+        if binefit_percent > ico_invest.limit_profit_percent
+          puts "#{ico_info.name} - CALL FORCE BY with binefit (#{binefit_percent}%)"
+          obj_sell = api_obj.sell(ico_info.name, ico_bot.amount, current_buy_price)
+
+          if obj_sell.present?
+            puts "#{ico_info.name} - FORCE SELL SUCCESS !"
+            ico_invest.status = 0
+            ico_invest.ico_bot_id = nil
+            ico_invest.save
+          end
+        end
+
+        sleep(1)
+      end
+
+      end_time = Time.now
+      inteval = (end_time - start_time).to_i
+
+      sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    end
+  end
 end
 
 class BotRunning
@@ -136,17 +216,19 @@ class BotRunning
       @ico_bot.trading_type = "ORDER_BUY"
       @ico_bot.save
     else
-      lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
-
       @num_time_check_lose.times do |index|
         puts "#{@ico_bot.ico_info.name} => Check lose time at #{index}"
+        update_current_price()
+        lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
         if lose_percent > @ico_bot.limit_cancel_for_lose_percent
-          if index == num_time - 1
+          if index == @num_time_check_lose - 1
             set_lose_order()
 
             @ico_bot.trading_type = "LOSE_ORDER"
             @ico_bot.save
           end
+
+          sleep(15)
         else
           return
         end
@@ -156,7 +238,7 @@ class BotRunning
   end
 
   def check_set_order_sell
-    puts "#{@ico_bot.ico_info.name} - check_set_order_sell() with price #{@current_buy_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
 
     @ico_bot.reload
     if @ico_bot.status == 1
@@ -185,7 +267,7 @@ class BotRunning
   end
 
   def check_finish_order_sell
-    puts "#{@ico_bot.ico_info.name} - check_finish_order_sell() with price #{@current_buy_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
 
     status = @api_obj.check_order(@current_order.sell_order_id)
 
@@ -202,11 +284,24 @@ class BotRunning
 
     lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
     if lose_percent > @ico_bot.limit_cancel_for_lose_percent
-      cancel_buy_order()
-      set_lose_order()
+      @num_time_check_lose.times do |index|
+        puts "#{@ico_bot.ico_info.name} => Check lose time at #{index}"
+        update_current_price()
+        lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
+        if lose_percent > @ico_bot.limit_cancel_for_lose_percent
+          if index == @num_time_check_lose - 1
+            cancel_buy_order()
+            set_lose_order()
 
-      @ico_bot.trading_type = "LOSE_ORDER"
-      @ico_bot.save
+            @ico_bot.trading_type = "LOSE_ORDER"
+            @ico_bot.save
+          end
+
+          sleep(15)
+        else
+          return
+        end
+      end
     else
       status = @api_obj.check_order(@current_order.buy_order_id)
 
@@ -214,6 +309,7 @@ class BotRunning
         @current_order.bought_order_id = 1
         @current_order.save
         @ico_bot.trading_type = "SELLING"
+        @ico_bot.ico_order_id = nil
         @ico_bot.save
       end
     end
@@ -406,7 +502,7 @@ class Bitfi
       puts "Error #{e}"
     end
 
-    result
+    status
   end
 
   # @return status =1: sold or Bought | =0 : still alive
