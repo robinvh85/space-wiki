@@ -228,7 +228,7 @@ class BotRunning
             @ico_bot.save
           end
 
-          sleep(15)
+          sleep(20)
         else
           return
         end
@@ -297,7 +297,7 @@ class BotRunning
             @ico_bot.save
           end
 
-          sleep(15)
+          sleep(20)
         else
           return
         end
