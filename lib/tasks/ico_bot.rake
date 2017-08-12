@@ -124,9 +124,11 @@ namespace :ico_bot do
         
         ico_bot = IcoBot.find(ico_invest.ico_bot_id)
         price_obj = api_obj.get_current_trading_price(ico_info.name, ico_bot.limit_amount_check_price)
-        current_buy_price = price_obj[:buy_price]
 
-        binefit_percent = (current_buy_price - ico_invest.invest_price) / ico_invest.invest_price * 100
+        next if price_obj.nil? # Return if can not get price
+
+        current_buy_price = price_obj[:buy_price]
+        binefit_percent = (current_buy_price - ico_invest.last_order_price) / ico_invest.last_order_price * 100
         puts "#{ico_info.name} - check for buy with binefit (#{binefit_percent}%) at #{Time.now}"
 
         if binefit_percent > ico_invest.limit_profit_percent
