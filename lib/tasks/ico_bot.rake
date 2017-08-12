@@ -8,7 +8,7 @@ namespace :ico_bot do
     threads = []
     thread_num = 1
     
-    bot_list = IcoBot.where('')
+    bot_list = IcoBot.where('status <> -1')
     cycle_time = 20
 
     index = 0

@@ -7,7 +7,7 @@ div.container
         thead
           tr
             th ID
-            th Amount
+            th Status
             th Sell price
             th Buy price
             th Action
@@ -16,13 +16,16 @@ div.container
             th rowspan="2"
               | {{ bot.id }} {{ bot.ico_info.name }}
             th 
-              input type="text" style="width: 100px;" v-model="bot.amount"
+              label v-show="bot.ico_order == null"
+                | DONE
+              label v-show="bot.ico_order != null"
+                | TRADING
             th
-              input type="text" style="width: 90px;" v-model="bot.sell_price"
-              | {{ bot.current_buy_price }}
+              input type="text" style="width: 90px;" v-model="bot.sell_price" @change="change_sell_price(bot)"
+              | {{ bot.current_sell_price }} ({{ ( (bot.current_sell_price - bot.sell_price ) / bot.sell_price * 100).toFixed(2) }})
             th
               input type="text" style="width: 90px;" v-model="bot.buy_price"
-              | {{ bot.current_sell_price }}
+              | {{ bot.current_buy_price }}
             th
               button @click="update_bot(bot)"
                 | Update
@@ -32,7 +35,7 @@ div.container
                 | Stop
           tr v-show="bot.ico_order != null"
             td style="text-align: left;"
-              | {{ bot.ico_order.amount }}
+              | 
             td style="text-align: left;"
               | {{ bot.ico_order.sell_price }}
             td style="text-align: left;"
@@ -41,12 +44,7 @@ div.container
               a v-show="bot.ico_order.sell_order_id != null && bot.ico_order.sold_order_id == null" @click="cancel_sell(bot.ico_order)"
                 | Cancel sell
               a v-show="bot.ico_order.buy_order_id != null" @click="cancel_buy(bot.ico_order)"
-                | Change buy
-  div.panel
-    div.panel-heading
-      | Chart
-    div.panel-block      
-      div id='chart' style="width:100%;"
+                | Cancel buy
 
 javascript:
   $(function(){
@@ -138,12 +136,22 @@ javascript:
           });
         }
       },
+      change_sell_price: function(bot){
+        bot.buy_price = (bot.sell_price - bot.sell_price * bot.buy_price_percent / 100).toFixed(8);
+      },
       init: function(){
         console.log("INIT");
         this.get_bot_list();
       }    
     },
     watch: {
+      /*
+      bot.sell_price: function (value) {
+        bot.buy_price = value;
+
+      //  this.$forceUpdate();
+      },
+      */
     },
     created: function() {
       console.log("created");
