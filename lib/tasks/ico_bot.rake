@@ -469,27 +469,29 @@ class Bitfi
 
   def buy(pair_name, amount, price)
     puts "====> Buy with Amount: #{amount} at Price: #{'%.8f' % price} at #{Time.now}"
+    result = nil
 
     begin
       result = @client.new_order(pair_name, amount, "exchange limit", "buy", price)
+      puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     rescue Exception => e
-      result = nil
+      puts "======> BUY ERROR #{e}"
     end
 
-    puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     result
   end
 
   def sell(pair_name, amount, price)
     puts "====> Sell Amount: #{amount} with Price: #{'%.8f' % price} at #{Time.now}"
+    result = nil
 
     begin
       result = @client.new_order(pair_name, amount, "exchange limit", "sell", price)
+      puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     rescue Exception => e
-      result = nil
+      puts "======> SELL ERROR #{e}"
     end
-
-    puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+    
     result
   end
 
@@ -587,11 +589,11 @@ class PoloObj
     begin
       order = JSON.parse(`python -W ignore script/python/buy.py #{pair_name} #{'%.8f' % price} #{amount}`)
       result = {"order_id" => order["orderNumber"]}
+      puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     rescue Exception => e
-      puts "Error #{e}"
+      puts "BUY ERROR #{e}"
     end
 
-    puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     result
   end
 
@@ -602,11 +604,11 @@ class PoloObj
     begin
       order = JSON.parse(`python -W ignore script/python/sell.py #{pair_name} #{'%.8f' % price} #{amount}`)
       result = {"order_id" => order["orderNumber"]}
+      puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     rescue Exception => e
-      puts "Error #{e}"
+      puts "======> SELL ERROR #{e}"
     end
-
-    puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
+ 
     result
   end
 
@@ -622,6 +624,7 @@ class PoloObj
       end
     rescue Exception => e
       puts "Error #{e}"
+      status = -1
     end
 
     status
