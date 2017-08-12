@@ -101,6 +101,7 @@ namespace :ico_bot do
       api_obj = nil
 
       ico_invest_list.each do |ico_invest|
+        ico_invest.reload
         ico_info = IcoInfo.find(ico_invest.ico_info_id)
 
         # identify api_obj
@@ -252,7 +253,8 @@ class BotRunning
       @current_order = IcoOrder.create({
         sell_price: @ico_bot.sell_price,
         amount: @ico_bot.amount,
-        sell_order_id: obj_sell['order_id']
+        sell_order_id: obj_sell['order_id'],
+        pair_name: @ico_bot.ico_info.name
       })
     
       @ico_bot.trading_type = "ORDER_SELL"
@@ -282,7 +284,7 @@ class BotRunning
   end
 
   def check_finish_order_buy
-    puts "#{@ico_bot.ico_info.name} - check_finish_order_buy() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_finish_order_buy() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
 
     lose_percent = (@current_sell_price - @ico_bot.sell_price) / @ico_bot.sell_price * 100
     if lose_percent > @ico_bot.limit_cancel_for_lose_percent
@@ -318,7 +320,7 @@ class BotRunning
   end
 
   def cancel_buy_order
-    puts "#{@ico_bot.ico_info.name} - cancel_buy_order() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - cancel_buy_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
 
     status = @api_obj.cancel_order(@current_order.buy_order_id)
 
@@ -331,7 +333,7 @@ class BotRunning
   end
 
   def set_lose_order
-    puts "#{@ico_bot.ico_info.name} - set_lose_order() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - set_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
 
     lose_price = @ico_bot.sell_price + (@ico_bot.sell_price * @ico_bot.force_buy_percent / 100 )
     
@@ -348,7 +350,7 @@ class BotRunning
   end
 
   def check_finish_lose_order
-    puts "#{@ico_bot.ico_info.name} - check_finish_lose_order() with price #{@current_sell_price} at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_finish_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
 
     if @current_sell_price < @ico_bot.sell_price
       cancel_buy_order() # Cancel lose_buy order
