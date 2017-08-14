@@ -1,0 +1,23 @@
+div class="modal fade" id="editOrder" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
+  div class="modal-dialog modal-lg" role="document"
+    div class="modal-content"
+      div class="modal-header"
+        h5 class="modal-title" id="exampleModalLabel"
+          | Modal title
+        button type="button" class="close" data-dismiss="modal" aria-label="Close"
+          span aria-hidden="true"
+          | &times;
+      div class="modal-body"
+        form
+          div class="form-group row"
+            label for="" class="col-sm-2 col-form-label"
+              | Sell price
+            div class="col-sm-4"
+              input class="form-control" v-model="selected_bot.sell_price"
+            label for="" class="col-sm-2 col-form-label"
+              | Buy price
+            div class="col-sm-4"
+              input class="form-control" v-model="selected_bot.buy_price"
+      div class="modal-footer"
+        button type="button" class="btn btn-primary" @click="update_bot(selected_bot)"
+          | Update

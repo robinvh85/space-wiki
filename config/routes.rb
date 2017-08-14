@@ -35,6 +35,8 @@ Rails.application.routes.draw do
 
   get 'icos' => 'icos#index'
 
+  get 'ico1s' => 'ico1s#index'
+
   # Trades
   get 'trades' => 'trades#index'
 
