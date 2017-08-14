@@ -203,7 +203,7 @@ class BotRunning
   
   def check_for_buy    
     current_profit = (@ico_bot.sell_price - @current_sell_price) / @current_sell_price * 100
-    puts "#{@ico_bot.ico_info.name} - check_for_buy() with price #{@current_sell_price} (#{'%.2f' % current_profit}%) at #{Time.now}"
+    puts "#{@ico_bot.ico_info.name} - check_for_buy() with price #{'%.2f' % @current_sell_price} (#{'%.2f' % current_profit}%) at #{Time.now}"
     
     if @current_sell_price < @ico_bot.sell_price
       result = @api_obj.buy(@ico_bot.ico_info.name, buy_amount, @ico_bot.buy_price)
