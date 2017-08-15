@@ -53,7 +53,7 @@ module Ajax
     private
 
     def bot_info_params
-      params.require(:bot).permit(:amount, :sell_price, :buy_price, :status)
+      params.require(:bot).permit(:amount, :sell_price, :buy_price, :status, :trading_type)
     end
   end
 end

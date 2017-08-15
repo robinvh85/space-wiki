@@ -112,7 +112,7 @@ javascript:
       start_sell: function(bot){
         var self = this;
         bot.status = 1;
-        bot.trade_type = "SELLING";
+        bot.trading_type = "SELLING";
 
         if(confirm("Do you want to start sell ?"))
         {
@@ -123,7 +123,7 @@ javascript:
       },
       start_buy: function(bot){
         var self = this;
-        bot.trade_type = "BUYING";
+        bot.trading_type = "BUYING";
 
         if(confirm("Do you want to start buy ?"))
         {

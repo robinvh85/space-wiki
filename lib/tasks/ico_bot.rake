@@ -312,7 +312,7 @@ class BotRunning
       if status == 1
         @current_order.bought_order_id = 1
         @current_order.save
-        @ico_bot.trading_type = "SELLING"
+        @ico_bot.trading_type = "DONE"
         @ico_bot.ico_order_id = nil
         @ico_bot.save
       end
@@ -342,11 +342,15 @@ class BotRunning
 
     result = @api_obj.buy(@ico_bot.ico_info.name, new_amount, lose_price)
 
-    profit = (@ico_bot.sell_price - lose_price) / lose_price * 100
-    @current_order.buy_order_id = result['order_id']
-    @current_order.buy_price = lose_price
-    @current_order.profit = profit
-    @current_order.save
+    if result.present?
+      profit = (@ico_bot.sell_price - lose_price) / lose_price * 100
+      @current_order.buy_order_id = result['order_id']
+      @current_order.buy_price = lose_price
+      @current_order.profit = profit
+      @current_order.save
+    else
+      puts "===> set_lose_order() ERROR"
+    end
   end
 
   def check_finish_lose_order
@@ -362,7 +366,7 @@ class BotRunning
         if status == 1
           @current_order.bought_order_id = 1
           @current_order.save
-          @ico_bot.trading_type = "SELLING"
+          @ico_bot.trading_type = "DONE"
           @ico_bot.ico_order_id = nil
           @ico_bot.save
         end
