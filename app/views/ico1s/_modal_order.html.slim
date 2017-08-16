@@ -3,7 +3,9 @@ div class="modal fade" id="editOrder" tabindex="-1" role="dialog" aria-labelledb
     div class="modal-content"
       div class="modal-header"
         h5 class="modal-title" id="exampleModalLabel"
-          | {{ selected_bot.ico_info ? selected_bot.ico_info.name : '' }}
+          | {{ selected_bot.pair_name }} - 
+          label class="text-warning"
+            | {{ selected_bot.trading_type }}
         button type="button" class="close" data-dismiss="modal" aria-label="Close"
           span aria-hidden="true"
           | &times;
@@ -15,21 +17,24 @@ div class="modal fade" id="editOrder" tabindex="-1" role="dialog" aria-labelledb
             div class="col-sm-3"
               input class="form-control" v-model="selected_bot.sell_price" style="width:100px;"
               label 
-                | {{ selected_bot.current_sell_price }}
+                | {{ selected_bot.current_buy_price }} 
+              label v-bind:class="{ 'text-primary': difference_buy_price_percent(selected_bot) > 0, 'text-danger': difference_buy_price_percent(selected_bot) < 0 }"
+                | &nbsp; ({{ difference_buy_price_percent(selected_bot) }}%)
             label for="" class="col-sm-2 col-form-label"
               | Buy price
             div class="col-sm-3"
-              input class="form-control" v-model="selected_bot.buy_price" style="width:100px;"
-                | {{ selected_bot.current_buy_price }}
+              input class="form-control" v-model="selected_bot.buy_price" style="width:100px; display:inline;"
+              label class="text-primary"
+                | &nbsp; ({{ difference_sell_and_buy_price_percent(selected_bot) }}%)
+              | {{ selected_bot.current_sell_price }}
             div class="col-sm-2"
-              label class="text-warning"
-                | {{ selected_bot.trading_type }}
+              |
       div class="modal-footer"
-        button type="button" class="btn btn-primary" @click="cancel_order(selected_bot)" v-show="selected_bot.trading_type == 'ORDER_SELL' || selected_bot.trading_type == 'ORDER_BUY' "
-          | Cancel order
-        button type="button" class="btn btn-primary" @click="start_sell(selected_bot)" v-show="selected_bot.trading_type == 'SELLING' || selected_bot.trading_type == 'DONE'"
-          | Start Sell
+        button type="button" class="btn btn-primary" @click="cancel_order(selected_bot)" v-show="selected_bot.trading_type == 'CHECKING_ORDER_BUY' || selected_bot.trading_type == 'CHECKING_ORDER_SELL'"
+          | Cancel Order
         button type="button" class="btn btn-primary" @click="start_buy(selected_bot)" v-show="selected_bot.trading_type == 'BUYING'"
           | Start Buy
+        button type="button" class="btn btn-primary" @click="start_sell(selected_bot)" v-show="selected_bot.trading_type == 'SELLING' || selected_bot.trading_type == 'DONE'"
+          | Start Sell        
         button type="button" class="btn btn-primary" @click="update_bot(selected_bot)"
           | Update

@@ -32,18 +32,13 @@ module Ajax
       end
 
       render json: bot_list.to_json(
-        :include => [:ico_order, :ico_info, :ico_invest]
+        :include => [:ico_order]
       )
     end
 
     def update_bot
       bot = IcoBot.find(params[:bot][:id])
       bot.update(bot_info_params)
-
-      # binding.pry
-      bot_invest = IcoInvest.find_by(ico_info_id: params[:bot][:ico_info_id])
-      bot_invest.last_order_price = (params[:bot][:sell_price]).to_f
-      bot_invest.save
 
       render json: {
         status: 'OK'

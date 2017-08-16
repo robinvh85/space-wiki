@@ -126,7 +126,7 @@ class BotRunningUsd
 
       @current_order = IcoOrder.create({
         buy_price: @ico_bot.buy_price,
-        amount: @ico_bot.amount,
+        amount_usd: @ico_bot.amount_usd,
         buy_order_id: result['order_id'],
         pair_name: @ico_bot.pair_name
       })
