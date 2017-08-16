@@ -442,7 +442,6 @@ class Bitfi
       data = @client.orderbook(pair_name)
       
       buy_price = 0
-
       if data['bids'].nil?
         puts "CAN NOT GET PRICE !!!!!"
         return nil 
@@ -468,7 +467,7 @@ class Bitfi
         sell_price: sell_price
       }
     rescue Exception => e
-      puts "Error #{e}"
+      puts "get_current_trading_price() - Error #{e}"
       nil
     end
   end
