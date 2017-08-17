@@ -7,7 +7,7 @@ div#icos
         div
           input type="checkbox" v-model="is_all" 
             | All
-      th colspan="3"
+      th colspan="4"
         | Invest
       th colspan="4"
         | Order
@@ -16,7 +16,9 @@ div#icos
         | $ Amount
       th 
         | Ico Amount
-      th 
+      th
+        | Status 
+      th
         | Action
       th 
         | Buy price
@@ -33,7 +35,9 @@ div#icos
         | {{ bot.amount_usd }}
       td.right
         | {{ bot.amount_ico }}
-      td 
+      td
+        | {{ bot.status }} 
+      td
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editBot" @click="edit_bot(bot)"
           | Detail
       td.right
