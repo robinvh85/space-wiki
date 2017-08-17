@@ -1,0 +1,61 @@
+div class="modal fade" id="editBot" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
+  div class="modal-dialog modal-lg" role="document"
+    div class="modal-content"
+      div class="modal-header"
+        h5 class="modal-title" id="exampleModalLabel"
+          | Bot info
+        button type="button" class="close" data-dismiss="modal" aria-label="Close"
+          span aria-hidden="true"
+          | &times;
+      div class="modal-body"
+        form
+          div class="form-group"
+            label for="frm_pair_name"
+              | Pair name
+            input type="input" id="frm_pair_name" max-length='10' class="form-control" placeholder="Pair name" v-model="selected_bot.pair_name"
+          div class="form-group"
+            label for="frm_ico_name"
+              | Ico name
+            input type="input" id="frm_ico_name" max-length='5' class="form-control" placeholder="Ico name" v-model="selected_bot.ico_name"
+          div class="form-group"
+            label for="frm_amount_usd"
+              | Use amount
+            input type="input" id="frm_amount_usd" max-length='5' class="form-control"placeholder="Amount" v-model="selected_bot.amount_usd"
+          div class="form-group"
+            label for="frm_limit_amount_check_price"
+              | Limit amount check price
+            input type="input" id="frm_limit_amount_check_price" class="form-control" placeholder="Percent" v-model="selected_bot.limit_amount_check_price"
+          div class="form-group"
+            label for="frm_limit_cancel_for_lose_percent"
+              | Limit percent lose price
+            input type="input" id="frm_limit_cancel_for_lose_percent" class="form-control" placeholder="Percent" v-model="selected_bot.limit_cancel_for_lose_percent"
+          div class="form-group"
+            label for="frm_force_sell_percent"
+              | Force sell percent
+            input type="input" id="frm_force_sell_percent" class="form-control" placeholder="Percent" v-model="selected_bot.force_sell_percent"
+          div class="form-group"
+            label for="frm_default_sell_price_percent"
+              | Default sell price percent
+            input type="input" id="frm_default_sell_price_percent" class="form-control" placeholder="Percent" v-model="selected_bot.default_sell_price_percent"
+          div class="form-group"
+            label for="frm_site"
+              | Site
+            select for="frm_site" class="form-control" v-model="selected_bot.ico_account_id"
+              option value="1"
+                | Bitfi
+              option value="2"
+                | Polo
+          div class="form-group"
+            label for="frm_status"
+              | Site
+            select id="status" class="form-control" v-model="selected_bot.status"
+              option value="0"
+                | Enabled
+              option value="1"
+                | Active
+              option value="-1"
+                | Disabled
+              
+      div class="modal-footer"
+        button type="button" class="btn btn-primary" @click="update_bot_info(selected_bot)"
+          | Save
