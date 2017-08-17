@@ -146,7 +146,7 @@ class BotRunningUsd
     
     return if @ico_bot.status != 1
 
-    if @current_buy_price > @ico_bot.buy_price
+    if @current_buy_price >= @ico_bot.buy_price
       result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @ico_bot.buy_price)
 
       return if result.nil?
