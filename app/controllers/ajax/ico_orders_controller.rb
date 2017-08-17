@@ -23,7 +23,11 @@ module Ajax
     end
 
     def get_bot_list
-      bot_list = IcoBot.where('status <> -1')
+      if params[:is_all] == "true"
+        bot_list = IcoBot.where('')
+      else
+        bot_list = IcoBot.where('status <> -1')
+      end
 
       bot_list.each do |bot|
         if bot.ico_order.nil?

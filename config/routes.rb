@@ -98,6 +98,9 @@ Rails.application.routes.draw do
     get 'trades/force_sell' => 'trades#force_sell'
 
     get 'trackings/get_tracking_price_list' => 'trackings#get_tracking_price_list'
+
+    post 'bots/create' => 'bots#create'
+    put 'bots/update' => 'bots#update'
   end
 
 end

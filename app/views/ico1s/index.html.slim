@@ -2,6 +2,11 @@ div#icos
   table.table.table-bordered
     tr
       th rowspan="2"
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newBot" @click="init_new_bot()"
+          | New invest        
+        div
+          input type="checkbox" v-model="is_all" 
+            | All
       th colspan="3"
         | Invest
       th colspan="4"
@@ -14,10 +19,10 @@ div#icos
       th 
         | Action
       th 
-        | Sell price
-      th 
         | Buy price
       th 
+        | Sell price
+      th style="width:150px;"
         | Status
       th 
         | Action
@@ -29,24 +34,25 @@ div#icos
       td.right
         | {{ bot.amount_ico }}
       td 
-        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#detailInvest"
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editBot" @click="edit_bot(bot)"
           | Detail
       td.right
-        | {{ bot.sell_price }} 
-        label v-bind:class="{ 'text-primary': difference_buy_price_percent(bot) > 0, 'text-danger': difference_buy_price_percent(bot) < 0 }"
-          | ({{ difference_buy_price_percent(bot) }}%)
-      td.right
         | {{ bot.buy_price }} 
+        label v-bind:class="{ 'text-primary': difference_buy_price_percent(bot) > 0, 'text-danger': difference_buy_price_percent(bot) < 0 }"
+          | ({{ difference_buy_price_percent(bot) }}%)          
+      td.right
+        | {{ bot.sell_price }} 
         label class="text-primary"
-          | ({{ difference_sell_and_buy_price_percent(bot) }}%)
+          | ({{ difference_sell_and_buy_price_percent(bot) }}%)      
       td 
         | {{ bot.trading_type }}
       td 
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editOrder" @click="edit_order(bot)"
           | Edit
-      
-  = render 'modal_invest'
-  = render 'modal_order'
+
+  = render 'modal_new_bot'    
+  = render 'modal_edit_bot'
+  = render 'modal_order'  
 
 javascript:
   $(function(){
@@ -71,15 +77,36 @@ javascript:
       current_price: 0,
       bot_list: [],
       selected_bot: {},
-      test_value: 15
+      new_bot: {},
+      is_all: false
     },
     methods: {
+      init_new_bot: function(){
+        this.new_bot = {
+          limit_amount_check_price: 0,
+          limit_cancel_for_lose_percent: 1.5,
+          force_sell_percent: 2,
+          default_sell_price_percent: 2,
+          ico_account_id: 2,
+          trading_type: 'BUYING'
+        }
+      },
+      edit_bot: function(bot){
+        this.selected_bot = bot;
+      },
+      update_bot_info: function(bot){
+        var self = this;
+        this.$http.put('/ajax/bots/update', { bot: bot } ).then(function (res){
+          self.get_bot_list();
+          $('#editBot').modal('hide');
+        });
+      },
       edit_order: function(bot){
         this.selected_bot = bot;
       },
       get_bot_list: function(){
         var self = this;
-        this.$http.get('/ajax/ico_orders/get_bot_list').then(function (res){
+        this.$http.get('/ajax/ico_orders/get_bot_list', { params: {is_all: this.is_all}} ).then(function (res){
           self.bot_list = res.data;
         });
       },
@@ -174,6 +201,15 @@ javascript:
         result = (value1 - value2) / value2 * 100;
         return result.toFixed(2);
       },
+      create_bot: function(){
+        var self = this;
+        this.$http.post('/ajax/bots/create', {bot: this.new_bot}).then(function (res){
+          if(res.data != null){
+            self.get_bot_list();
+            $('#newBot').modal('hide');
+          }            
+        });
+      },
       init: function(){
         console.log("INIT");
         this.get_bot_list();
@@ -191,6 +227,9 @@ javascript:
       //  this.$forceUpdate();
       },
       */
+      is_all: function(value){
+        this.get_bot_list();
+      }
     },
     created: function() {
       console.log("created");

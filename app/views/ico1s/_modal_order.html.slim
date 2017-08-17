@@ -11,19 +11,19 @@ div class="modal fade" id="editOrder" tabindex="-1" role="dialog" aria-labelledb
           | &times;
       div class="modal-body"
         form
-          div class="form-group row"
-            label for="" class="col-sm-2 col-form-label"
-              | Sell price
+          div class="form-group row"            
+            label for="bot_sell_price" class="col-sm-2 col-form-label"
+              | Buy price
             div class="col-sm-3"
-              input class="form-control" v-model="selected_bot.sell_price" style="width:100px;"
+              input#bot_sell_price class="form-control" v-model="selected_bot.buy_price" style="width:100px;"
               label 
                 | {{ selected_bot.current_buy_price }} 
               label v-bind:class="{ 'text-primary': difference_buy_price_percent(selected_bot) > 0, 'text-danger': difference_buy_price_percent(selected_bot) < 0 }"
                 | &nbsp; ({{ difference_buy_price_percent(selected_bot) }}%)
-            label for="" class="col-sm-2 col-form-label"
-              | Buy price
+            label for="bot_buy_price" class="col-sm-2 col-form-label"
+              | Sell price
             div class="col-sm-3"
-              input class="form-control" v-model="selected_bot.buy_price" style="width:100px; display:inline;"
+              input#bot_buy_price class="form-control" v-model="selected_bot.sell_price" style="width:100px; display:inline;"
               label class="text-primary"
                 | &nbsp; ({{ difference_sell_and_buy_price_percent(selected_bot) }}%)
               | {{ selected_bot.current_sell_price }}
