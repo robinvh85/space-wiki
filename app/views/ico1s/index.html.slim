@@ -135,23 +135,24 @@ javascript:
           });
         }        
       },
-      start_buy: function(bot){
+      start_buy: function(_bot){
         var self = this;
+
+        bot = JSON.parse(JSON.stringify(_bot));
+
         bot.trading_type = "BUYING";
         bot.status = 1;
 
-        if(confirm("Do you want to start buy ?"))
-        {
-          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
-            alert("Start " + res.data.status);
-          });
-        }        
+        this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+          alert("Start " + res.data.status);
+        });
       },
-      stop_bot: function(bot){
+      stop_bot: function(_bot){
         var self = this;
 
         if(confirm("Do you want to stop bot ?"))
         {
+          bot = JSON.parse(JSON.stringify(_bot));
           bot.status = -1;
           bot.trade_type = "";
           this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){

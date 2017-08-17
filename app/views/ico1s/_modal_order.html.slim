@@ -32,7 +32,7 @@ div class="modal fade" id="editOrder" tabindex="-1" role="dialog" aria-labelledb
       div class="modal-footer"
         button type="button" class="btn btn-primary" @click="cancel_order(selected_bot)" v-show="selected_bot.trading_type == 'CHECKING_ORDER_BUY' || selected_bot.trading_type == 'CHECKING_ORDER_SELL'"
           | Cancel Order
-        button type="button" class="btn btn-primary" @click="start_buy(selected_bot)" v-show="selected_bot.trading_type == 'BUYING'"
+        button type="button" class="btn btn-primary" @click="start_buy(selected_bot)" v-show="selected_bot.trading_type == 'BUYING' || selected_bot.trading_type == ''"
           | Start Buy
         button type="button" class="btn btn-primary" @click="start_sell(selected_bot)" v-show="selected_bot.trading_type == 'SELLING' || selected_bot.trading_type == 'DONE'"
           | Start Sell        
