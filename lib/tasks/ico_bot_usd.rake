@@ -205,7 +205,6 @@ class BotRunningUsd
       profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
       @current_order.sell_order_id = obj_sell['order_id']
       @current_order.sell_price = @ico_bot.sell_price
-      @current_order.profit = profit
       @current_order.save
 
       @ico_bot.trading_type = "CHECKING_ORDER_SELL"
@@ -234,12 +233,12 @@ class BotRunningUsd
     lose_percent = (@ico_bot.buy_price - @current_buy_price) / @current_buy_price * 100
     if lose_percent > @ico_bot.limit_cancel_for_lose_percent
       @num_time_check_lose.times do |index|
-        puts "#{@ico_bot.ico_info.name} => Check lose time at #{index}"
+        puts "##{@thread_id} - #{@ico_bot.pair_name} => Check lose time at #{index}"
         update_current_price()
         lose_percent = (@ico_bot.buy_price - @current_buy_price) / @current_buy_price * 100
         if lose_percent > @ico_bot.limit_cancel_for_lose_percent
           if index == @num_time_check_lose - 1
-            cancel_sell_order()
+            cancel_order_sell()
             set_lose_order()
           end
 
@@ -252,29 +251,16 @@ class BotRunningUsd
       status = @api_obj.check_order(@current_order.sell_order_id)
 
       if status == 1
+        profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
+
         @current_order.sold_order_id = 1
+        @current_order.profit = profit
         @current_order.save
         @ico_bot.trading_type = "DONE"
         @ico_bot.save
       end
     end
-  end
-
-  def cancel_sell_order
-    puts "##{@thread_id} - #{@ico_bot.ico_info.name} - cancel_sell_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
-
-    status = @api_obj.cancel_order(@current_order.sell_order_id)
-
-    if status == 1
-      @current_order.sell_order_id = nil
-      @current_order.sell_price = nil
-      @current_order.profit = nil
-      @current_order.save
-
-      @ico_bot.trading_type = "SELLING"
-      @ico_bot.save
-    end
-  end
+  end  
 
   def set_lose_order
     puts "##{@thread_id} - #{@ico_bot.pair_name} - set_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
@@ -283,11 +269,9 @@ class BotRunningUsd
     
     result = @api_obj.sell(@ico_bot.pair_name, @ico_bot.amount_ico, lose_price)
 
-    if result.present?
-      profit = (lose_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
+    if result.present?      
       @current_order.sell_order_id = result['order_id']
-      @current_order.sell_price = lose_price
-      @current_order.profit = profit
+      @current_order.sell_price = lose_price      
       @current_order.save
 
       @ico_bot.trading_type = "LOSE_ORDER"
@@ -301,12 +285,15 @@ class BotRunningUsd
     puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
 
     if @current_sell_price > @ico_bot.sell_price
-      cancel_sell_order() # Cancel lose_sell order
+      cancel_order_sell() # Cancel lose_sell order
     else
       begin
         status = @api_obj.check_order(@current_order.buy_order_id)
         if status == 1
+          profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
+
           @current_order.bought_order_id = 1
+          @current_order.profit = profit
           @current_order.save
           @ico_bot.trading_type = "DONE"
           @ico_bot.ico_order_id = nil
@@ -337,13 +324,16 @@ class BotRunningUsd
   end
 
   def cancel_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - Cancel order sell"
-    
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - cancel_order_sell() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
+
     status = @api_obj.cancel_order(@current_order.sell_order_id)
 
-    if status == 1      
-      @ico_bot.trading_type = 'SELLING'
-      @ico_bot.ico_order_id = nil
+    if status == 1
+      @current_order.sell_order_id = nil
+      @current_order.sell_price = nil
+      @current_order.save
+
+      @ico_bot.trading_type = "SELLING"
       @ico_bot.save
     end
   end
