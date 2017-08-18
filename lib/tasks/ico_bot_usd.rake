@@ -260,7 +260,7 @@ class BotRunningUsd
         @ico_bot.save
       end
     end
-  end  
+  end
 
   def set_lose_order
     puts "##{@thread_id} - #{@ico_bot.pair_name} - set_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
