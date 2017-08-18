@@ -292,9 +292,10 @@ class BotRunningUsd
         if status == 1
           profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
 
-          @current_order.bought_order_id = 1
+          @current_order.sell_order_id = 1
           @current_order.profit = profit
           @current_order.save
+          
           @ico_bot.trading_type = "DONE"
           @ico_bot.ico_order_id = nil
           @ico_bot.save
