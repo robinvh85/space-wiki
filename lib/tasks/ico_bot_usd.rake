@@ -172,7 +172,7 @@ class BotRunningUsd
     
     return if @ico_bot.status != 1
 
-    result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @current_buy_price)
+    result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @current_sell_price)
 
     return if result.nil?
 
@@ -278,9 +278,10 @@ class BotRunningUsd
         profit = (@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100
 
         @current_order.sold_order_id = 1
-        @current_order.profit = profiti
+        @current_order.profit = profit
         @current_order.save
         @ico_bot.trading_type = "DONE"
+        @ico_bot.limit_price_for_buy = @current_order.sell_price
         @ico_bot.save
       end
     end
@@ -321,6 +322,7 @@ class BotRunningUsd
           @current_order.save
           
           @ico_bot.trading_type = "DONE"
+          @ico_bot.limit_price_for_buy = @current_order.sell_price
           @ico_bot.ico_order_id = nil
           @ico_bot.save
         end

@@ -79,6 +79,8 @@ class FindingBuy
     @bot.reload
     return if @bot.trading_type != 'DONE'
 
+    return if @bot.current_buy_price > @bot.limit_price_for_buy
+
     ico_price = IcoPriceLog.where(pair_name: @pair_name).last
     puts "#{@pair_name} - change percent: #{ico_price.change_buy_percent}"
     return if ico_price.change_buy_percent < 1
