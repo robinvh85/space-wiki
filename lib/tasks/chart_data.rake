@@ -9,7 +9,7 @@ namespace :chart_data do
   task get: :environment do
     puts "Run rake chart_data:get at #{Time.now}"
 
-    sleep(5)
+    sleep(2)
     ChartData.start = (Time.now - 10.minutes).to_i
     ChartData.end = Time.now.to_i
 
@@ -21,8 +21,8 @@ namespace :chart_data do
       # ChartData.get_data_chart_15m(currency_pair)
       # ChartData.get_percent_min_15m_24h(currency_pair)
 
-      ChartData.get_data_chart_30m(currency_pair)
-      ChartData.get_percent_min_30m_24h(currency_pair)
+      # ChartData.get_data_chart_30m(currency_pair)
+      # ChartData.get_percent_min_30m_24h(currency_pair)
       
       # ChartData.get_data_chart_2h(currency_pair)
     end

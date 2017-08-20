@@ -215,6 +215,16 @@ javascript:
           }            
         });
       },
+      done_order: function(bot){
+        var self = this;
+        bot = JSON.parse(JSON.stringify(_bot));
+
+        bot.trading_type = "DONE";
+
+        this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+          alert("DONE " + res.data.status);
+        });
+      },
       init: function(){
         console.log("INIT");
         this.get_bot_list();
