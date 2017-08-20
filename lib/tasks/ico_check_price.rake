@@ -24,7 +24,7 @@ namespace :ico_check_price do
       end
     end
 
-    running_bot_list = IcoBot.where('status <> -1').to_a
+    running_bot_list = IcoBot.where('status <> -2').to_a
 
     # Create threads
     thread_num.times do |index|
@@ -32,14 +32,19 @@ namespace :ico_check_price do
       thread = Thread.new{
         thread_id = index + 1
         bot_list = []
+        bot_ids = []
 
         while true
           start_time = Time.now
 
           if running_bot_list.any?
             bot = running_bot_list.shift
+            bot_ids << bot.id
           else
             bot = IcoBot.where('status = 2').first
+            if bot.present?
+              bot = nil if bot_ids.include?(bot.id)  
+            end
           end
 
           # Find new bot
@@ -52,6 +57,7 @@ namespace :ico_check_price do
             }
             bot_obj = BotRunningUsd.new(config)
             bot_list << bot_obj
+            bot_ids << bot.id
           end
 
           # Run bot_list
@@ -59,7 +65,7 @@ namespace :ico_check_price do
           bot_list.each do |bot|
             bot.ico_bot.reload
 
-            if bot.ico_bot.status == -1
+            if bot.ico_bot.status == -2
               bot_list.delete(bot)
               next
             end
