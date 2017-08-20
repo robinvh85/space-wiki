@@ -126,6 +126,8 @@ class BotRunningUsd
 
     if @ico_bot.trading_type == "BUYING"
       check_set_order_for_buy()
+    elsif @ico_bot.trading_type == "FORCE_BUY"
+      check_set_force_order_for_buy()
     elsif @ico_bot.trading_type == "CHECKING_ORDER_BUY"
       check_finish_order_buy()
     elsif @ico_bot.trading_type == "CANCEL_BUY"
@@ -165,7 +167,29 @@ class BotRunningUsd
     end
   end
 
-   def check_finish_order_buy
+  def check_set_force_order_for_buy    
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_force_order_for_buy() with price #{'%.2f' % @current_buy_price} at #{Time.now}"
+    
+    return if @ico_bot.status != 1
+
+    result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @current_buy_price)
+
+    return if result.nil?
+
+    @current_order = IcoOrder.create({
+      buy_price: @ico_bot.buy_price,
+      amount_usd: @ico_bot.amount_usd,
+      buy_order_id: result['order_id'],
+      pair_name: @ico_bot.pair_name
+    })
+
+    @ico_bot.trading_type = "CHECKING_ORDER_BUY"
+    @ico_bot.status = 0
+    @ico_bot.ico_order = @current_order
+    @ico_bot.save
+  end
+
+  def check_finish_order_buy
     puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_buy() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
 
     status = @api_obj.check_order(@current_order.buy_order_id)
@@ -251,10 +275,10 @@ class BotRunningUsd
       status = @api_obj.check_order(@current_order.sell_order_id)
 
       if status == 1
-        profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
+        profit = (@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100
 
         @current_order.sold_order_id = 1
-        @current_order.profit = profit
+        @current_order.profit = profiti
         @current_order.save
         @ico_bot.trading_type = "DONE"
         @ico_bot.save
@@ -290,9 +314,9 @@ class BotRunningUsd
       begin
         status = @api_obj.check_order(@current_order.buy_order_id)
         if status == 1
-          profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
+          profit = (@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100
 
-          @current_order.sell_order_id = 1
+          @current_order.sold_order_id = 1
           @current_order.profit = profit
           @current_order.save
           
@@ -322,6 +346,26 @@ class BotRunningUsd
 
     @current_buy_price  = data[:buy_price]
     @current_sell_price = data[:sell_price]
+  end
+
+  def save_current_price
+    return if @previous_buy_price == 0
+
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - save_current_price() at #{Time.now}"
+    change_buy_percent = ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)
+    change_sell_percent = ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)
+    diff_price_percent = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
+
+    IcoPriceLog.create({
+      pair_name: @ico_bot.pair_name,
+      buy_price: @current_buy_price,
+      sell_price: @current_sell_price,
+      change_buy_percent: change_buy_percent,
+      change_sell_percent: change_sell_percent,
+      diff_price_percent: diff_price_percent,
+      period_type: '20s',
+      time_at: Time.now.to_i
+    })
   end
 
   def cancel_order_sell
