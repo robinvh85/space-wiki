@@ -5,7 +5,7 @@ namespace :ico_check_price do
     
     cycle_time = 20
 
-    thread_num = 2
+    thread_num = 3
     api_obj_hash = {}
     threads = []
 
