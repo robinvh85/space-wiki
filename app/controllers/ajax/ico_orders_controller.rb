@@ -26,7 +26,7 @@ module Ajax
       if params[:is_all] == "true"
         bot_list = IcoBot.where('')
       else
-        bot_list = IcoBot.where('status <> -1')
+        bot_list = IcoBot.where('status >= 0')
       end
 
       bot_list.each do |bot|
