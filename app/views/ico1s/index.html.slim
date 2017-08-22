@@ -215,7 +215,7 @@ javascript:
           }            
         });
       },
-      done_order: function(bot){
+      done_order: function(_bot){
         var self = this;
         bot = JSON.parse(JSON.stringify(_bot));
 
@@ -245,6 +245,10 @@ javascript:
       is_all: function(value){
         this.get_bot_list();
       }
+      /*,
+      selected_bot: function(value){
+        this.selected_bot.sell_price = value.buy_price + value.buy_price * 0.02;
+      }*/
     },
     created: function() {
       console.log("created");
