@@ -280,7 +280,7 @@ class BotRunningUsd
         @current_order.sold_order_id = 1
         @current_order.profit = profit
         @current_order.save
-        @ico_bot.trading_type = "DONE"
+        @ico_bot.trading_type = "DONE_ORDER"
         @ico_bot.limit_price_for_buy = @current_order.sell_price
         @ico_bot.save
       end
@@ -321,7 +321,7 @@ class BotRunningUsd
           @current_order.profit = profit
           @current_order.save
           
-          @ico_bot.trading_type = "DONE"
+          @ico_bot.trading_type = "DONE_ORDER"
           @ico_bot.limit_price_for_buy = @current_order.sell_price
           @ico_bot.ico_order_id = nil
           @ico_bot.save
