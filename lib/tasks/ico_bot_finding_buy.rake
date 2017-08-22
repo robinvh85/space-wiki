@@ -9,7 +9,7 @@ namespace :ico_bot_finding_buy do
     finding_objs = []
     # init obj
     pair_names.each do |pair_name|
-      finding_obj = FindingBuy.new({pair_name: pair_name})
+      finding_obj = FindingBuyBasic.new({pair_name: pair_name})
       finding_objs << finding_obj
     end
 
@@ -18,12 +18,41 @@ namespace :ico_bot_finding_buy do
 
       finding_objs.each do |finding_obj|
         finding_obj.finding()
+        sleep(0.2)
       end
 
       end_time = Time.now
       inteval = (end_time - start_time).to_i
 
       sleep(cycle_time - inteval) if cycle_time - inteval > 0
+    end
+  end
+end
+
+class FindingBuyBasic
+  def initialize(config)
+    @pair_name = config[:pair_name]
+    @bot = IcoBot.find_by(pair_name: @pair_name)
+  end
+
+  def finding
+    puts "#{@pair_name} - Find buy price at #{Time.now}"
+
+    @bot.reload
+    return if @bot.trading_type != 'DONE'
+    return if @bot.current_buy_price > @bot.buy_price
+
+    ico_price = IcoPriceLog.where(pair_name: @pair_name).last
+
+    puts "#{@pair_name} - change percent: #{ico_price.change_buy_percent} - analysis_value: #{ico_price.analysis_value}"
+
+    if ico_price.analysis_value > 0.2
+      puts "#{@pair_name} - set BUY with percent #{ico_price.change_buy_percent}"
+      @bot.trading_type = 'FORCE_BUY'
+      @bot.status = 1
+      # @bot.buy_price = @bot.current_buy_price + @bot.current_buy_price * 0.003
+      # @bot.sell_price = @bot.buy_price + @bot.buy_price * 0.05
+      @bot.save!
     end
   end
 end

@@ -358,6 +358,14 @@ class BotRunningUsd
     change_sell_percent = ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)
     diff_price_percent = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
 
+    time_at = Time.now.to_i
+    records = IcoPriceLog.where("pair_name = ? AND time_at <= ?", @ico_bot.pair_name, time_at).order(id: 'desc').limit(4)
+    analysis_value = change_buy_percent
+    
+    records.each do |record|
+      analysis_value += record.change_buy_percent
+    end
+
     IcoPriceLog.create({
       pair_name: @ico_bot.pair_name,
       buy_price: @current_buy_price,
@@ -366,7 +374,8 @@ class BotRunningUsd
       change_sell_percent: change_sell_percent,
       diff_price_percent: diff_price_percent,
       period_type: '20s',
-      time_at: Time.now.to_i
+      analysis_value: analysis_value,
+      time_at: time_at
     })
   end
 
