@@ -27,7 +27,7 @@ namespace :ico_bot_usd do
       end
     end
 
-    running_bot_list = IcoBot.where('status <> -1').to_a
+    running_bot_list = IcoBot.where('status >= 0').to_a
 
     # Create threads
     thread_num.times do |index|

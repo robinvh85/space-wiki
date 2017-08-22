@@ -46,7 +46,7 @@ class FindingBuyBasic
 
     puts "#{@pair_name} - change percent: #{ico_price.change_buy_percent} - analysis_value: #{ico_price.analysis_value}"
 
-    if ico_price.analysis_value > 0.2
+    if ico_price.analysis_value > 0.2 && ico_price.change_buy_percent > 0.02
       puts "#{@pair_name} - set BUY with percent #{ico_price.change_buy_percent}"
       @bot.trading_type = 'FORCE_BUY'
       @bot.status = 1
