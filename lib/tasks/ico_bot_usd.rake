@@ -177,12 +177,13 @@ class BotRunningUsd
     return if result.nil?
 
     @current_order = IcoOrder.create({
-      buy_price: @ico_bot.buy_price,
+      buy_price: @current_sell_price,
       amount_usd: @ico_bot.amount_usd,
       buy_order_id: result['order_id'],
       pair_name: @ico_bot.pair_name
     })
 
+    @ico_bot.buy_price = @current_sell_price
     @ico_bot.trading_type = "CHECKING_ORDER_BUY"
     @ico_bot.status = 0
     @ico_bot.ico_order = @current_order
