@@ -291,7 +291,7 @@ class BotBtcRunning1
 
 end
 
-class Bitfi
+class Bitfi1
   class << self
     attr_accessor :key, :secret
 

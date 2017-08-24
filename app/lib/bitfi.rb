@@ -40,7 +40,7 @@ class Bitfi
         sell_price: sell_price
       }
     rescue Exception => e
-      puts "Error #{e}"
+      puts "Error - #{e}"
       nil
     end
   end

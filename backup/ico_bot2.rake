@@ -426,7 +426,7 @@ class BotRunning
 
 end
 
-class Bitfi
+class Bitfi1
   def initialize(config)
     Bitfinex::Client.configure do |conf|
       conf.api_key = config[:key]
