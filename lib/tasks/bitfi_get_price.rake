@@ -17,10 +17,10 @@ namespace :bitfi_get_price do
 
     # Init api_obj_hash
     pair_list_origin = [
-      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTAUSD", "OMGUSD", "XRMUSD"],   
-      ["EOSUSD", "SANUSD", "DASHUSD", "ZECUSD", "RRTUSD", "BTCUSD", "ETCUSD"]
-      # ["ETHUSD", "BCHUSD"],   
-      # ["EOSUSD", "SANUSD"]
+      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "OMGUSD", "XMRUSD"],   
+      ["EOSUSD", "SANUSD", "DSHUSD", "ZECUSD", "RRTUSD", "BTCUSD", "ETCUSD"]
+      # ["XRPUSD", "SANUSD"],   
+      # ["XMRUSD"]
     ]
 
     # Create threads
@@ -47,7 +47,7 @@ namespace :bitfi_get_price do
             ico.update_current_price()
             ico.save_price()
 
-            sleep(0.2)
+            sleep(0.4)
           end
 
           end_time = Time.now
@@ -94,9 +94,9 @@ class BitfiPrice
   end
 
   def save_price
-    puts "##{@thread_id} - #{@pair} - save_price() at #{Time.now}"
     return if @previous_buy_price == 0
 
+    puts "##{@thread_id} - #{@pair} - save_price() at #{Time.now}"
     change_buy_percent = ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)
     change_sell_percent = ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)
     diff_price_percent = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
