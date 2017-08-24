@@ -1,0 +1,2 @@
+class BitfiPriceLog < ApplicationRecord
+end
