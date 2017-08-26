@@ -17,11 +17,10 @@ namespace :bitfi_get_price do
 
     # Init api_obj_hash
     pair_list_origin = [
-      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "XMRUSD"],   
-      ["EOSUSD", "DSHUSD", "ZECUSD", "BTCUSD", "ETCUSD", "OMGUSD"]
+      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "XMRUSD", "RRTUSD"],   
+      ["EOSUSD", "DSHUSD", "ZECUSD", "BTCUSD", "ETCUSD", "OMGUSD", "SANUSD"]
       # ["XRPUSD", "SANUSD"],   
       # ["XMRUSD"]
-      # NOT: "RRTUSD", "SANUSD"
     ]
 
     # Create threads
@@ -45,8 +44,13 @@ namespace :bitfi_get_price do
           start_time = Time.now
           puts "\n#{thread_id} run at #{Time.now}"
           ico_list.each do |ico|
+            puts "#{thread_id} - #{ico.pair}"
+
             ico.update_current_price()
             price_log = ico.save_price()
+
+            next if price_log.nil?
+
             ico.find_pump(price_log)
             ico.find_down(price_log)
 
@@ -71,6 +75,8 @@ namespace :bitfi_get_price do
 end
 
 class BitfiPrice
+  attr_accessor :pair
+
   def initialize(config)
     @thread_id = config[:thread_id]
     @pair = config[:pair]
@@ -82,7 +88,7 @@ class BitfiPrice
     @current_sell_price = 0
   end
 
-  def update_current_price  
+  def update_current_price
     # Backup previous price
     @previous_sell_price = @current_sell_price
     @previous_buy_price = @current_buy_price
@@ -97,7 +103,7 @@ class BitfiPrice
   end
 
   def save_price
-    return if @previous_buy_price == 0
+    return nil if @previous_buy_price == 0
 
     puts "##{@thread_id} - #{@pair} - save_price() at #{Time.now}"
     change_buy_percent = ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)
@@ -112,7 +118,7 @@ class BitfiPrice
       analysis_value += record.change_buy_percent
     end
 
-    BitfiPriceLog.create({
+    price_log = BitfiPriceLog.new({
       pair_name: @pair,
       buy_price: @current_buy_price,
       sell_price: @current_sell_price,
@@ -123,6 +129,9 @@ class BitfiPrice
       analysis_value: analysis_value,
       time_at: time_at
     })
+    
+    price_log.save!
+    price_log
   end
 
   def find_pump(price_log)
@@ -141,7 +150,7 @@ class BitfiPrice
       price_log.analysis_pump = 1
     end
 
-    price_log.save
+    price_log.save!
   end
 
   def find_down(price_log)
@@ -162,5 +171,6 @@ class BitfiPrice
       price_log.analysis_pump = 0
     end
 
-    price_log.save
+    price_log.save!
+  end
 end
