@@ -17,10 +17,11 @@ namespace :bitfi_get_price do
 
     # Init api_obj_hash
     pair_list_origin = [
-      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "OMGUSD", "XMRUSD"],   
-      ["EOSUSD", "SANUSD", "DSHUSD", "ZECUSD", "RRTUSD", "BTCUSD", "ETCUSD"]
+      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "XMRUSD"],   
+      ["EOSUSD", "DSHUSD", "ZECUSD", "BTCUSD", "ETCUSD", "OMGUSD"]
       # ["XRPUSD", "SANUSD"],   
       # ["XMRUSD"]
+      # NOT: "RRTUSD", "SANUSD"
     ]
 
     # Create threads
@@ -42,12 +43,14 @@ namespace :bitfi_get_price do
 
         while true
           start_time = Time.now
-
+          puts "\n#{thread_id} run at #{Time.now}"
           ico_list.each do |ico|
             ico.update_current_price()
-            ico.save_price()
+            price_log = ico.save_price()
+            ico.find_pump(price_log)
+            ico.find_down(price_log)
 
-            sleep(0.4)
+            sleep(0.3)
           end
 
           end_time = Time.now
@@ -121,4 +124,43 @@ class BitfiPrice
       time_at: time_at
     })
   end
+
+  def find_pump(price_log)
+    puts "#{@pair} - find_pump() - #{price_log.id}"
+    records = BitfiPriceLog.where("pair_name = ? AND time_at <= ?", @pair, price_log.time_at).order(id: 'desc').limit(4)
+
+    flag_all_active = true
+    records.each do |record|
+      if record.analysis_value < 0
+        flag_all_active = false
+        break
+      end
+    end
+
+    if flag_all_active == true
+      price_log.analysis_pump = 1
+    end
+
+    price_log.save
+  end
+
+  def find_down(price_log)
+    puts "#{@pair} - find_down() - #{price_log.id}"
+    records = BitfiPriceLog.where("pair_name = ? AND time_at <= ?", @pair, price_log.time_at).order(id: 'desc').limit(4)
+
+    flag_all_active = true
+    records.each do |record|
+      if record.analysis_value > 0
+        flag_all_active = false
+        break
+      end
+    end
+
+    if flag_all_active == true
+      price_log.analysis_pump = -1
+    else
+      price_log.analysis_pump = 0
+    end
+
+    price_log.save
 end
