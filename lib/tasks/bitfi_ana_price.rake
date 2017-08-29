@@ -2,8 +2,8 @@
 namespace :bitfi_ana_price do
   task :start, [] => :environment do |_cmd, args|
     puts "Run rake bitfi_ana_price:start"
-    pair_list = ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "OMGUSD", "XMRUSD", "EOSUSD", "SANUSD", "DSHUSD", "ZECUSD", "RRTUSD", "BTCUSD", "ETCUSD"]
-    #pair_list = ["BCHUSD"]
+    # pair_list = ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "OMGUSD", "XMRUSD", "EOSUSD", "SANUSD", "DSHUSD", "ZECUSD", "RRTUSD", "BTCUSD", "ETCUSD"]
+    pair_list = ["XMRUSD"]
 
     Analys.find_pump(pair_list)
     Analys.find_down(pair_list)
@@ -164,9 +164,12 @@ class Analys
       pair_list.each do |pair|
         is_end = false
 
-        puts "find_pump() - #{pair}"
+        puts "find_pump() - #{pair} VH"
 
+        index = 0
         while true
+          index += 1
+          puts "START - #{index}"
           list = BitfiPriceLog.where("pair_name = ? AND analysis_pump IS NULL", pair).limit(500)
 
           break if list.length == 0
