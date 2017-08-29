@@ -52,7 +52,7 @@ namespace :bitfi_get_price do
             next if price_log.nil?
 
             ico.find_pump(price_log)
-            ico.find_down(price_log)
+            ico.find_down(price_log) if price_log.analysis_pump != 1
 
             sleep(0.3)
           end

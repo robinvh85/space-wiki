@@ -5,7 +5,7 @@ namespace :bitfi_ana_price do
     pair_list = ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "OMGUSD", "XMRUSD", "EOSUSD", "SANUSD", "DSHUSD", "ZECUSD", "RRTUSD", "BTCUSD", "ETCUSD"]
     #pair_list = ["BCHUSD"]
 
-    # Analys.find_pump(pair_list)
+    Analys.find_pump(pair_list)
     Analys.find_down(pair_list)
   end
 
@@ -167,7 +167,7 @@ class Analys
         puts "find_pump() - #{pair}"
 
         while true
-          list = BitfiPriceLog.where("pair_name = ? AND analysis_pump IS NULL AND analysis_value > 0.02", pair).limit(500)
+          list = BitfiPriceLog.where("pair_name = ? AND analysis_pump IS NULL", pair).limit(500)
 
           break if list.length == 0
 
