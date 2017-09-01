@@ -400,11 +400,224 @@ namespace :bitfi_ana_training do
           order['buy_at'] = item.created_at
 
           # puts "ORDER profit (#{profit}%) - Buy at: ##{order['buy_id']} - #{order['buy']} => Sell at: ##{order['sell_id']} - #{order['sell']}"
-          puts "ORDER profit (#{profit}%)"
+          puts "(#{profit}%)"
           Analys1.save_result(pair, order, traning_id)
           order = {}
           trading_type = ""
           check_price = item.buy_price          
+        end
+      end
+    end
+  end
+
+  task :training6, [] => :environment do |_cmd, args|
+    puts "Run rake bitfi_ana_training:training6"
+    pair = 'XMRUSD'
+
+    list = BitfiPriceLog.where("pair_name=?", pair).order(id: 'asc')
+
+    order = {}
+    trading_type = "DONE"
+    cancel_buy_count = 0
+
+    is_sell_lose = false
+    delay_count = 0
+    traning_id = 6
+    check_price = 0
+    count_check_price = 0
+
+    ProfitResult.where(pair_name: pair, traning_id: traning_id).delete_all
+    list.each do |item|
+      if is_sell_lose
+        if count_check_price > 30
+          if check_price > item.buy_price
+            trading_type = ''
+            is_sell_lose = false
+          else
+            count_check_price = 0
+            check_price = item.buy_price
+          end
+        else
+          count_check_price += 1
+          next  
+        end
+      elsif trading_type == 'DONE'
+        if count_check_price > 10
+          if check_price > item.buy_price
+            trading_type = ''
+          else
+            count_check_price = 0
+            check_price = item.buy_price
+          end
+        else
+          count_check_price += 1
+          next  
+        end
+      end
+
+      if trading_type == ""        
+        if order['buy'].nil? and item.analysis_pump == 1 and item.change_buy_percent > 0.01 and item.change_sell_percent > 0.01
+          trading_type = "BUYING"
+          cancel_buy_count = 0
+          order['set_buy_id'] = item.id          
+
+          # unless is_sell_lose
+          trading_type = "BOUGHT"
+          order['buy'] = item.buy_price
+          order['buy_id'] = item.id
+          # end
+        end
+      elsif trading_type == "BUYING"
+        cancel_buy = false
+        
+        if item.change_buy_percent <= 0 or item.change_sell_percent <= 0
+          cancel_buy = true
+        end
+
+        if cancel_buy #or cancel_buy_count > 2
+          order = {}
+          trading_type = ""          
+        else
+          trading_type = "BOUGHT"
+          order['buy'] = item.buy_price
+          order['buy_id'] = item.id
+          # is_sell_lose = false
+        end
+      elsif trading_type == "BOUGHT"
+        force_sell = false
+
+        # if item.count_up_down == 0
+        #   force_sell = true
+        # end
+
+        profit = ((item.sell_price - order['buy']) / order['buy'] * 100).round(2)
+        if profit > 1 and item.change_buy_percent <= 0
+          force_sell = true
+        end
+
+        if profit < -20
+          force_sell = true
+          is_sell_lose = true
+          delay_count = 0
+          count_check_price = 0
+        end
+
+        if force_sell
+          order['sell'] = item.sell_price
+          order['sell_id'] = item.id
+          
+          profit = ((order['sell'] - order['buy']) / order['buy'] * 100).round(2)
+          order['profit'] = profit
+          order['buy_at'] = item.created_at
+
+          puts "(#{profit}%)"
+          Analys1.save_result(pair, order, traning_id)
+          order = {}
+          trading_type = "DONE"
+          count_check_price = 0
+          check_price = item.buy_price          
+        end
+      end
+    end
+  end
+
+  task :training7, [] => :environment do |_cmd, args|
+    puts "Run rake bitfi_ana_training:training7"
+    pair = 'XMRUSD'
+
+    list = BitfiPriceLog.where("pair_name=?", pair).order(id: 'asc')
+
+    order = {}
+    trading_type = ""
+    cancel_buy_count = 0
+
+    traning_id = 7
+    top_price = 0
+    down_percent = 0
+    is_lose = false
+    count_delay = 0
+
+    ProfitResult.where(pair_name: pair, traning_id: traning_id).delete_all
+    list.each do |item|
+
+      if is_lose
+        count_delay += 1
+        
+        if count_delay > 50
+          is_lose = false
+        else
+          next
+        end
+      end
+
+      if trading_type == "DONE"
+        if top_price < item.buy_price
+          top_price = item.buy_price
+        end
+
+        down_percent = (top_price - item.buy_price) / item.buy_price * 100
+
+        if down_percent <= 1
+          trading_type = ''
+        end
+      end
+
+      if trading_type == ""
+        if order['buy'].nil? and item.analysis_pump == 1 and item.change_buy_percent > 0.01 and item.change_sell_percent > 0.01
+          trading_type = "BUYING"
+          cancel_buy_count = 0
+          order['set_buy_id'] = item.id          
+
+          trading_type = "BOUGHT"
+          order['buy'] = item.buy_price
+          order['buy_id'] = item.id
+        end
+      # elsif trading_type == "BUYING"
+      #   cancel_buy = false
+        
+      #   if item.change_buy_percent <= 0 or item.change_sell_percent <= 0
+      #     cancel_buy = true
+      #   end
+
+      #   if cancel_buy #or cancel_buy_count > 2
+      #     order = {}
+      #     trading_type = ""          
+      #   else
+      #     trading_type = "BOUGHT"
+      #     order['buy'] = item.buy_price
+      #     order['buy_id'] = item.id
+      #   end
+      elsif trading_type == "BOUGHT"
+        force_sell = false
+
+        profit = ((item.sell_price - order['buy']) / order['buy'] * 100).round(2)
+        if profit > 0.7 and item.change_buy_percent <= 0
+          force_sell = true
+        end
+
+        if item.change_buy_percent < -0.5
+          force_sell = true
+        end
+
+        if profit < -1
+          force_sell = true
+          is_lose = true
+          count_delay = 0
+        end
+
+        if force_sell
+          order['sell'] = item.sell_price
+          order['sell_id'] = item.id
+          
+          profit = ((order['sell'] - order['buy']) / order['buy'] * 100).round(2)
+          order['profit'] = profit
+          order['buy_at'] = item.created_at
+
+          puts "(#{profit}%)"
+          Analys1.save_result(pair, order, traning_id)
+          order = {}
+          trading_type = "DONE"
+          max_price = item.buy_price
         end
       end
     end
