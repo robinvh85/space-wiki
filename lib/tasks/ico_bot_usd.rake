@@ -1,4 +1,4 @@
-# 
+#  VH RUNNING
 require 'bitfinex-api-rb'
 
 namespace :ico_bot_usd do

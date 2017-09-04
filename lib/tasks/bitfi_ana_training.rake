@@ -540,13 +540,26 @@ namespace :bitfi_ana_training do
     ProfitResult.where(pair_name: pair, traning_id: traning_id).delete_all
     list.each do |item|
 
+
+      # Check pass lose 1
       if is_lose
         count_delay += 1
         
-        if count_delay > 50
+        if count_delay > 30
           is_lose = false
         else
           next
+        end
+      end
+
+      # Check pass lose 2
+      # get price before 1m
+      if is_lose
+        time_before = item.time_at - 1.5.minutes.to_i
+        before_price_log = BitfiPriceLog.where("time_at > ?", time_before)
+
+        if item.buy_price > before_price_log.buy_price 
+          is_lose = false
         end
       end
 
@@ -557,9 +570,11 @@ namespace :bitfi_ana_training do
 
         down_percent = (top_price - item.buy_price) / item.buy_price * 100
 
-        if down_percent <= 1
+        if down_percent <= 0.5
           trading_type = ''
         end
+
+        # trading_type = ''
       end
 
       if trading_type == ""
@@ -590,8 +605,8 @@ namespace :bitfi_ana_training do
       elsif trading_type == "BOUGHT"
         force_sell = false
 
-        profit = ((item.sell_price - order['buy']) / order['buy'] * 100).round(2)
-        if profit > 0.7 and item.change_buy_percent <= 0
+        profit = ((item.buy_price - order['buy']) / order['buy'] * 100).round(2)
+        if profit > 1 and item.change_buy_percent <= 0
           force_sell = true
         end
 
@@ -606,7 +621,12 @@ namespace :bitfi_ana_training do
         end
 
         if force_sell
-          order['sell'] = item.sell_price
+
+          if is_lose
+            order['sell'] = item.sell_price
+          else
+            order['sell'] = item.sell_price
+          end
           order['sell_id'] = item.id
           
           profit = ((order['sell'] - order['buy']) / order['buy'] * 100).round(2)

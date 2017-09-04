@@ -7,12 +7,13 @@ namespace :ico_bot_pump do
     
     cycle_time = 20
 
+    acc = IcoAccount.find_by(site: 'Bitfi')
     api_obj = Bitfi.new({
       key: acc.key,
       secret: acc.secret
     })
 
-    running_bot_list = IcoBot.where("pair_name='XMRUSD'").to_a
+    running_bot_list = IcoBot.where(trading_type: 'DONE_ORDER').to_a
 
     bot_list = []
     
@@ -78,21 +79,30 @@ class BotPump
     # Check for buy
 
     if @ico_bot.trading_type == "DONE_ORDER"
-      puts "##{@thread_id} - #{@ico_bot.pair_name} - checkpump() DONE_ORDER at #{Time.now}"
-      price_log = BitfiPriceLog.where(pair_name: @ico_bot.pair_name).last
+      puts "##{@thread_id} - #{@ico_bot.pair_name} - checkpump() DONE_ORDER with price #{@current_buy_price} at #{Time.now}"
+      price_logs = BitfiPriceLog.where(pair_name: @ico_bot.pair_name).order(id: 'desc').limit(2)
 
-      if price_log.analysis_pump == 1 and price_log.analysis_value > 0.5 and price_log.change_buy_percent > 0.3 and price_log.change_sell_percent > 0.3
+      if price_logs[0].analysis_pump == 1 and price_logs[0].analysis_value > 0.5 and price_logs[0].change_buy_percent > 0.3 and price_logs[0].change_sell_percent > 0.3
         @ico_bot.trading_type = "FORCE_BUY"
+      else
+        return
+      end
+      
+      if price_logs[1].analysis_pump == 1 and price_logs[1].analysis_value > 0.5 and price_logs[1].change_buy_percent > 0.3 and price_logs[1].change_sell_percent > 0.3
+        @ico_bot.trading_type = "FORCE_BUY"
+      else
+        @ico_bot.trading_type = ""
       end
     elsif @ico_bot.trading_type == "BOUGHT"
-      puts "##{@thread_id} - #{@ico_bot.pair_name} - checkpump() BOUGHT at #{Time.now}"
+      puts "##{@thread_id} - #{@ico_bot.pair_name} - checkpump() BOUGHT with price #{@current_buy_price} at #{Time.now}"
+      price_log = BitfiPriceLog.where(pair_name: @ico_bot.pair_name).last
       if price_log.analysis_pump == -1
         @ico_bot.trading_type = "FORCE_SELL"
       end
     end
 
+    @ico_bot.save
   end
-
 
   # Can create many algorithms and watching for better
   def analysis

@@ -1,0 +1,2 @@
+class BitfiTradeLog < ApplicationRecord
+end
