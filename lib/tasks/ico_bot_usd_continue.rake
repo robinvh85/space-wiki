@@ -10,9 +10,6 @@ namespace :ico_bot_usd_continue do
     
     cycle_time = 20
 
-    api_obj_hash = {}
-
-    # Init api_obj_hash
     acc = IcoAccount.first
     if acc.site == "Bitfi"
       api_obj = Bitfi.new({
@@ -33,14 +30,21 @@ namespace :ico_bot_usd_continue do
           thread_id: thread_id
         }
         bot_obj = BotRunningUsdContinue.new(config)
+        is_first_time = true
 
         while true
           start_time = Time.now
 
           bot_obj.update_current_price()
+
+          if is_first_time
+            is_first_time = false
+            next
+          end
+
           bot_obj.save_price()
           bot_obj.find_pump()
-          bot_obj.find_down()
+          bot_obj.find_down() if bot_obj.price_log.analysis_pump != 1
           bot_obj.analysis()
 
           sleep(0.2)
@@ -63,7 +67,7 @@ namespace :ico_bot_usd_continue do
 end
 
 class BotRunningUsdContinue
-  attr_accessor :ico_bot
+  attr_accessor :ico_bot, :price_log
 
   def initialize(config)
     @ico_bot = config[:ico_bot]
@@ -111,22 +115,26 @@ class BotRunningUsdContinue
       # get price before 1m
     if @ico_bot.trading_type == "DONE_LOSE_ORDER"
       time_before = Time.now.to_i - 1.5.minutes.to_i
-      before_price_log = BitfiTradeLog.where("pair_name = ? AND time_at > ?", ico_bot.pair_name, time_before).sort(id: 'DESC').first
+      before_price_log = BitfiTradeLog.where("pair_name = ? AND time_at > ?", ico_bot.pair_name, time_before).order(id: 'ASC').first
+
+      puts "##{@thread_id} - #{@ico_bot.pair_name} - check for DONE_LOSE_ORDER - #{@current_buy_price} > #{before_price_log.buy_price} at #{Time.now}"
 
       if @current_buy_price > before_price_log.buy_price 
         @ico_bot.trading_type = 'DONE_ORDER'
       end
     end
 
-    if @ico_bot == "DONE_ORDER"
+    if @ico_bot.trading_type == "DONE_ORDER"
       if @top_price < @price_log.buy_price
         @top_price = @price_log.buy_price
       end
 
       down_percent = (@top_price - @price_log.buy_price) / @price_log.buy_price * 100
 
-      if down_percent <= 0.5
-        @ico_bot.trading_type = ''
+      puts "##{@thread_id} - #{@ico_bot.pair_name} - check for DONE_ORDER - down #{'%.2f' % down_percent}% at #{Time.now}"
+
+      if down_percent >= 0.5
+        @ico_bot.trading_type = 'BUYING'
       end
     end
     
@@ -174,7 +182,7 @@ class BotRunningUsdContinue
       amount = @api_obj.get_balances(@ico_bot.ico_name)
       @ico_bot.amount_ico = amount
       @ico_bot.trading_type = "SELLING"
-      @ico_bot.save
+      @ico_bot.save!
     end
   end
 
@@ -208,7 +216,6 @@ class BotRunningUsdContinue
       
       profit = ((@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
       @current_order.profit = profit
-      @current_order.buy_at = @price_log.created_at
 
       obj_sell = @api_obj.sell(@ico_bot.pair_name, @ico_bot.amount_ico, @current_order.sell_price)
       @current_order.sell_order_id = obj_sell['order_id']
@@ -241,7 +248,8 @@ class BotRunningUsdContinue
     end
   end
 
-  def update_current_price  
+  def update_current_price
+    # puts "update_current_price() at #{Time.now()}"
     # Backup previous price
     @previous_sell_price = @current_sell_price
     @previous_buy_price = @current_buy_price
@@ -260,8 +268,8 @@ class BotRunningUsdContinue
   end
 
   def find_pump()
-    puts "#{@pair} - find_pump() - #{@price_log.id}"
-    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @pair, @price_log.time_at).order(id: 'desc').limit(4)
+    # puts "#{@ico_bot.pair_name} - find_pump() - #{@price_log.id}"
+    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @ico_bot.pair_name, @price_log.time_at).order(id: 'desc').limit(4)
 
     flag_all_active = true
     records.each do |record|
@@ -279,8 +287,8 @@ class BotRunningUsdContinue
   end
 
   def find_down()
-    puts "#{@pair} - find_down() - #{@price_log.id}"
-    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @pair, @price_log.time_at).order(id: 'desc').limit(4)
+    # puts "#{@ico_bot.pair_name} - find_down() - #{@price_log.id}"
+    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @ico_bot.pair_name, @price_log.time_at).order(id: 'desc').limit(4)
 
     flag_all_active = true
     records.each do |record|
@@ -300,15 +308,13 @@ class BotRunningUsdContinue
   end
 
   def save_price
-    return nil if @previous_buy_price == 0
-
-    puts "##{@thread_id} - #{@pair} - save_price() at #{Time.now}"
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - save_price() at #{Time.now}"
     change_buy_percent = ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)
     change_sell_percent = ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)
     diff_price_percent = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
 
     time_at = Time.now.to_i
-    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @pair, time_at).order(id: 'desc').limit(4)
+    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @ico_bot.pair_name, time_at).order(id: 'desc').limit(4)
     analysis_value = change_buy_percent
     
     records.each do |record|
@@ -316,7 +322,7 @@ class BotRunningUsdContinue
     end
 
     @price_log = BitfiTradeLog.new({
-      pair_name: @pair,
+      pair_name: @ico_bot.pair_name,
       buy_price: @current_buy_price,
       sell_price: @current_sell_price,
       change_buy_percent: change_buy_percent,
