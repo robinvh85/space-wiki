@@ -64,6 +64,59 @@ namespace :ico_bot_usd_continue do
       t.join
     end
   end
+
+  task :check_price, [] => :environment do |_cmd, args|
+    puts "rake ico_bot_usd_continue:check_price"
+
+    time_at = Time.now.to_i
+    from = time_at - 1.hours.to_i
+
+    query = """
+      SELECT *
+      FROM (
+        SELECT pair_name, count(analysis_pump) as analysis_pump
+        FROM bitfi_price_logs
+        WHERE time_at > #{from} AND time_at < #{time_at}
+        AND analysis_pump = 1 AND analysis_value > 0
+        GROUP BY pair_name
+      ) as tb
+      ORDER BY analysis_pump DESC
+    """
+
+    # records_array = ActiveRecord::Base.connection.execute(query)
+    records = ActiveRecord::Base.connection.exec_query(query)
+
+    records.each do |record|
+      pair_name = record["pair_name"]
+
+      # Get max, min price
+      from = time_at - 2.hours.to_i
+      query = """
+        SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
+        FROM bitfi_price_logs
+        WHERE time_at > #{from} AND time_at < #{time_at}
+        AND pair_name = '#{pair_name}'
+      """
+      data = ActiveRecord::Base.connection.exec_query(query)
+      max_price = data[0]["max_price"]
+      min_price = data[0]["min_price"]
+
+      # Get current price
+      query = """
+        SELECT *
+        FROM bitfi_price_logs
+        WHERE time_at <= #{time_at} AND pair_name='#{pair_name}'
+        ORDER BY id DESC
+        LIMIT 1
+      """
+      data = ActiveRecord::Base.connection.exec_query(query)
+      current_price = data[0]["sell_price"]
+      percent = (current_price - min_price) / (max_price - min_price) * 100
+      capa_percent = (max_price / min_price * 100 - 100)
+      puts "current: #{current_price} - min: #{min_price} - max: #{max_price}"
+      puts "#{pair_name} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"
+    end
+  end
 end
 
 class BotRunningUsdContinue
@@ -101,43 +154,16 @@ class BotRunningUsdContinue
 
     @ico_bot.reload
 
-    # if @ico.trading_type == "DONE_LOSE_ORDER"
-    #   @count_delay += 1
-      
-    #   if @count_delay > 30
-    #     @ico.trading_type = 'BUYING'
-    #   else
-    #     return
-    #   end
-    # end
+    if @ico_bot.trading_type == "DONE"
+      pair_name = specify_better_ico(Time.now.to_i)
 
-    # Check pass lose 2
-      # get price before 1m
-    if @ico_bot.trading_type == "DONE_LOSE_ORDER"
-      time_before = Time.now.to_i - 2.minutes.to_i
-      before_price_log = BitfiTradeLog.where("pair_name = ? AND time_at > ?", ico_bot.pair_name, time_before).order(id: 'ASC').first
-
-      puts "##{@thread_id} - #{@ico_bot.pair_name} - check for DONE_LOSE_ORDER - #{@current_buy_price} > #{before_price_log.buy_price} at #{Time.now}"
-
-      if @current_buy_price > before_price_log.buy_price 
-        @ico_bot.trading_type = 'BUYING'
+      unless pair_name.nil?
+        @ico_bot.pair_name = pair_name
+        @ico_bot.trading_type = "BUYING"
+        @ico_bot.save!
       end
     end
 
-    # if @ico_bot.trading_type == "DONE_ORDER"
-    #   if @top_price < @price_log.buy_price
-    #     @top_price = @price_log.buy_price
-    #   end
-
-    #   down_percent = (@top_price - @price_log.buy_price) / @price_log.buy_price * 100
-
-    #   puts "##{@thread_id} - #{@ico_bot.pair_name} - check for DONE_ORDER - down #{'%.2f' % down_percent}% at #{Time.now}"
-
-    #   if down_percent >= 0.5
-    #     @ico_bot.trading_type = 'BUYING'
-    #   end
-    # end
-    
     if @ico_bot.trading_type == "BUYING"
       check_set_order_for_buy()
     elsif @ico_bot.trading_type == "CHECKING_ORDER_BUY"
@@ -148,7 +174,68 @@ class BotRunningUsdContinue
       check_finish_order_sell()
     end
   end
-  
+
+  def specify_better_ico(time_at)
+    puts "##{@thread_id} - specify_better_ico() at #{Time.now}"
+    
+    from = time_at - 1.hours.to_i
+
+    query = """
+      SELECT *
+      FROM (
+        SELECT pair_name, count(analysis_pump) as analysis_pump
+        FROM bitfi_price_logs
+        WHERE time_at > #{from} AND time_at < #{time_at}
+        AND analysis_pump = 1 AND analysis_value > 0
+        GROUP BY pair_name
+      ) as tb
+      ORDER BY analysis_pump DESC
+    """
+
+    # records_array = ActiveRecord::Base.connection.execute(query)
+    records = ActiveRecord::Base.connection.exec_query(query)
+
+    records.each do |record|
+      pair_name = record["pair_name"]
+
+      # Get max, min price
+      from = time_at - 2.hours.to_i
+      query = """
+        SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
+        FROM bitfi_price_logs
+        WHERE time_at > #{from} AND time_at < #{time_at}
+        AND pair_name = '#{pair_name}'
+      """
+      data = ActiveRecord::Base.connection.exec_query(query)
+      max_price = data[0]["max_price"]
+      min_price = data[0]["min_price"]
+
+      # Get current price
+      query = """
+        SELECT *
+        FROM bitfi_price_logs
+        WHERE time_at <= #{time_at} and pair_name='#{pair_name}'
+        ORDER BY id DESC
+        LIMIT 1
+      """
+      data = ActiveRecord::Base.connection.exec_query(query)
+      current_price = data[0]["sell_price"]
+      percent = (current_price - min_price) / (max_price - min_price) * 100
+      
+      puts "current: #{current_price} - min: #{min_price} - max: #{max_price}"
+      puts "ICO - #{pair_name} - #{'%.2f' % percent}"
+
+      capa_percent = (max_price / min_price * 100 - 100)
+
+      if percent < 70 and capa_percent > 3
+        puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
+        return pair_name
+      end
+    end
+
+    return nil
+  end
+
   def check_set_order_for_buy    
     puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.2f' % @current_buy_price} at #{Time.now}"
     
@@ -193,26 +280,22 @@ class BotRunningUsdContinue
     @is_lose = false
 
     profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-    if profit > 0.8 and @price_log.change_buy_percent <= 0
+    if profit > 1 and @price_log.change_buy_percent <= 0
       force_sell = true
     end
 
-    if @price_log.change_buy_percent < -0.5
-      force_sell = true
-    end
+    # if @price_log.change_buy_percent < -0.5
+    #   force_sell = true
+    # end
 
-    if profit < -1
-      force_sell = true
-      @is_lose = true
-      count_delay = 0
-    end
+    # if profit < -1
+    #   force_sell = true
+    #   @is_lose = true
+    #   count_delay = 0
+    # end
 
     if force_sell
-      if @is_lose
-        @current_order.sell_price = @price_log.sell_price
-      else
-        @current_order.sell_price = @price_log.sell_price
-      end
+      @current_order.sell_price = @current_buy_price
       
       profit = ((@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
       @current_order.profit = profit
@@ -240,13 +323,7 @@ class BotRunningUsdContinue
       @current_order.sold_order_id = 1
       @current_order.profit = profit
       @current_order.save
-      if @is_lose
-        @ico_bot.trading_type = "DONE_LOSE_ORDER"
-      else
-        @ico_bot.trading_type = "DONE_ORDER"
-      end
-
-      @ico_bot.limit_price_for_buy = @current_order.sell_price
+      @ico_bot.trading_type = "DONE"
       @ico_bot.save
     end
   end
