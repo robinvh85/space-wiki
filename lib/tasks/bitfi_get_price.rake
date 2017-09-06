@@ -140,7 +140,7 @@ class BitfiPrice
 
     flag_all_active = true
     records.each do |record|
-      if record.analysis_value < 0
+      if record.analysis_value <= 0
         flag_all_active = false
         break
       end

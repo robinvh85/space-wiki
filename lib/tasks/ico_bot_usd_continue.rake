@@ -113,8 +113,8 @@ namespace :ico_bot_usd_continue do
       current_price = data[0]["sell_price"]
       percent = (current_price - min_price) / (max_price - min_price) * 100
       capa_percent = (max_price / min_price * 100 - 100)
-      puts "current: #{current_price} - min: #{min_price} - max: #{max_price}"
-      puts "#{pair_name} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"
+      puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
+      puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"
     end
   end
 end
@@ -159,6 +159,7 @@ class BotRunningUsdContinue
 
       unless pair_name.nil?
         @ico_bot.pair_name = pair_name
+        @ico_bot.ico_name = pair_name[0..2].downcase
         @ico_bot.trading_type = "BUYING"
         @ico_bot.save!
       end
@@ -222,12 +223,13 @@ class BotRunningUsdContinue
       current_price = data[0]["sell_price"]
       percent = (current_price - min_price) / (max_price - min_price) * 100
       
-      puts "current: #{current_price} - min: #{min_price} - max: #{max_price}"
-      puts "ICO - #{pair_name} - #{'%.2f' % percent}"
+      puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
+      puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"
 
       capa_percent = (max_price / min_price * 100 - 100)
 
-      if percent < 70 and capa_percent > 3
+      except_icos = ['RRTUSD']
+      if percent <= 70 and capa_percent >= 4 and !except_icos.include? pair_name
         puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
         return pair_name
       end
@@ -237,15 +239,28 @@ class BotRunningUsdContinue
   end
 
   def check_set_order_for_buy    
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.2f' % @current_buy_price} at #{Time.now}"
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
+    
+    time_before = Time.now.to_i - 1.8.minutes.to_i
+    before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
+    
+    if @current_buy_price <= before_price_log.buy_price
+      puts "##{@thread_id} - #{@ico_bot.pair_name} -> #{'%.8f' % @current_buy_price} < #{'%.8f' % before_price_log.buy_price} so return"
+      return
+    end
     
     if @price_log.analysis_pump == 1 and @price_log.change_buy_percent > 0.01 and @price_log.change_sell_percent > 0.01
       result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @price_log.sell_price)
 
       return if result.nil?
 
+      buy_price = @price_log.buy_price
+      if @price_log.diff_price_percent <= 0.3
+        buy_price = @price_log.sell_price
+      end
+
       @current_order = IcoOrder.create({
-        buy_price: @price_log.sell_price,
+        buy_price: buy_price,
         amount_usd: @ico_bot.amount_usd,
         buy_order_id: result['order_id'],
         pair_name: @ico_bot.pair_name
@@ -273,14 +288,22 @@ class BotRunningUsdContinue
     end
   end
 
-  def check_set_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
-
+  def check_set_order_sell    
     force_sell = false
     @is_lose = false
 
+    time_before = Time.now.to_i - 1.5.minutes.to_i
+    before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
+
     profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-    if profit > 1 and @price_log.change_buy_percent <= 0
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.2f' % profit}) at #{Time.now}"
+
+    if @current_buy_price > before_price_log.buy_price
+      puts "##{@thread_id} - #{@ico_bot.pair_name} -> #{'%.8f' % @current_buy_price} < #{'%.8f' % before_price_log.buy_price} still increase"
+      return
+    end
+    
+    if profit > 1 #and @price_log.change_buy_percent <= 0
       force_sell = true
     end
 
@@ -325,6 +348,8 @@ class BotRunningUsdContinue
       @current_order.save
       @ico_bot.trading_type = "DONE"
       @ico_bot.save
+
+      sleep(60 * 2)
     end
   end
 
