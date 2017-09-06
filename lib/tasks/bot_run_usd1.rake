@@ -130,14 +130,14 @@ class BotRunUsd1
     end
     
     if @price_log.analysis_pump == 1 and @price_log.change_buy_percent > 0.01 and @price_log.change_sell_percent > 0.01
-      result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @price_log.sell_price)
-
-      return if result.nil?
-
       buy_price = @price_log.buy_price
-      if @price_log.diff_price_percent <= 0.3
+      if @price_log.diff_price_percent <= 0.5
         buy_price = @price_log.sell_price
       end
+      
+      result = @api_obj.buy(@ico_bot.pair_name, buy_amount, buy_price)
+
+      return if result.nil?
 
       @current_order = IcoOrder.create({
         buy_price: buy_price,
