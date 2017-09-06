@@ -69,7 +69,7 @@ namespace :ico_bot_usd_continue do
     puts "rake ico_bot_usd_continue:check_price"
 
     time_at = Time.now.to_i
-    from = time_at - 1.hours.to_i
+    from = time_at - 2.hours.to_i
 
     query = """
       SELECT *
@@ -90,7 +90,7 @@ namespace :ico_bot_usd_continue do
       pair_name = record["pair_name"]
 
       # Get max, min price
-      from = time_at - 2.hours.to_i
+      from = time_at - 3.hours.to_i
       query = """
         SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
         FROM bitfi_price_logs
@@ -138,7 +138,7 @@ class BotRunningUsdContinue
     @current_order = nil
     @current_order = IcoOrder.find(@ico_bot.ico_order_id) if @ico_bot.ico_order_id.present?
     @num_time_check_lose = 4 # 1m
-    @count_delay = 0
+    # @count_delay = 0
   end
 
   def buy_amount
@@ -163,6 +163,7 @@ class BotRunningUsdContinue
         @ico_bot.trading_type = "BUYING"
         @ico_bot.save!
       end
+      return
     end
 
     if @ico_bot.trading_type == "BUYING"
@@ -179,7 +180,7 @@ class BotRunningUsdContinue
   def specify_better_ico(time_at)
     puts "##{@thread_id} - specify_better_ico() at #{Time.now}"
     
-    from = time_at - 1.hours.to_i
+    from = time_at - 2.hours.to_i
 
     query = """
       SELECT *
@@ -200,7 +201,7 @@ class BotRunningUsdContinue
       pair_name = record["pair_name"]
 
       # Get max, min price
-      from = time_at - 2.hours.to_i
+      from = time_at - 3.hours.to_i
       query = """
         SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
         FROM bitfi_price_logs
@@ -223,13 +224,13 @@ class BotRunningUsdContinue
       current_price = data[0]["sell_price"]
       percent = (current_price - min_price) / (max_price - min_price) * 100
       
-      puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
-      puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"
-
       capa_percent = (max_price / min_price * 100 - 100)
 
+      puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
+      puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"      
+
       except_icos = ['RRTUSD']
-      if percent <= 70 and capa_percent >= 4 and !except_icos.include? pair_name
+      if percent <= 70 and capa_percent >= 3 and !except_icos.include? pair_name
         puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
         return pair_name
       end
@@ -290,7 +291,7 @@ class BotRunningUsdContinue
 
   def check_set_order_sell    
     force_sell = false
-    @is_lose = false
+    # @is_lose = false
 
     time_before = Time.now.to_i - 1.5.minutes.to_i
     before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
@@ -311,11 +312,11 @@ class BotRunningUsdContinue
     #   force_sell = true
     # end
 
-    # if profit < -1
-    #   force_sell = true
-    #   @is_lose = true
-    #   count_delay = 0
-    # end
+    if profit < -4
+      force_sell = true
+      # @is_lose = true
+      # count_delay = 0
+    end
 
     if force_sell
       @current_order.sell_price = @current_buy_price
