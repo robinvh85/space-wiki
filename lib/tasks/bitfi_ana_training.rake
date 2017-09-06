@@ -9,6 +9,59 @@ namespace :bitfi_ana_training do
     Analys1.find_down(pair_list)
   end
 
+  task :check_price, [] => :environment do |_cmd, args|
+    puts "rake bitfi_ana_training:check_price"
+
+    time_at = Time.now.to_i
+    from = time_at - 30.minutes.to_i
+
+    query = """
+      SELECT *
+      FROM (
+        SELECT pair_name, count(analysis_pump) as analysis_pump
+        FROM bitfi_price_logs
+        WHERE time_at > #{from} AND time_at < #{time_at}
+        AND analysis_pump = 1 AND analysis_value > 0
+        GROUP BY pair_name
+      ) as tb
+      ORDER BY analysis_pump DESC
+    """
+
+    # records_array = ActiveRecord::Base.connection.execute(query)
+    records = ActiveRecord::Base.connection.exec_query(query)
+
+    records.each do |record|
+      pair_name = record["pair_name"]
+
+      # Get max, min price
+      from = time_at - 3.hours.to_i
+      query = """
+        SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
+        FROM bitfi_price_logs
+        WHERE time_at > #{from} AND time_at < #{time_at}
+        AND pair_name = '#{pair_name}'
+      """
+      data = ActiveRecord::Base.connection.exec_query(query)
+      max_price = data[0]["max_price"]
+      min_price = data[0]["min_price"]
+
+      # Get current price
+      query = """
+        SELECT *
+        FROM bitfi_price_logs
+        WHERE time_at <= #{time_at} AND pair_name='#{pair_name}'
+        ORDER BY id DESC
+        LIMIT 1
+      """
+      data = ActiveRecord::Base.connection.exec_query(query)
+      current_price = data[0]["sell_price"]
+      percent = (current_price - min_price) / (max_price - min_price) * 100
+      capa_percent = (max_price / min_price * 100 - 100)
+      puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
+      puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"
+    end
+  end
+
   task :calc_change_buy_1m_2m, [] => :environment do |_cmd, args|
     puts "Run rake bitfi_ana_training:calc_change_buy_1m_2m"
 
