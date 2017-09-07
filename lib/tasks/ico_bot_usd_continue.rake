@@ -33,7 +33,7 @@ namespace :ico_bot_usd_continue do
 
         if index == 0
           bot_obj = BotRunUsd1.new(config)
-        elsif index = 1
+        elsif index == 1
           bot_obj = BotRunUsd2.new(config)
         end
         is_first_time = true
