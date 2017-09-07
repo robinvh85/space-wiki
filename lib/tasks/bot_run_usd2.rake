@@ -193,7 +193,7 @@ class BotRunUsd2
   end
 
   def check_finish_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.8f' % @current_order.sell_price}) at #{Time.now}"
 
     status = @api_obj.check_order(@current_order.sell_order_id)
 

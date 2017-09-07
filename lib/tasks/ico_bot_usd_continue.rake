@@ -10,6 +10,7 @@ namespace :ico_bot_usd_continue do
     
     cycle_time = 20
 
+    api_obj = nil
     acc = IcoAccount.first
     if acc.site == "Bitfi"
       api_obj = Bitfi.new({
