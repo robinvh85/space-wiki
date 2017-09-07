@@ -164,6 +164,7 @@ class BotRunUsd1
       # amount = @api_obj.get_balances(@ico_bot.ico_name)
       # @ico_bot.amount_ico = amount
       @ico_bot.trading_type = "SELLING"
+      @ico_bot.pair_name = nil
       @ico_bot.save!
     end
   end

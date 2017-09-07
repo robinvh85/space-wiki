@@ -36,13 +36,12 @@ class BotRunUsd2
     if @ico_bot.trading_type == "DONE"
       pair_name = specify_better_ico(Time.now.to_i)
 
-      unless pair_name.nil?
-        @ico_bot.pair_name = pair_name
-        @ico_bot.ico_name = pair_name[0..2].downcase
-        @ico_bot.trading_type = "BUYING"
-        @ico_bot.save!
-      end
-      return
+      return if pair_name.nil?
+
+      @ico_bot.pair_name = pair_name
+      @ico_bot.ico_name = pair_name[0..2].downcase
+      @ico_bot.trading_type = "BUYING"
+      @ico_bot.save!
     end
 
     if @ico_bot.trading_type == "BUYING"
@@ -110,8 +109,14 @@ class BotRunUsd2
 
       except_icos = ['RRTUSD']
       if percent <= 70 and capa_percent >= 3 and !except_icos.include? pair_name
-        puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
-        return pair_name
+
+        list = IcoBot.where(pair_name: pair_name)
+        if list.length == 0
+          puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
+          return pair_name
+        else
+          next
+        end
       end
     end
 
@@ -130,14 +135,16 @@ class BotRunUsd2
     end
     
     if @price_log.analysis_pump == 1 and @price_log.change_buy_percent > 0.01 and @price_log.change_sell_percent > 0.01
-      result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @price_log.sell_price)
+      buy_price = @price_log.buy_price
+      if @price_log.diff_price_percent <= 0.5
+        buy_price = @price_log.sell_price
+      else
+        return
+      end
+      
+      result = @api_obj.buy(@ico_bot.pair_name, buy_amount, buy_price)
 
       return if result.nil?
-
-      buy_price = @price_log.buy_price
-      if @price_log.diff_price_percent <= 0.3
-        buy_price = @price_log.sell_price
-      end
 
       @current_order = IcoOrder.create({
         buy_price: buy_price,
@@ -161,47 +168,17 @@ class BotRunUsd2
       @current_order.bought_order_id = 1
       @current_order.save
 
-      # amount = @api_obj.get_balances(@ico_bot.ico_name)
-      # @ico_bot.amount_ico = amount
       @ico_bot.trading_type = "SELLING"
       @ico_bot.save!
     end
   end
 
   def check_set_order_sell    
-    force_sell = false
-    # @is_lose = false
-
-    time_before = Time.now.to_i - 1.5.minutes.to_i
-    before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
-
-    profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.2f' % profit}) at #{Time.now}"
-
-    if @current_buy_price > before_price_log.buy_price
-      puts "##{@thread_id} - #{@ico_bot.pair_name} -> #{'%.8f' % @current_buy_price} < #{'%.8f' % before_price_log.buy_price} still increase"
-      return
-    end
-    
-    if profit > 1 #and @price_log.change_buy_percent <= 0
-      force_sell = true
-    end
-
-    # if @price_log.change_buy_percent < -0.5
-    #   force_sell = true
-    # end
-
-    if profit < -4
-      force_sell = true
-      # @is_lose = true
-      # count_delay = 0
-    end
+    force_sell = true
 
     if force_sell
-      @current_order.sell_price = @current_buy_price
-      
-      profit = ((@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-      @current_order.profit = profit
+      profit = 0.013 # 13%
+      @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit).round(8)
 
       amount = @api_obj.get_balances(@ico_bot.ico_name)
       @ico_bot.amount_ico = amount
