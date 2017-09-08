@@ -17,7 +17,6 @@ class BotRunUsd1
     @current_order = nil
     @current_order = IcoOrder.find(@ico_bot.ico_order_id) if @ico_bot.ico_order_id.present?
     @num_time_check_lose = 4 # 1m
-    # @count_delay = 0
   end
 
   def buy_amount
@@ -80,7 +79,7 @@ class BotRunUsd1
       pair_name = record["pair_name"]
 
       # Get max, min price
-      from = time_at - 3.hours.to_i
+      from = time_at - 4.hours.to_i
       query = """
         SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
         FROM bitfi_price_logs
@@ -102,14 +101,14 @@ class BotRunUsd1
       data = ActiveRecord::Base.connection.exec_query(query)
       current_price = data[0]["sell_price"]
       percent = (current_price - min_price) / (max_price - min_price) * 100
-      
+
       capa_percent = (max_price / min_price * 100 - 100)
 
       puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
       puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"      
 
       except_icos = ['RRTUSD']
-      if percent <= 70 and capa_percent >= 3 and !except_icos.include? pair_name
+      if percent <= 60 and capa_percent >= 3 and !except_icos.include? pair_name
         puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
         return pair_name
       end
@@ -131,8 +130,10 @@ class BotRunUsd1
     
     if @price_log.analysis_pump == 1 and @price_log.change_buy_percent > 0.01 and @price_log.change_sell_percent > 0.01
       buy_price = @price_log.buy_price
-      if @price_log.diff_price_percent <= 0.5
+      if @price_log.diff_price_percent <= 0.4
         buy_price = @price_log.sell_price
+      else
+        return
       end
       
       result = @api_obj.buy(@ico_bot.pair_name, buy_amount, buy_price)
@@ -188,14 +189,9 @@ class BotRunUsd1
       force_sell = true
     end
 
-    # if @price_log.change_buy_percent < -0.5
-    #   force_sell = true
-    # end
-
-    if profit < -4
+    if profit < -3
       force_sell = true
       # @is_lose = true
-      # count_delay = 0
     end
 
     if force_sell

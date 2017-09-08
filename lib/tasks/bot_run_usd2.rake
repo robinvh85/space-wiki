@@ -79,7 +79,7 @@ class BotRunUsd2
       pair_name = record["pair_name"]
 
       # Get max, min price
-      from = time_at - 3.hours.to_i
+      from = time_at - 4.hours.to_i
       query = """
         SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
         FROM bitfi_price_logs
@@ -108,7 +108,7 @@ class BotRunUsd2
       puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"      
 
       except_icos = ['RRTUSD']
-      if percent <= 70 and capa_percent >= 3 and !except_icos.include? pair_name
+      if percent <= 60 and capa_percent >= 3 and !except_icos.include? pair_name
 
         list = IcoBot.where(pair_name: pair_name)
         if list.length == 0
@@ -177,7 +177,7 @@ class BotRunUsd2
     force_sell = true
 
     if force_sell
-      profit = 0.013 # 13%
+      profit = 0.012 # 12%
       @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit).round(8)
 
       amount = @api_obj.get_balances(@ico_bot.ico_name)

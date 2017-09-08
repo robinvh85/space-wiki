@@ -17,7 +17,7 @@ namespace :bitfi_get_price do
 
     # Init api_obj_hash
     pair_list_origin = [
-      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "XMRUSD", "RRTUSD"],   
+      ["ETHUSD", "BCHUSD", "LTCUSD", "XRPUSD", "IOTUSD", "XMRUSD", "NEOUSD"],
       ["EOSUSD", "DSHUSD", "ZECUSD", "BTCUSD", "ETCUSD", "OMGUSD", "SANUSD"]
       # ["XRPUSD", "SANUSD"],   
       # ["XMRUSD"]
