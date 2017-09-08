@@ -36,7 +36,12 @@ namespace :ico_bot_usd_continue do
           bot_obj = BotRunUsd1.new(config)
         elsif index == 1
           bot_obj = BotRunUsd2.new(config)
+        elsif index == 2
+          bot_obj = BotRunUsd3.new(config)
+        elsif index == 3
+          bot_obj = BotRunUsd4.new(config)
         end
+
         is_first_time = true
 
         while true
