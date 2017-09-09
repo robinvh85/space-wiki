@@ -1,0 +1,2 @@
+class BittrPriceLog < ApplicationRecord
+end

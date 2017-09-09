@@ -87,7 +87,7 @@ class BotRunUsd2
       pair_name = record["pair_name"]
 
       # Get max, min price
-      from = time_at - 4.hours.to_i
+      from = time_at - 6.hours.to_i
       query = """
         SELECT pair_name, max(buy_price) as max_price, min(buy_price) as min_price
         FROM bitfi_price_logs
@@ -174,7 +174,7 @@ class BotRunUsd2
 
     if status == 1
       @current_order.bought_order_id = 1
-      @current_order.save
+      @current_order.save 
 
       @ico_bot.trading_type = "SELLING"
       @ico_bot.save!
@@ -203,7 +203,7 @@ class BotRunUsd2
 
     unless @is_lose
       current_profit = (@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100
-      if current_profit < 2
+      if current_profit < -2
         cancel_order_sell()
         return
       end
