@@ -5,7 +5,7 @@ namespace :bittr_get_price do
     
     cycle_time = 20
 
-    thread_num = 2
+    thread_num = 3
     api_obj_hash = {}
     threads = []
 
@@ -18,7 +18,8 @@ namespace :bittr_get_price do
     # Init api_obj_hash
     pair_list_origin = [
       ["BTC-NEO", "BTC-KMD", "BTC-QTUM", "BTC-OMG", "BTC-PAY", "BTC-MCO"],
-      ["BTC-ETH", "BTC-LTC", "BTC-LSK", "BTC-BCC", "BTC-MTL", "BTC-ARK"]
+      ["BTC-ETH", "BTC-LTC", "BTC-LSK", "BTC-BCC", "BTC-MTL", "BTC-ARK"],
+      ["BTC-CLOAK", "BTC-OK", "BTC-ION", "BTC-XEL", "BTC-GLD", "BTC-WINGS"]
     ]
 
     # Create threads

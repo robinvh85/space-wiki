@@ -107,10 +107,15 @@ class BotRunUsd1
       puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
       puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"      
 
-      except_icos = ['RRTUSD']
-      if percent <= 70 and capa_percent >= 3 and !except_icos.include? pair_name
-        puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
-        return pair_name
+      except_icos = ['RRTUSD', 'SANUSD']
+      if percent <= 65 and capa_percent >= 3 and !except_icos.include? pair_name
+        list = IcoBot.where(pair_name: pair_name)
+        if list.length == 0
+          puts "FIND A NEW ICO - #{pair_name} - #{'%.2f' % percent} - #{'%.2f' % capa_percent}"
+          return pair_name
+        else
+          next
+        end
       end
     end
 

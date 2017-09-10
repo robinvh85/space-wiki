@@ -47,7 +47,7 @@ class BotRunUsd2
       @ico_bot.save!
       return
     elsif @ico_bot.trading_type == "DONE_LOSE"
-      @default_profit = 2
+      @default_profit = 2.0
       @ico_bot.trading_type = "BUYING"
       return
     end
@@ -115,8 +115,8 @@ class BotRunUsd2
       puts "\ncurrent: #{current_price} - min: #{min_price} - max: #{max_price}"
       puts "#{pair_name} count: #{record['analysis_pump']} - #{'%.2f' % percent}% - #{'%.2f' % capa_percent}"      
 
-      except_icos = ['RRTUSD']
-      if percent <= 60 and capa_percent >= 3 and !except_icos.include? pair_name
+      except_icos = ['RRTUSD', 'SANUSD']
+      if percent <= 50 and capa_percent >= 3 and !except_icos.include? pair_name
 
         list = IcoBot.where(pair_name: pair_name)
         if list.length == 0

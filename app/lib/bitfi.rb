@@ -5,7 +5,7 @@ class Bitfi
       conf.secret = config[:secret]
     end
 
-    @client = @client = Bitfinex::Client.new
+    @client = Bitfinex::Client.new
   end
 
   def get_current_trading_price(pair_name, limit_amount)
