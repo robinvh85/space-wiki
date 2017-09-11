@@ -1,39 +1,28 @@
-class Bitfi
+class Bittr
   def initialize(config)
-    Bitfinex::Client.configure do |conf|
-      conf.api_key = config[:key]
-      conf.secret = config[:secret]
+    Bittrex.config do |c|
+      c.key = config[:key]
+      c.secret = config[:secret]
     end
 
-    @client = Bitfinex::Client.new
+    @client = Bittrex::Client.new
   end
 
   def get_current_trading_price(pair_name, limit_amount)
 
     begin
-      data = @client.orderbook(pair_name)
+      data = Bittrex::Quote.current(pair_name)
       
       buy_price = 0
+      sell_price = 0
 
-      if data['bids'].nil?
+      if data.nil?
         puts "#{pair_name} - CAN NOT GET PRICE !!!!!"
         return nil 
       end
 
-      data['bids'].each do |bid|
-        if bid["amount"].to_f > limit_amount
-          buy_price = bid["price"].to_f
-          break
-        end
-      end
-
-      sell_price = 0
-      data['asks'].each do |ask|
-        if ask["amount"].to_f > limit_amount
-          sell_price = ask["price"].to_f
-          break
-        end
-      end
+      buy_price = data.bid
+      sell_price = data.ask
 
       {
         buy_price: buy_price,
@@ -50,7 +39,11 @@ class Bitfi
     result = nil
 
     begin
-      result = @client.new_order(pair_name, amount, "exchange limit", "buy", price)
+      result = @client.get('/market/buylimit', {
+        market: market,
+        quantity: amount,
+        rate: price
+      })
       puts "======> BUY FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     rescue Exception => e
       puts "======> BUY ERROR #{e}"
@@ -64,7 +57,12 @@ class Bitfi
     result = nil
 
     begin
-      result = @client.new_order(pair_name, amount, "exchange limit", "sell", price)
+      result = @client.get('/market/selllimit', {
+        market: market,
+        quantity: amount,
+        rate: price
+      })
+
       puts "======> SELL FINISH at price: #{'%.8f' % price} - amount: #{amount}"
     rescue Exception => e
       puts "======> SELL ERROR #{e}"
@@ -78,8 +76,14 @@ class Bitfi
 
     status = 0
     begin
-      result = @client.cancel_orders(order_id)
-      status = 1
+      result = client.get('/market/cancel', {
+        uuid: order_id
+      })
+
+      if result["success"]
+        status = 1
+      end
+      
     rescue Exception => e
       puts "Error #{e}"
     end

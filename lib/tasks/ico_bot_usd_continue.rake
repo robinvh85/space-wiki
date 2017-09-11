@@ -6,7 +6,7 @@ namespace :ico_bot_usd_continue do
     puts "Run rake ico_bot_usd_continue:start"
     
     threads = []
-    thread_num = 4
+    thread_num = 2
     
     cycle_time = 20
 
@@ -59,7 +59,7 @@ namespace :ico_bot_usd_continue do
           bot_obj.find_down() if bot_obj.price_log.analysis_pump != 1
           bot_obj.analysis()
 
-          sleep(1)
+          sleep(0.2)
 
           end_time = Time.now
           inteval = (end_time - start_time).to_i

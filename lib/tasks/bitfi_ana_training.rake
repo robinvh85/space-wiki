@@ -214,8 +214,7 @@ namespace :bitfi_ana_training do
     ProfitResult.where(pair_name: pair, traning_id: traning_id).delete_all
 
     list.each do |item|
-
-      if trading_type == ""        
+      if trading_type == ""
         if order['buy'].nil? and item.analysis_pump == 1 and item.change_buy_percent > 0.1 and item.change_sell_percent > 0.1 and item.change_buy_2m > 1
           trading_type = "BUYING"
           cancel_buy_count = 0
@@ -223,7 +222,7 @@ namespace :bitfi_ana_training do
         end
       elsif trading_type == "BUYING"
         cancel_buy = false
-        
+
         if item.change_buy_2m <= 0
           cancel_buy = true
         end
@@ -246,7 +245,7 @@ namespace :bitfi_ana_training do
 
         if cancel_buy or cancel_buy_count > 2
           order = {}
-          trading_type = ""          
+          trading_type = ""
         else
           trading_type = "BOUGHT"
           order['buy'] = item.sell_price
