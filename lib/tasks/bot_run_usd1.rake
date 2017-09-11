@@ -1,5 +1,5 @@
 class BotRunUsd1
-  attr_accessor :ico_bot, :price_log
+  attr_accessor :ico_bot, :price_log, :previous_buy_price
 
   def initialize(config)
     @ico_bot = config[:ico_bot]
@@ -35,12 +35,12 @@ class BotRunUsd1
     if @ico_bot.trading_type == "DONE"
       pair_name = specify_better_ico(Time.now.to_i)
 
-      unless pair_name.nil?
-        @ico_bot.pair_name = pair_name
-        @ico_bot.ico_name = pair_name[0..2].downcase
-        @ico_bot.trading_type = "BUYING"
-        @ico_bot.save!
-      end
+      return if pair_name.nil?
+
+      @ico_bot.pair_name = pair_name
+      @ico_bot.ico_name = pair_name[0..2].downcase
+      @ico_bot.trading_type = "BUYING"
+      @ico_bot.save!
       return
     end
 
@@ -164,41 +164,41 @@ class BotRunUsd1
 
       # amount = @api_obj.get_balances(@ico_bot.ico_name)
       # @ico_bot.amount_ico = amount
-      @ico_bot.trading_type = "SELLING"
-      @ico_bot.pair_name = nil
+      @ico_bot.trading_type = "SELLING"      
       @ico_bot.save!
     end
   end
 
   def check_set_order_sell    
-    force_sell = false
+    force_sell = true
     # @is_lose = false
 
-    time_before = Time.now.to_i - 1.5.minutes.to_i
-    before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
+    # time_before = Time.now.to_i - 1.5.minutes.to_i
+    # before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
 
-    profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.2f' % profit}) at #{Time.now}"
+    # profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
+    # puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.2f' % profit}) at #{Time.now}"
 
-    if @current_buy_price > before_price_log.buy_price
-      puts "##{@thread_id} - #{@ico_bot.pair_name} -> #{'%.8f' % @current_buy_price} < #{'%.8f' % before_price_log.buy_price} still increase"
-      return
-    end
+    # if @current_buy_price > before_price_log.buy_price
+    #   puts "##{@thread_id} - #{@ico_bot.pair_name} -> #{'%.8f' % @current_buy_price} < #{'%.8f' % before_price_log.buy_price} still increase"
+    #   return
+    # end
     
-    if profit > 1 #and @price_log.change_buy_percent <= 0
-      force_sell = true
-    end
+    # if profit > 1 #and @price_log.change_buy_percent <= 0
+    #   force_sell = true
+    # end
 
-    if profit < -3
-      force_sell = true
-      # @is_lose = true
-    end
+    # if profit < -3
+    #   force_sell = true
+    #   # @is_lose = true
+    # end
 
     if force_sell
-      @current_order.sell_price = @current_buy_price
-      
-      profit = ((@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-      @current_order.profit = profit
+      profit = 0.012 # 12%
+      @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit).round(8)
+
+      # profit = ((@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
+      @current_order.profit = profit * 100
 
       amount = @api_obj.get_balances(@ico_bot.ico_name)
       @ico_bot.amount_ico = amount
@@ -213,15 +213,13 @@ class BotRunUsd1
   end
 
   def check_finish_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
+    current_profit = (@current_sell_price - @current_order.buy_price) / @current_order.buy_price * 100
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price}(#{'%.2f' % current_profit}%) - #{'%.8f' % @current_order.sell_price}(#{'%.2f' % @current_order.profit}%) at #{Time.now}"
 
     status = @api_obj.check_order(@current_order.sell_order_id)
 
     if status == 1
-      profit = (@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100
-
       @current_order.sold_order_id = 1
-      @current_order.profit = profit
       @current_order.save
       @ico_bot.trading_type = "DONE"
       @ico_bot.save
@@ -290,7 +288,7 @@ class BotRunUsd1
   end
 
   def save_price
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - save_price() at #{Time.now}"
+    puts "\n##{@thread_id} - #{@ico_bot.pair_name} - save_price() at #{Time.now}"
     change_buy_percent = ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)
     change_sell_percent = ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)
     diff_price_percent = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
