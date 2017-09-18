@@ -44,7 +44,6 @@ class BotRunUsd
   end
 
   def check_set_order_for_buy
-    
     puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
 
     time_before = Time.now.to_i - 1.minutes.to_i
@@ -55,12 +54,12 @@ class BotRunUsd
       return
     end
 
-    buy_price = @price_log.buy_price
-    if @price_log.diff_price_percent <= 0.5
-      buy_price = @price_log.sell_price
-    else
-      return
-    end
+    # if @price_log.diff_price_percent <= 0.5
+    #   buy_price = @price_log.buy_price
+    # else
+    #   return
+    # end
+    buy_price = @current_buy_price
 
     result = @api_obj.buy(@ico_bot.pair_name, buy_amount, buy_price)
 
