@@ -1,0 +1,2 @@
+class IcoRatio < ApplicationRecord
+end

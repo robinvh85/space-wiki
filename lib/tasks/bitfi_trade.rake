@@ -1,58 +1,40 @@
 require 'bitfinex-api-rb'
 
 namespace :bitfi_trade do
-  task :buy, [:price] => :environment do |_cmd, args|
-    api_obj = nil
-    acc = IcoAccount.first
-    if acc.site == 'Bitfi'
-      api_obj = Bitfi.new({
-        key: acc.key,
-        secret: acc.secret
-      })
-    end
+  task :save_ratio, [] => :environment do |_cmd, args|
+    ico_pair_name = 'ZECUSD'
+    btc_pair_name = 'BTCUSD'
+    now = Time.now
 
-    pair_name = 'BCHUSD'
-    amount_usd = 50.0
-    # buy_price = 371
-    buy_price = args[:price].to_f
-    buy_amount = (amount_usd / buy_price).round(8)
-    puts "Buy with amount #{buy_amount}"
-    api_obj.buy(pair_name, buy_amount, buy_price)
-  end
+    ico_price_log = BitfiPriceLog.where('pair_name = ? AND time_at < ?', ico_pair_name, now.to_i).order(id: 'desc').first
+    btc_price_log = BitfiPriceLog.where('pair_name = ? AND time_at < ?', btc_pair_name, now.to_i).order(id: 'desc').first
 
-  task :sell, [:price] => :environment do |_cmd, args|
-    api_obj = nil
-    acc = IcoAccount.first
-    if acc.site == 'Bitfi'
-      api_obj = Bitfi.new({
-        key: acc.key,
-        secret: acc.secret
-      })
-    end
+    puts "Time: #{ico_price_log.created_at}"
 
-    pair_name = 'BCHUSD'
-    # sell_price = 374
-    sell_price = args[:price]
-    # amount = 0.1347
-    amount = api_obj.get_balances('bch')
-    puts "Sell with amount #{amount}"
-    api_obj.sell(pair_name, amount, sell_price)
-  end
+    item = IcoRatio.create({
+      pair_name: ico_price_log.pair_name,
+      ratio: ((ico_price_log.buy_price / btc_price_log.buy_price) * 1000),
+      ico_price: ico_price_log.buy_price,
+      btc_price: btc_price_log.buy_price,
+      time_at: btc_price_log.created_at
+    })
 
-  task :check_price, [] => :environment do |_cmd, args|
-    api_obj = nil
-    acc = IcoAccount.first
-    if acc.site == 'Bitfi'
-      api_obj = Bitfi.new({
-        key: acc.key,
-        secret: acc.secret
-      })
-    end
-    pair_name = 'BCHUSD'
-    while true
-      data = api_obj.get_current_trading_price(pair_name, 0)
-      puts "Price #{data.to_json}"
-      sleep(20)
+    ico_bot = IcoBot.find(1)
+
+    if ico_bot.trading_type == 'DONE'
+      puts "Finding ICO for BUYING"
+      # Check for buy
+      now = Time.now
+      hour_now = now - now.min.minutes - now.sec.seconds
+      previous_time = time_now - 1.hours
+
+      avg_ratio = IcoRatio.where('pair_name = ? AND time_at > ? AND time_at < ?', ico_pair_name, previous_time, hour_now).average(:ratio)
+
+      diff = avg_ratio - item.ratio
+      if diff > 0.5
+        ico_bot.limit_price_for_buy = item.ico_price
+        ico_bot.trading_type = 'BUYING'
+      end
     end
   end
 end

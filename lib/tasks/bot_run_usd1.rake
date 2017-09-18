@@ -33,7 +33,7 @@ class BotRunUsd1
     @ico_bot.reload
 
     if @ico_bot.trading_type == "DONE"
-      pair_name = specify_better_ico(Time.now.to_i)
+      pair_name = 'BCHUSD'#specify_better_ico(Time.now.to_i)
 
       return if pair_name.nil?
 
@@ -122,10 +122,10 @@ class BotRunUsd1
     return nil
   end
 
-  def check_set_order_for_buy    
+  def check_set_order_for_buy
     puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
     
-    time_before = Time.now.to_i - 1.8.minutes.to_i
+    time_before = Time.now.to_i - 2.4.minutes.to_i
     before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
     
     if @current_buy_price <= before_price_log.buy_price
@@ -135,7 +135,7 @@ class BotRunUsd1
     
     if @price_log.analysis_pump == 1 and @price_log.change_buy_percent > 0.01 and @price_log.change_sell_percent > 0.01
       buy_price = @price_log.buy_price
-      if @price_log.diff_price_percent <= 0.4
+      if @price_log.diff_price_percent <= 0.5
         buy_price = @price_log.sell_price
       else
         return
@@ -175,14 +175,14 @@ class BotRunUsd1
   end
 
   def check_set_order_sell    
-    force_sell = true
+    force_sell = false
     # @is_lose = false
 
     time_before = Time.now.to_i - 1.5.minutes.to_i
     before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
 
-    # profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
-    # puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.2f' % profit}) at #{Time.now}"
+    profit = ((@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} (#{'%.2f' % profit}) at #{Time.now}"
 
     # return if before_price_log.nil?
 
@@ -195,13 +195,14 @@ class BotRunUsd1
     #   force_sell = true
     # end
 
-    # if profit < -3
-    #   force_sell = true
-    #   # @is_lose = true
-    # end
+    if profit < -3
+      force_sell = true
+      @is_lose = true
+    end
 
     if force_sell
       profit = 0.01 # 1%
+      profit = -0.03 if @is_lose == true
       @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit).round(8)
 
       # profit = ((@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100).round(2)

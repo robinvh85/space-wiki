@@ -316,7 +316,7 @@ class BotRunUsd3
     @price_log.save!
   end
 end
-=======
+
 class BotRunUsd3
   attr_accessor :ico_bot, :price_log, :previous_buy_price
 
