@@ -4,7 +4,7 @@ namespace :bitfi_trade do
   task :save_ratio, [] => :environment do |_cmd, args|
     puts 'Run bitfi_trade:save_ratio'
 
-    ico_pair_name = 'ZECUSD'
+    ico_pair_name = 'BCHUSD'
     btc_pair_name = 'BTCUSD'
     now = Time.now
 
@@ -32,7 +32,7 @@ namespace :bitfi_trade do
       unless avg_ratio.nil?
         diff = avg_ratio - ico_ratio.ratio
         puts "Finding ICO for BUYING at #{Time.now} with diff #{diff}"
-        if diff > 0.5
+        if diff > 1
           ico_bot.limit_price_for_buy = ico_ratio.ico_price
           ico_bot.trading_type = 'BUYING'
         end

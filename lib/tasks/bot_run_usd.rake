@@ -17,6 +17,7 @@ class BotRunUsd
     @current_order = nil
     @current_order = IcoOrder.find(@ico_bot.ico_order_id) if @ico_bot.ico_order_id.present?
     @num_time_check_lose = 4 # 1m
+    @is_lose = false
   end
 
   def buy_amount
@@ -93,6 +94,8 @@ class BotRunUsd
 
   def check_set_order_sell
     profit = 1 # 1%
+    profit = -3 if @is_lose == true
+
     @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit / 100.0).round(8)
 
     @current_order.profit = profit
@@ -111,6 +114,15 @@ class BotRunUsd
     current_profit = (@current_sell_price - @current_order.buy_price) / @current_order.buy_price * 100
     puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price}(#{'%.2f' % current_profit}%) - #{'%.8f' % @current_order.sell_price}(#{'%.2f' % @current_order.profit}%) at #{Time.now}"
 
+    unless @is_lose
+      current_profit = (@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100
+      if current_profit < -2.2
+        cancel_order_sell()
+        return
+      end
+    end
+
+
     status = @api_obj.check_order(@current_order.sell_order_id)
 
     if status == 1
@@ -120,6 +132,22 @@ class BotRunUsd
       @ico_bot.save
 
       sleep(60 * 2)
+    end
+  end
+
+  def cancel_order_sell
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - cancel_order_sell() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
+
+    status = @api_obj.cancel_order(@current_order.sell_order_id)
+
+    if status == 1
+      @is_lose = true
+      @current_order.sell_order_id = nil
+      @current_order.sell_price = nil
+      @current_order.save
+
+      @ico_bot.trading_type = "SELLING"
+      @ico_bot.save
     end
   end
 
