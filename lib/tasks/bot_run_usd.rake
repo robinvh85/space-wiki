@@ -94,9 +94,14 @@ class BotRunUsd
 
   def check_set_order_sell
     profit = 1 # 1%
-    profit = -3 if @is_lose == true
+    # profit = -5 if @is_lose == true
 
-    @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit / 100.0).round(8)
+    if @is_lose
+      @current_order.sell_price = @current_order.buy_price  
+      @is_lose = false
+    else
+      @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit / 100.0).round(8)
+    end
 
     @current_order.profit = profit
     amount = @api_obj.get_balances(@ico_bot.ico_name)
@@ -116,7 +121,7 @@ class BotRunUsd
 
     unless @is_lose
       current_profit = (@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100
-      if current_profit < -2.2
+      if current_profit < -4
         cancel_order_sell()
         return
       end
