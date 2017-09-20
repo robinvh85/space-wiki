@@ -37,7 +37,7 @@ namespace :bitfi_trade do
       # Check for buy
       unless avg_ratio.nil?
         puts "Finding ICO for BUYING at #{Time.now} with diff #{diff_ratio}"
-        if diff_ratio > 0.5
+        if diff_ratio > 0.5 and ratio < 132
           ico_bot.limit_price_for_buy = ico_ratio.ico_price
           ico_bot.trading_type = 'BUYING'
           ico_bot.save
