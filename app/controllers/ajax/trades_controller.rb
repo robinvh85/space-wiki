@@ -7,10 +7,25 @@ module Ajax
       render json: ico_list
     end
 
+    def update_ico_info
+      ico = IcoInfo.find(params[:ico][:id])
+      ico.update(ico_info_params)
+
+      render json: {
+        status: 'OK'
+      }
+    end
+
     def get_trading_list
       trade_list = BotTradeInfo.where(is_trading: 1)
 
       render json: trade_list
+    end
+
+    def create_ico
+      ico = IcoInfo.create(ico_info_params)
+
+      render json: ico
     end
 
     def get_trading_history_list
@@ -61,6 +76,10 @@ module Ajax
     private
     def polo_params
       params.require(:polo).permit(:note)
+    end
+
+    def ico_info_params
+      params.require(:ico).permit(:pair_name, :resistance_price, :support_price, :is_auto, :support_profit, :resistance_profit)
     end
   end
 end

@@ -1,10 +1,14 @@
 div#icos
   table.table.table-bordered
     tr
-      th Pair Name
+      th 
+        | Pair Name
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
+          | New
       th Resistance
       th Support
       th Current price
+      th Auto
       th Action
     tr v-for="ico in ico_list"
       td 
@@ -13,14 +17,16 @@ div#icos
         | {{ ico.resistance_price }}
       td.right
         | {{ ico.support_price }}
-      td
+      td.right
         | {{ ico.current_price }} 
-      td
-        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editBot" @click="edit_bot(bot)"
+      td.center 
+        input type='checkbox' v-model='ico.is_auto' disabled='disabled'
+      td.right
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
           | Edit      
 
-  / = render 'modal_new_bot'    
-  / = render 'modal_edit_bot'
+  = render 'modal_new_ico'    
+  = render 'modal_edit_ico'
   / = render 'modal_order'  
 
 javascript:
@@ -37,13 +43,44 @@ javascript:
   var app = new Vue({
     el: '#icos',
     data: {
-      ico_list: []
+      ico_list: [],
+      selected_ico: {},
+      new_ico: {}
     },
     methods: {
+      init_new_ico: function(){
+        this.new_ico = {
+          pair_name: '',
+          resistance_price: 0,
+          support_price: 0,
+          is_auto: 0,
+          support_profit: 0,
+          resistance_profit: 0
+        }
+      },
       get_ico_list: function(){
         var self = this;
         this.$http.get('/ajax/trades/get_ico_list', { params: {}} ).then(function (res){
           self.ico_list = res.data;
+        });
+      },
+      edit_ico: function(ico){
+        this.selected_ico = ico;
+      },
+      update_ico_info: function(ico){
+        var self = this;
+        this.$http.put('/ajax/trades/update_ico_info', { ico: ico } ).then(function (res){
+          self.get_ico_list();
+          $('#editIco').modal('hide');
+        });
+      },
+      create_ico: function(){
+        var self = this;
+        this.$http.post('/ajax/trades/create_ico', {ico: this.new_ico}).then(function (res){
+          if(res.data != null){
+            self.get_ico_list();
+            $('#newIco').modal('hide');
+          }            
         });
       },
       init: function(){

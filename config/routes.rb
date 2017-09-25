@@ -97,6 +97,8 @@ Rails.application.routes.draw do
     get 'trades/force_buy' => 'trades#force_buy'
     get 'trades/force_sell' => 'trades#force_sell'
     get 'trades/get_ico_list' => 'trades#get_ico_list'
+    put 'trades/update_ico_info' => 'trades#update_ico_info'
+    post 'trades/create_ico' => 'trades#create_ico'
 
     get 'trackings/get_tracking_price_list' => 'trackings#get_tracking_price_list'
 
