@@ -1,6 +1,12 @@
 module Ajax
   class TradesController < ActionController::Base
-    
+
+    def get_ico_list
+      ico_list = IcoInfo.all
+
+      render json: ico_list
+    end
+
     def get_trading_list
       trade_list = BotTradeInfo.where(is_trading: 1)
 

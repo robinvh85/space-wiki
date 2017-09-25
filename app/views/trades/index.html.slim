@@ -1,95 +1,67 @@
-= content_for :javascripts
-  = javascript_include_tag 'trades/app'
+div#icos
+  table.table.table-bordered
+    tr
+      th Pair Name
+      th Resistance
+      th Support
+      th Current price
+      th Action
+    tr v-for="ico in ico_list"
+      td 
+        | {{ ico.pair_name }}
+      td.right
+        | {{ ico.resistance_price }}
+      td.right
+        | {{ ico.support_price }}
+      td
+        | {{ ico.current_price }} 
+      td
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editBot" @click="edit_bot(bot)"
+          | Edit      
 
-div#trades.container
-  div.panel style="margin-bottom: 20px;"
-    div.panel-heading
-      | Scheduling
-    div.panel-block
-      div
-        table.table style="width: 800px;"
-          thead
-            tr
-              th Pair
-              th Status
-              th Remain times
-          tbody
-            tr v-for="item in trading_setting_list"
-              td
-                | {{ item.currency_pair_name }}
-              td 
-                | {{ item.status }} 
-              td 
-                | {{ item.run_times }}
-    
-    div.panel style="margin-bottom: 20px;"
-    div.panel-heading
-      | Trading
-    div.panel-block
-      div
-        table.table style="width: 800px;"
-          thead
-            tr
-              th Pair
-              th Start at
-              th Buy at
-              th 
-              th 
-              th
-              th
-          tbody
-            tr v-for="item in trading_list" v-bind:class="{ selected: item.selected }"
-              td
-                | {{ item.currency_pair_name }}
-              td 
-                | {{ item.created_at }} 
-              td 
-                | {{ item.buy_at }} 
-              td
-                a @click="force_buy_trading(item)"
-                  | Force Buy
-              td 
-                a @click="force_sell_trading(item)"
-                  | Force Sell
-              td 
-                a @click="get_history_logs(item)"
-                  | Logs
-              td 
-                a @click="cancel_trading(item)"
-                  | Cancel
+  / = render 'modal_new_bot'    
+  / = render 'modal_edit_bot'
+  / = render 'modal_order'  
 
-    div.panel style="margin-bottom: 20px;"
-    div.panel-heading
-      | Log
-    div.panel-block
-      div
-        table.table style="width: 1200px;"
-          thead
-            tr
-              th Pair
-              th Trade type
-              th Changed price
-              th Changed with floor
-              th Changed with ceil
-              th Profit
-              th Current price
-              th Time
-          tbody
-            tr v-for="item in traing_history_logs" v-bind:class="{ sell : item.trade_type == 'sell' }"
-              td
-                | {{ item.currency_pair_name }}
-              td 
-                | {{ item.trade_type }} 
-              td.right
-                | {{ item.changed_price_percent }} 
-              td.right
-                | {{ item.changed_with_floor_percent }} 
-              td.right
-                | {{ item.changed_with_ceil_percent }} 
-              td.right v-bind:class="{ warn : item.profit > 2 }"
-                | {{ item.profit }} 
-              td.right
-                | {{ item.current_price }} 
-              td
-                | {{ item.created_at }} 
-               
+javascript:
+  $(function(){
+    decimal = 8;
+    $("#date_input").val(moment().format("Y/MM/DD"));
+  });
+
+  // Vue
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+  Vue.prototype.$http = axios;
+
+  var app = new Vue({
+    el: '#icos',
+    data: {
+      ico_list: []
+    },
+    methods: {
+      get_ico_list: function(){
+        var self = this;
+        this.$http.get('/ajax/trades/get_ico_list', { params: {}} ).then(function (res){
+          self.ico_list = res.data;
+        });
+      },
+      init: function(){
+        console.log("INIT");
+        this.get_ico_list();
+      }    
+    },
+    watch: {
+      
+    },
+    created: function() {
+      console.log("created");
+    },
+    mounted: function() {
+      console.log("mounted");
+      this.init();
+    }
+  });
+
+
+
