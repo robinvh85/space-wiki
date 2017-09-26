@@ -2,7 +2,7 @@ class PoloObj
   def initialize()
   end
 
-  def get_current_trading_price(pair_name, limit_amount)
+  def get_current_trading_price(pair_name, limit_amount = 0)
     result = nil
 
     begin

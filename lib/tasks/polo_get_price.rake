@@ -5,7 +5,7 @@ namespace :polo_get_price do
     
     cycle_time = 60
 
-    thread_num = 4
+    thread_num = 2
     threads = []
 
     # Create threads
@@ -23,17 +23,26 @@ namespace :polo_get_price do
 
           pair_list.each do |pair|
             puts "#{thread_id} - #{pair.name}"
-            data_price = polo_obj.get_current_trading_price(pair.name)
+            data_price = polo_obj.get_current_trading_price(pair.name, 0)
             next if data_price.nil?
 
-            diff_price_percent = (data_price['sell_price'] - data_price['buy_price']) / data_price['buy_price'] * 100
+            diff_price_percent = (data_price[:sell_price] - data_price[:buy_price]) / data_price[:buy_price] * 100
             price_log = PoloPriceLog.create({
               pair_name: pair.name,
-              buy_price: data_price['buy_price'],
-              sell_price: data_price['sell_price'],
+              buy_price: data_price[:buy_price],
+              sell_price: data_price[:sell_price],
               diff_price_percent: diff_price_percent,
               time_at: Time.now.to_i
             })
+
+            ico = IcoInfo.find_by(pair_name: pair.name)
+
+            unless ico.nil?
+              ico.current_price = data_price[:buy_price]
+              ico.save
+            end
+
+            sleep(0.1)
           end
 
           end_time = Time.now

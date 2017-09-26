@@ -6,28 +6,11 @@ namespace :polo_bot_btc do
     puts "Run rake polo_bot_btc:start"
     
     threads = []
-    thread_num = 2
+    thread_num = 1
     
-    cycle_time = 20
+    cycle_time = 60
 
-    api_obj_hash = {}
-
-    # Init api_obj_hash
-    accounts = IcoAccount.all
-    accounts.each do |acc|
-      if acc.site == "Bitfi"
-        api_obj = Bitfi.new({
-          key: acc.key,
-          secret: acc.secret
-        })
-        api_obj_hash[acc.site] = api_obj
-      elsif acc.site == "Polo"
-        api_obj = PoloObj.new
-        api_obj_hash[acc.site] = api_obj
-      end
-    end
-
-    running_bot_list = IcoBot.where('status >= 0').to_a
+    api_obj = PoloObj.new
 
     # Create threads
     thread_num.times do |index|
@@ -39,36 +22,11 @@ namespace :polo_bot_btc do
         while true
           start_time = Time.now
 
-          if running_bot_list.any?
-            bot = running_bot_list.shift
-          else
-            bot = IcoBot.where('status = 2').first
-          end
-
-          # Find new bot
-          if bot.present?
-            puts "##{thread_id} init #{bot.pair_name}"
-            bot.status = 0
-            bot.save!
-
-            config = {
-              ico_bot: bot,
-              api_obj: api_obj_hash[bot.ico_account.site],
-              thread_id: thread_id
-            }
-            bot_obj = BotRunningUsd.new(config)
-            bot_list << bot_obj
-          end
+          ico_list = IcoInfo.all
 
           # Run bot_list
-          puts "Thread ##{thread_id} run with #{bot_list.length} icos at #{Time.now}"
-          bot_list.each do |bot|
-            bot.ico_bot.reload
-
-            if bot.ico_bot.status == -1
-              bot_list.delete(bot)
-              next
-            end
+          ico_list.each do |ico|
+            ico.reload
 
             bot.update_current_price()
             bot.analysis()
@@ -93,8 +51,8 @@ namespace :polo_bot_btc do
   end
 end
 
-class BotRunningUsd
-  attr_accessor :ico_bot
+class PoloBotRun
+  attr_accessor :ico_bot, :price_log, :previous_buy_price
 
   def initialize(config)
     @ico_bot = config[:ico_bot]
@@ -105,14 +63,18 @@ class BotRunningUsd
     @current_sell_price = 0
     @previous_buy_price = 0
     @previous_sell_price = 0
-    
+
+    @price_log = nil
+    @top_price = 0
+
     @current_order = nil
     @current_order = IcoOrder.find(@ico_bot.ico_order_id) if @ico_bot.ico_order_id.present?
     @num_time_check_lose = 4 # 1m
+    @is_lose = false
   end
 
   def buy_amount
-    new_amount = (@ico_bot.amount_usd / @ico_bot.buy_price).round(8)
+    new_amount = (@ico_bot.amount_usd / @price_log.buy_price).round(8)
     new_amount
   end
 
@@ -126,58 +88,36 @@ class BotRunningUsd
 
     if @ico_bot.trading_type == "BUYING"
       check_set_order_for_buy()
-    elsif @ico_bot.trading_type == "FORCE_BUY"
-      check_set_force_order_for_buy()
     elsif @ico_bot.trading_type == "CHECKING_ORDER_BUY"
       check_finish_order_buy()
-    elsif @ico_bot.trading_type == "CANCEL_BUY"
-      cancel_order_buy()
     elsif @ico_bot.trading_type == "SELLING"
       check_set_order_sell()
     elsif @ico_bot.trading_type == "CHECKING_ORDER_SELL"
       check_finish_order_sell()
-    elsif @ico_bot.trading_type == "CANCEL_SELL"
-      cancel_order_sell()
-    elsif @ico_bot.trading_type == "LOSE_ORDER"
-      check_finish_lose_order()
-    end
-  end
-  
-  def check_set_order_for_buy    
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.2f' % @current_buy_price} at #{Time.now}"
-    
-    return if @ico_bot.status != 1
-
-    if @current_buy_price >= @ico_bot.buy_price
-      result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @ico_bot.buy_price)
-
-      return if result.nil?
-
-      @current_order = IcoOrder.create({
-        buy_price: @ico_bot.buy_price,
-        amount_usd: @ico_bot.amount_usd,
-        buy_order_id: result['order_id'],
-        pair_name: @ico_bot.pair_name
-      })
-
-      @ico_bot.trading_type = "CHECKING_ORDER_BUY"
-      @ico_bot.status = 0
-      @ico_bot.ico_order = @current_order
-      @ico_bot.save
     end
   end
 
-  def check_set_force_order_for_buy    
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_force_order_for_buy() with price #{'%.2f' % @current_buy_price} at #{Time.now}"
-    
-    return if @ico_bot.status != 1
+  def check_set_order_for_buy
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_for_buy() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
 
-    result = @api_obj.buy(@ico_bot.pair_name, buy_amount, @current_sell_price)
+    time_before = Time.now.to_i - 1.minutes.to_i
+    before_price_log = BitfiPriceLog.where("pair_name = ? AND time_at > ?", @ico_bot.pair_name, time_before).order(id: 'ASC').first
+
+    if @current_buy_price <= before_price_log.buy_price and @current_buy_price > @ico_bot.limit_price_for_buy
+      puts "##{@thread_id} - #{@ico_bot.pair_name} -> #{'%.8f' % @current_buy_price} < #{'%.8f' % before_price_log.buy_price} so return"
+      return
+    end
+
+    # if @price_log.diff_price_percent <= 0.5
+    #   buy_price = @price_log.buy_price
+    # else
+    #   return
+    # end
+    buy_price = @current_buy_price
+
+    result = @api_obj.buy(@ico_bot.pair_name, buy_amount, buy_price)
 
     return if result.nil?
-
-    buy_price = @ico_bot.buy_price
-    buy_price = @current_sell_price if @current_sell_price < @ico_bot.buy_price
 
     @current_order = IcoOrder.create({
       buy_price: buy_price,
@@ -186,9 +126,7 @@ class BotRunningUsd
       pair_name: @ico_bot.pair_name
     })
 
-    @ico_bot.buy_price = buy_price
     @ico_bot.trading_type = "CHECKING_ORDER_BUY"
-    @ico_bot.status = 0
     @ico_bot.ico_order = @current_order
     @ico_bot.save
   end
@@ -202,141 +140,77 @@ class BotRunningUsd
       @current_order.bought_order_id = 1
       @current_order.save
 
-      amount = @api_obj.get_balances(@ico_bot.ico_name)
-      @ico_bot.amount_ico = amount
+      @ico_bot.trading_type = "SELLING"
+      @ico_bot.save!
+    end
+  end
+
+  def check_set_order_sell
+    profit = 1 # 1%
+    # profit = -5 if @is_lose == true
+
+    if @is_lose
+      @current_order.sell_price = @current_order.buy_price  
+      @is_lose = false
+    else
+      @current_order.sell_price = (@current_order.buy_price + @current_order.buy_price * profit / 100.0).round(8)
+    end
+
+    @current_order.profit = profit
+    amount = @api_obj.get_balances(@ico_bot.ico_name)
+    @ico_bot.amount_ico = amount
+
+    obj_sell = @api_obj.sell(@ico_bot.pair_name, @ico_bot.amount_ico, @current_order.sell_price)
+    @current_order.sell_order_id = obj_sell['order_id']
+    @current_order.save
+
+    @ico_bot.trading_type = "CHECKING_ORDER_SELL"
+    @ico_bot.save
+  end
+
+  def check_finish_order_sell
+    current_profit = (@current_sell_price - @current_order.buy_price) / @current_order.buy_price * 100
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price}(#{'%.2f' % current_profit}%) - #{'%.8f' % @current_order.sell_price}(#{'%.2f' % @current_order.profit}%) at #{Time.now}"
+
+    unless @is_lose
+      current_profit = (@current_buy_price - @current_order.buy_price) / @current_order.buy_price * 100
+      if current_profit < -4
+        cancel_order_sell()
+        return
+      end
+    end
+
+
+    status = @api_obj.check_order(@current_order.sell_order_id)
+
+    if status == 1
+      @current_order.sold_order_id = 1
+      @current_order.save
+      @ico_bot.trading_type = "DONE"
+      @ico_bot.save
+
+      sleep(60 * 2)
+    end
+  end
+
+  def cancel_order_sell
+    puts "##{@thread_id} - #{@ico_bot.pair_name} - cancel_order_sell() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
+
+    status = @api_obj.cancel_order(@current_order.sell_order_id)
+
+    if status == 1
+      @is_lose = true
+      @current_order.sell_order_id = nil
+      @current_order.sell_price = nil
+      @current_order.save
+
       @ico_bot.trading_type = "SELLING"
       @ico_bot.save
     end
   end
 
-  def cancel_order_buy
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - Cancel order buy"
-    
-    status = @api_obj.cancel_order(@current_order.buy_order_id)
-
-    if status == 1
-      @current_order.delete
-
-      @ico_bot.trading_type = 'BUYING'
-      @ico_bot.ico_order_id = nil
-      @ico_bot.save
-    end
-  end
-
-  def check_set_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
-
-    if @current_sell_price > @ico_bot.buy_price
-      obj_sell = @api_obj.sell(@ico_bot.pair_name, @ico_bot.amount_ico, @ico_bot.sell_price)
-      return if obj_sell.nil?
-
-      profit = (@ico_bot.sell_price - @ico_bot.buy_price) / @ico_bot.buy_price * 100
-      @current_order.sell_order_id = obj_sell['order_id']
-      @current_order.sell_price = @ico_bot.sell_price
-      @current_order.save
-
-      @ico_bot.trading_type = "CHECKING_ORDER_SELL"
-      @ico_bot.save
-    else
-      @num_time_check_lose.times do |index|
-        puts "##{@thread_id} - #{@ico_bot.pair_name} => Check lose time at #{index}"
-        update_current_price()
-        lose_percent = (@ico_bot.buy_price - @current_buy_price) / @current_buy_price * 100
-        if lose_percent > @ico_bot.limit_cancel_for_lose_percent
-          if index == @num_time_check_lose - 1
-            set_lose_order()
-          end
-
-          sleep(20)
-        else
-          return
-        end
-      end
-    end
-  end
-
-  def check_finish_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
-
-    lose_percent = (@ico_bot.buy_price - @current_buy_price) / @current_buy_price * 100
-    if lose_percent > @ico_bot.limit_cancel_for_lose_percent
-      @num_time_check_lose.times do |index|
-        puts "##{@thread_id} - #{@ico_bot.pair_name} => Check lose time at #{index}"
-        update_current_price()
-        lose_percent = (@ico_bot.buy_price - @current_buy_price) / @current_buy_price * 100
-        if lose_percent > @ico_bot.limit_cancel_for_lose_percent
-          if index == @num_time_check_lose - 1
-            cancel_order_sell()
-            set_lose_order()
-          end
-
-          sleep(20)
-        else
-          return
-        end
-      end
-    else
-      status = @api_obj.check_order(@current_order.sell_order_id)
-
-      if status == 1
-        profit = (@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100
-
-        @current_order.sold_order_id = 1
-        @current_order.profit = profit
-        @current_order.save
-        @ico_bot.trading_type = "DONE_ORDER"
-        @ico_bot.limit_price_for_buy = @current_order.sell_price
-        @ico_bot.save
-      end
-    end
-  end
-
-  def set_lose_order
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - set_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
-
-    lose_price = @ico_bot.buy_price - (@ico_bot.buy_price * @ico_bot.force_sell_percent / 100 )
-    
-    result = @api_obj.sell(@ico_bot.pair_name, @ico_bot.amount_ico, lose_price)
-
-    if result.present?      
-      @current_order.sell_order_id = result['order_id']
-      @current_order.sell_price = lose_price      
-      @current_order.save
-
-      @ico_bot.trading_type = "LOSE_ORDER"
-      @ico_bot.save
-    else
-      puts "===> set_lose_order() ERROR"
-    end
-  end
-
-  def check_finish_lose_order
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - check_finish_lose_order() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
-
-    if @current_sell_price > @ico_bot.sell_price
-      cancel_order_sell() # Cancel lose_sell order
-    else
-      begin
-        status = @api_obj.check_order(@current_order.buy_order_id)
-        if status == 1
-          profit = (@current_order.sell_price - @current_order.buy_price) / @current_order.buy_price * 100
-
-          @current_order.sold_order_id = 1
-          @current_order.profit = profit
-          @current_order.save
-          
-          @ico_bot.trading_type = "DONE_ORDER"
-          @ico_bot.limit_price_for_buy = @current_order.sell_price
-          @ico_bot.ico_order_id = nil
-          @ico_bot.save
-        end
-      rescue Exception => e
-        puts "##{@thread_id} - Buy order #{@current_order.buy_order_id} is not existed!"
-      end
-    end
-  end
-
-  def update_current_price  
+  def update_current_price
+    # puts "update_current_price() at #{Time.now()}"
     # Backup previous price
     @previous_sell_price = @current_sell_price
     @previous_buy_price = @current_buy_price
@@ -354,23 +228,21 @@ class BotRunningUsd
     @current_sell_price = data[:sell_price]
   end
 
-  def save_current_price
-    return if @previous_buy_price == 0
-
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - save_current_price() at #{Time.now}"
+  def save_price
+    puts "\n##{@thread_id} - #{@ico_bot.pair_name} - save_price() at #{Time.now}"
     change_buy_percent = ((@current_buy_price - @previous_buy_price) / @previous_buy_price * 100).round(2)
     change_sell_percent = ((@current_sell_price - @previous_sell_price) / @previous_sell_price * 100).round(2)
     diff_price_percent = ((@current_sell_price - @current_buy_price) / @current_buy_price * 100).round(2)
 
     time_at = Time.now.to_i
-    records = IcoPriceLog.where("pair_name = ? AND time_at <= ?", @ico_bot.pair_name, time_at).order(id: 'desc').limit(4)
+    records = BitfiTradeLog.where("pair_name = ? AND time_at <= ?", @ico_bot.pair_name, time_at).order(id: 'desc').limit(4)
     analysis_value = change_buy_percent
     
     records.each do |record|
       analysis_value += record.change_buy_percent
     end
 
-    IcoPriceLog.create({
+    @price_log = BitfiTradeLog.new({
       pair_name: @ico_bot.pair_name,
       buy_price: @current_buy_price,
       sell_price: @current_sell_price,
@@ -381,21 +253,7 @@ class BotRunningUsd
       analysis_value: analysis_value,
       time_at: time_at
     })
+    
+    @price_log.save!
   end
-
-  def cancel_order_sell
-    puts "##{@thread_id} - #{@ico_bot.pair_name} - cancel_order_sell() with price #{'%.8f' % @current_sell_price} at #{Time.now}"
-
-    status = @api_obj.cancel_order(@current_order.sell_order_id)
-
-    if status == 1
-      @current_order.sell_order_id = nil
-      @current_order.sell_price = nil
-      @current_order.save
-
-      @ico_bot.trading_type = "SELLING"
-      @ico_bot.save
-    end
-  end
-
 end
