@@ -14,9 +14,11 @@ div#icos
       td 
         | {{ ico.pair_name }}
       td.right
-        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price).toFixed(2) }}%) - {{ ico.resistance_price }}
+        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price * 100).toFixed(2) }}%) - {{ ico.resistance_price }}
       td.right
-        | ({{ ((ico.current_price - ico.support_price) / ico.support_price).toFixed(2) }}%) - {{ ico.support_price }}
+        label :class="{'green': diff_support_price(ico) < 0}"
+          | ({{ diff_support_price(ico).toFixed(2) }}%) 
+        | - {{ ico.support_price }}
       td.right
         | {{ ico.current_price }} 
       td.center 
@@ -25,7 +27,7 @@ div#icos
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
           | Edit      
 
-  = render 'modal_new_ico'    
+  = render 'modal_new_ico'
   = render 'modal_edit_ico'
   / = render 'modal_order'  
 
@@ -85,6 +87,9 @@ javascript:
             $('#newIco').modal('hide');
           }            
         });
+      },
+      diff_support_price: function(ico){
+        return (ico.current_price - ico.support_price) / ico.support_price * 100;
       },
       init: function(){
         console.log("INIT");
