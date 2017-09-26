@@ -1,0 +1,2 @@
+class PoloPriceLog < ApplicationRecord
+end

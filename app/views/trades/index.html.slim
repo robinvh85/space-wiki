@@ -14,9 +14,9 @@ div#icos
       td 
         | {{ ico.pair_name }}
       td.right
-        | {{ ico.resistance_price }}
+        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price).toFixed(2) }}%) - {{ ico.resistance_price }}
       td.right
-        | {{ ico.support_price }}
+        | ({{ ((ico.current_price - ico.support_price) / ico.support_price).toFixed(2) }}%) - {{ ico.support_price }}
       td.right
         | {{ ico.current_price }} 
       td.center 
@@ -46,6 +46,9 @@ javascript:
       ico_list: [],
       selected_ico: {},
       new_ico: {}
+    },
+    computed: {
+      
     },
     methods: {
       init_new_ico: function(){
@@ -86,6 +89,7 @@ javascript:
       init: function(){
         console.log("INIT");
         this.get_ico_list();
+        setInterval(this.get_ico_list, 30000);
       }    
     },
     watch: {
