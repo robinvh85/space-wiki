@@ -1,0 +1,2 @@
+class PoloOrder < ApplicationRecord
+end

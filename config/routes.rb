@@ -87,7 +87,7 @@ Rails.application.routes.draw do
     get 'chartso/get_1d' => 'chartso#get_1d'
     get 'chartso/get_30m_full' => 'chartso#get_30m_full'
     get 'chartso/get_5m_predict' => 'chartso#get_5m_predict'
-    get 'chartso/get_5m_percent' => 'chartso#get_5m_percent'    
+    get 'chartso/get_5m_percent' => 'chartso#get_5m_percent'
     resources :polos
 
     get 'trades/get_trading_list' => 'trades#get_trading_list'
@@ -100,6 +100,8 @@ Rails.application.routes.draw do
     put 'trades/update_ico_info' => 'trades#update_ico_info'
     post 'trades/create_ico' => 'trades#create_ico'
     get 'trades/get_order' => 'trades#get_order'
+    post 'trades/create_order' => 'trades#create_order'
+    put 'trades/update_order' => 'trades#update_order'
 
     get 'trackings/get_tracking_price_list' => 'trackings#get_tracking_price_list'
 

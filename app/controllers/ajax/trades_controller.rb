@@ -38,6 +38,18 @@ module Ajax
       render json: order
     end
 
+    def create_order
+      order = PoloOrder.create(ico_order_params)
+
+      render json: order
+    end
+
+    def update_order
+      order = PoloOrder.update(ico_order_params)
+
+      render json: order
+    end
+
     def get_trading_history_list
       list = BotTradeHistory.where("status >= 1 AND status <= 4").order(buy_at: 'ASC')
 
