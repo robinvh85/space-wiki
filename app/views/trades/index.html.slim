@@ -102,7 +102,14 @@ javascript:
             }            
           });
         } else {
-          this.order = {};
+          this.order = {
+            pair_name: ico.pair_name,
+            amount_usd: 20,
+            buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
+            sell_price: ico.support_price
+          };
+
+
         }
       },
       save_order: function(){
@@ -115,6 +122,9 @@ javascript:
             $('#modalOrder').modal('hide');
           });
         }
+      },
+      calculate_percent: function(price, compare_price){
+        return ((price - compare_price) / compare_price * 100).toFixed(2);
       },
       diff_support_price: function(ico){
         return (ico.current_price - ico.support_price) / ico.support_price * 100;

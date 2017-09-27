@@ -41,11 +41,16 @@ module Ajax
     def create_order
       order = PoloOrder.create(ico_order_params)
 
+      ico = IcoInfo.find_by(pair_name: order.pair_name)
+      ico.polo_order_id = order.id
+      ico.save
+
       render json: order
     end
 
     def update_order
-      order = PoloOrder.update(ico_order_params)
+      order = PoloOrder.find(params[:order][:id])
+      order.update(ico_order_params)
 
       render json: order
     end
