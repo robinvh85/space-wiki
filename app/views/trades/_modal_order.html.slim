@@ -1,0 +1,35 @@
+div class="modal fade" id="modalOrder" tabindex="-1" role="dialog" aria-hidden="true"
+  div class="modal-dialog modal-lg" role="document"
+    div class="modal-content"
+      div class="modal-header"
+        h5 class="modal-title"
+          | Orders
+        button type="button" class="close" data-dismiss="modal" aria-label="Close"
+          span aria-hidden="true"
+          | &times;
+      div class="modal-body"
+        form
+          div class="form-group"
+            label for="order_amount_usd"
+              | Pair name
+            input type="input" id="order_amount_usd" max-length='10' class="form-control" placeholder="Pair name" v-model="order.amount_usd"
+          div class="form-group"
+            label for="order_buy_price"
+              | Buy at
+            input type="input" id="order_buy_price" max-length='5' class="form-control" placeholder="buy_price" v-model="order.buy_price"
+          div class="form-group"
+            label for="order_sell_price"
+              | Sell at
+            input type="input" id="order_sell_price" max-length='5' class="form-control"placeholder="sell_price" v-model="order.sell_price"
+          div class="form-group"
+            label for="order_trading_type"
+              | Trading type
+            select v-model="order.trading_type" class="form-control"
+              option BUYING
+              option CHECKING_ORDER_BUY
+              option SELLING
+              option CHECKING_ORDER_SELL
+              option DONE
+      div class="modal-footer"
+        button type="button" class="btn btn-primary" @click="create_order()"
+          | Create

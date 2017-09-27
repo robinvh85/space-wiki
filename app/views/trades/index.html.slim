@@ -10,6 +10,7 @@ div#icos
       th Current price
       th Auto
       th Action
+      th Order
     tr v-for="ico in ico_list"
       td 
         | {{ ico.pair_name }}
@@ -25,11 +26,13 @@ div#icos
         input type='checkbox' v-model='ico.is_auto' disabled='disabled'
       td.right
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
-          | Edit      
+          | Edit
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#modalOrder" @click="get_order(ico)"
+          | Order
 
   = render 'modal_new_ico'
   = render 'modal_edit_ico'
-  / = render 'modal_order'  
+  = render 'modal_order'  
 
 javascript:
   $(function(){
@@ -47,7 +50,8 @@ javascript:
     data: {
       ico_list: [],
       selected_ico: {},
-      new_ico: {}
+      new_ico: {},
+      order: {}
     },
     computed: {
       
@@ -87,6 +91,18 @@ javascript:
             $('#newIco').modal('hide');
           }            
         });
+      },
+      get_order: function(ico){
+        if(ico.polo_order_id){
+          var self = this;
+          this.$http.post('/ajax/trades/get_order', {polo_order_id: ico.polo_order_id}).then(function (res){
+            if(res.data != null){
+              this.order = res.data;
+            }            
+          });
+        } else {
+          this.order = {};
+        }
       },
       diff_support_price: function(ico){
         return (ico.current_price - ico.support_price) / ico.support_price * 100;

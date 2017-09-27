@@ -99,6 +99,7 @@ Rails.application.routes.draw do
     get 'trades/get_ico_list' => 'trades#get_ico_list'
     put 'trades/update_ico_info' => 'trades#update_ico_info'
     post 'trades/create_ico' => 'trades#create_ico'
+    get 'trades/get_order' => 'trades#get_order'
 
     get 'trackings/get_tracking_price_list' => 'trackings#get_tracking_price_list'
 

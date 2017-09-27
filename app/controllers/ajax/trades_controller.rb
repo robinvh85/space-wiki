@@ -28,6 +28,16 @@ module Ajax
       render json: ico
     end
 
+    def get_order
+      order = {}
+
+      unless params[:polo_order_id].nil?
+        order = PoloOrder.find(params[:polo_order_id])
+      end
+
+      render json: order
+    end
+
     def get_trading_history_list
       list = BotTradeHistory.where("status >= 1 AND status <= 4").order(buy_at: 'ASC')
 
@@ -80,6 +90,10 @@ module Ajax
 
     def ico_info_params
       params.require(:ico).permit(:pair_name, :resistance_price, :support_price, :is_auto, :support_profit, :resistance_profit)
+    end
+
+    def ico_order_params
+      params.require(:order).permit(:pair_name, :trading_type, :amount_usd, :buy_price, :sell_price)
     end
   end
 end

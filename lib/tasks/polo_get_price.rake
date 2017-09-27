@@ -2,10 +2,10 @@
 namespace :polo_get_price do
   task :start, [] => :environment do |_cmd, args|
     puts "Run rake polo_get_price:start"
-    
+
     cycle_time = 60
 
-    thread_num = 2
+    thread_num = 1
     threads = []
 
     # Create threads
@@ -13,34 +13,35 @@ namespace :polo_get_price do
       puts "Create thread ##{index + 1}"
       thread = Thread.new{
         thread_id = index + 1
-        polo_obj = PoloObj.new        
+        polo_obj = PoloObj.new
 
         while true
           start_time = Time.now
           puts "\n#{thread_id} run at #{Time.now}"
 
-          pair_list = CurrencyPair.where(thread_id: thread_id, is_disabled: 0)
+          # pair_list = CurrencyPair.where(thread_id: thread_id, is_disabled: 0)
+          ico_list = IcoInfo.all
 
-          pair_list.each do |pair|
-            puts "#{thread_id} - #{pair.name}"
-            data_price = polo_obj.get_current_trading_price(pair.name, 0)
+          ico_list.each do |ico|
+            puts "#{thread_id} - #{ico.pair_name}"
+            data_price = polo_obj.get_current_trading_price(ico.pair_name, 0)
             next if data_price.nil?
 
             diff_price_percent = (data_price[:sell_price] - data_price[:buy_price]) / data_price[:buy_price] * 100
             price_log = PoloPriceLog.create({
-              pair_name: pair.name,
+              pair_name: ico.pair_name,
               buy_price: data_price[:buy_price],
               sell_price: data_price[:sell_price],
               diff_price_percent: diff_price_percent,
               time_at: Time.now.to_i
             })
 
-            ico = IcoInfo.find_by(pair_name: pair.name)
+            # ico = IcoInfo.find_by(pair_name: pair.pair_name)
 
-            unless ico.nil?
-              ico.current_price = data_price[:buy_price]
-              ico.save
-            end
+            # unless ico.nil?
+            ico.current_price = data_price[:buy_price]
+            ico.save
+            # end
 
             sleep(0.1)
           end
