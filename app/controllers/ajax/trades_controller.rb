@@ -4,7 +4,9 @@ module Ajax
     def get_ico_list
       ico_list = IcoInfo.all
 
-      render json: ico_list
+      render json: ico_list.to_json(
+        include: [:polo_order]
+      )
     end
 
     def update_ico_info
@@ -54,6 +56,20 @@ module Ajax
 
       render json: order
     end
+
+    def get_chart_data
+      pair_name = params[:pair_name]
+      start_time = (Time.now - 15.days).to_i
+
+      list = ChartData30m.where("pair_name = ? AND time_at > ?", pair_name, start_time)
+      
+      data = create_data(list)
+
+      btc_list = ChartData30m.where("pair_name = ? AND time_at > ?", 'USDT_BTC', start_time)
+      data['btc_value'] = create_btc_data(btc_list)
+
+      render json: data
+    end    
 
     def get_trading_history_list
       list = BotTradeHistory.where("status >= 1 AND status <= 4").order(buy_at: 'ASC')
@@ -111,6 +127,32 @@ module Ajax
 
     def ico_order_params
       params.require(:order).permit(:pair_name, :trading_type, :amount_usd, :buy_price, :sell_price)
+    end
+
+    def create_data(list)
+      candle_data = []
+      # volume_data = []
+
+      list.each do |item|
+        time_at = item.time_at * 1000
+        candle_data.push([time_at, item.open.to_f, item.high.to_f, item.low.to_f, item.close.to_f])
+        # volume_data.push([time_at, item.volume.to_f])
+      end
+
+      {
+        candle_data: candle_data
+        # volume_data: volume_data,
+      }
+    end
+
+    def create_btc_data(list)
+      btc_data = []
+
+      list.each do |item|
+        btc_data.push([item.time_at * 1000, item.low.to_f])
+      end
+
+      btc_data
     end
   end
 end

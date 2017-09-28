@@ -9,21 +9,23 @@ div#icos
       th Support
       th Current price
       th Auto
-      th Action
       th Order
-    tr v-for="ico in ico_list"
+      th Action      
+    tr v-for="ico in ico_list" :class="{gray:is_trading(ico.polo_order)}"
       td 
         | {{ ico.pair_name }}
       td.right
-        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price * 100).toFixed(2) }}%) - {{ ico.resistance_price }}
+        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price * 100).toFixed(2) }}%) &nbsp;| {{ ico.resistance_price }}
       td.right
         label :class="{'green': diff_support_price(ico) < 0}"
           | ({{ diff_support_price(ico).toFixed(2) }}%) 
-        | - {{ ico.support_price }}
+        | &nbsp; | {{ ico.support_price }}
       td.right
         | {{ ico.current_price }} 
       td.center 
         input type='checkbox' v-model='ico.is_auto' disabled='disabled'
+      td
+        | {{ ico.polo_order_id }} - {{ ico.polo_order ? ico.polo_order.trading_type : '' }}
       td.right
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
           | Edit
@@ -70,11 +72,13 @@ javascript:
       get_ico_list: function(){
         var self = this;
         this.$http.get('/ajax/trades/get_ico_list', { params: {}} ).then(function (res){
+          console.log('get_ico_list')
           self.ico_list = res.data;
         });
       },
       edit_ico: function(ico){
         this.selected_ico = ico;
+        this.get_chart_data(ico);
       },
       update_ico_info: function(ico){
         var self = this;
@@ -106,7 +110,8 @@ javascript:
             pair_name: ico.pair_name,
             amount_usd: 20,
             buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
-            sell_price: ico.support_price
+            sell_price: ico.support_price,
+            trading_type: ''
           };
 
 
@@ -128,6 +133,22 @@ javascript:
       },
       diff_support_price: function(ico){
         return (ico.current_price - ico.support_price) / ico.support_price * 100;
+      },
+      is_trading: function(order){
+        if(order){
+          console.log(order.trading_type != '');   
+          return order.trading_type != '';
+        } else {
+          return false;
+        }        
+      },
+      get_chart_data: function(ico){
+        var self = this;
+        this.$http.get('/ajax/trades/get_chart_data', {params: { pair_name: ico.pair_name }}).then(function (res){
+          createChart30m(res.data, ico);
+          addPlotHover();
+          addClick(ico);
+        });
       },
       init: function(){
         console.log("INIT");

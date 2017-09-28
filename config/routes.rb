@@ -102,6 +102,7 @@ Rails.application.routes.draw do
     get 'trades/get_order' => 'trades#get_order'
     post 'trades/create_order' => 'trades#create_order'
     put 'trades/update_order' => 'trades#update_order'
+    get 'trades/get_chart_data' => 'trades#get_chart_data'
 
     get 'trackings/get_tracking_price_list' => 'trackings#get_tracking_price_list'
 
