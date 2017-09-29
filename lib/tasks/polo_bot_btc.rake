@@ -25,7 +25,7 @@ namespace :polo_bot_btc do
           while true
             start_time = Time.now
 
-            order_list = PoloOrder.all
+            order_list = PoloOrder.where("trading_type <> 'DONE'")
             order_list.each do |order|
               puts "\nStart trading for #{order.pair_name} at #{Time.now}"
               next if order.trading_type.empty?
@@ -168,6 +168,14 @@ class PoloBotRun
       @order.is_bought = 1
       @order.trading_type = "SELLING"
       @order.save
+
+      PoloOrder.create({
+        pair_name: @order.pair_name,
+        ico_info_id: @order.ico_info_id,
+        trading_type: @order.trading_type,
+        amount_usd: @order.amount_usd,
+        level: @order.level + 1
+      })
     end
   end
 

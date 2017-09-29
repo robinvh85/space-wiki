@@ -5,7 +5,7 @@ module Ajax
       ico_list = IcoInfo.all
 
       render json: ico_list.to_json(
-        include: [:polo_order]
+        include: [:polo_orders]
       )
     end
 
@@ -30,23 +30,19 @@ module Ajax
       render json: ico
     end
 
-    def get_order
-      order = {}
+    def get_orders
+      order_list = []
 
-      unless params[:polo_order_id].nil?
-        order = PoloOrder.find(params[:polo_order_id])
+      unless params[:ico_info_id].nil?
+        order_list = PoloOrder.where("ico_info_id = ? AND trading_type <> 'DONE'", params[:ico_info_id])
       end
 
-      render json: order
+      render json: order_list
     end
 
     def create_order
       order = PoloOrder.create(ico_order_params)
-
-      ico = IcoInfo.find_by(pair_name: order.pair_name)
-      ico.polo_order_id = order.id
-      ico.save
-
+      
       render json: order
     end
 
@@ -62,7 +58,7 @@ module Ajax
       start_time = (Time.now - 15.days).to_i
 
       list = ChartData30m.where("pair_name = ? AND time_at > ?", pair_name, start_time)
-      
+
       data = create_data(list)
 
       btc_list = ChartData30m.where("pair_name = ? AND time_at > ?", 'USDT_BTC', start_time)

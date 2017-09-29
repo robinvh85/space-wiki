@@ -29,12 +29,12 @@ div#icos
       td.right
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
           | Edit
-        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#modalOrder" @click="get_order(ico)"
-          | Order
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#modalOrder" @click="get_orders(ico)"
+          | Orders
 
   = render 'modal_new_ico'
   = render 'modal_edit_ico'
-  = render 'modal_order'  
+  = render 'modal_order'
 
 javascript:
   $(function(){
@@ -53,7 +53,8 @@ javascript:
       ico_list: [],
       selected_ico: {},
       new_ico: {},
-      order: {}
+      order: {},
+      order_list: []
     },
     computed: {
       
@@ -96,37 +97,35 @@ javascript:
           }            
         });
       },
-      get_order: function(ico){
+      get_orders: function(ico){
         this.selected_ico = ico;
-        if(ico.polo_order_id){
-          var self = this;
-          this.$http.get('/ajax/trades/get_order', {params: {polo_order_id: ico.polo_order_id} }).then(function (res){
-            if(res.data != null){
-              self.order = res.data;
-            }            
-          });
-        } else {
-          this.order = {
-            pair_name: ico.pair_name,
-            amount_usd: 20,
-            buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
-            sell_price: ico.support_price,
-            trading_type: ''
-          };
-
-
-        }
+        var self = this;
+        this.$http.get('/ajax/trades/get_orders', {params: {ico_info_id: ico.id} }).then(function (res){
+          if(res.data != null){
+            self.order_list = res.data;
+          }            
+        });
+        
+        this.order = {
+          pair_name: ico.pair_name,
+          amount_usd: 0,
+          buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
+          sell_price: ico.support_price,
+          trading_type: '',
+          level: 1
+        };
+        
+        console.log(this.order);
       },
-      save_order: function(){
-        if(this.selected_ico.polo_order_id){
-          this.$http.put('/ajax/trades/update_order', {order: this.order}).then(function (res){
-            $('#modalOrder').modal('hide');
-          });
-        } else {
-          this.$http.post('/ajax/trades/create_order', {order: this.order}).then(function (res){
-            $('#modalOrder').modal('hide');
-          });
-        }
+      create_order: function(order){
+        this.$http.post('/ajax/trades/create_order', {order: order}).then(function (res){
+          $('#modalOrder').modal('hide');
+        });
+      },
+      update_order: function(order){
+        this.$http.put('/ajax/trades/update_order', {order: order}).then(function (res){
+          $('#modalOrder').modal('hide');
+        });
       },
       calculate_percent: function(price, compare_price){
         return ((price - compare_price) / compare_price * 100).toFixed(2);
