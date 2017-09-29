@@ -1,6 +1,7 @@
 div#icos
   table.table.table-bordered
     tr
+      th
       th 
         | Pair Name
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
@@ -11,7 +12,9 @@ div#icos
       th Auto
       th Order
       th Action      
-    tr v-for="ico in ico_list" :class="{gray:is_trading(ico.polo_order)}"
+    tr v-for="(ico, index) in ico_list" :class="{gray:is_trading(ico.polo_order)}"
+      td 
+        | {{ index + 1}}
       td 
         | {{ ico.pair_name }}
       td.right
