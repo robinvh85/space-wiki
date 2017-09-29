@@ -25,7 +25,7 @@ namespace :polo_bot_btc do
           while true
             start_time = Time.now
 
-            order_list = PoloOrder.all
+            order_list = PoloOrder.where("trading_type <> 'DONE'")
             order_list.each do |order|
               puts "\nStart trading for #{order.pair_name} at #{Time.now}"
               next if order.trading_type.empty?
@@ -146,8 +146,8 @@ class PoloBotRun
   def check_set_order_for_buy
     puts "##{@thread_id} - #{@order.pair_name} - check_set_order_for_buy() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
 
-    diff_percent = (@current_buy_price - @ico_info.support_price) / @ico_info.support_price * 100
-    return if diff_percent > -0.5
+    diff_percent = (@current_buy_price - @order.buy_price) / @current_buy_price * 100
+    return if diff_percent > 0.5
     return if @current_buy_price < @order.buy_price
 
     result = @api_obj.buy(@order.pair_name, buy_amount, @order.buy_price)
@@ -168,6 +168,21 @@ class PoloBotRun
       @order.is_bought = 1
       @order.trading_type = "SELLING"
       @order.save
+
+      return if @order.level == 3
+
+      new_buy_price = @order.buy_price - ( @order.buy_price / 100 * 1 )
+      new_sell_price = @order.sell_price - ( @order.sell_price / 100 * 0.5 )
+
+      PoloOrder.create({
+        pair_name: @order.pair_name,
+        ico_info_id: @order.ico_info_id,
+        trading_type: 'BUYING',
+        amount_usd: @order.amount_usd,
+        level: @order.level + 1,
+        buy_price: new_buy_price,
+        sell_price: new_sell_price
+      })
     end
   end
 
@@ -179,7 +194,7 @@ class PoloBotRun
     return if @order.sell_price < @order.buy_price
 
     obj_sell = @api_obj.sell(@order.pair_name, amount, @order.sell_price)
-    
+
     @order.sell_order_id = obj_sell['order_id']
     @order.trading_type = "CHECKING_ORDER_SELL"
     @order.save
