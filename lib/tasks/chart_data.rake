@@ -16,6 +16,9 @@ namespace :chart_data do
     currency_pairs = CurrencyPair.where(is_disabled: 0)
     currency_pairs.each do |currency_pair|
       ChartData.get_data_chart_30m(currency_pair)
+      ChartData.get_data_chart_1d(currency_pair)
+
+      ChartData.update_yesterday_price(currency_pair.name)
     end
 
     puts "End rake chart_data:get at #{Time.now}"
@@ -26,6 +29,23 @@ module ChartData
   class << self
     attr_accessor :start, :end
 
+    def update_yesterday_price(pair_name)
+      puts "Update yesterday_price #{pair_name}"
+      yesterday = Time.now - 1.days
+      yesterday_time = Time.new(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0)
+
+      price_1d = ChartData1d.find_by(pair_name: pair_name, time_at: yesterday_time)
+
+      return if price_1d.nil?
+
+      ico_info = IcoInfo.find_by(pair_name: pair_name)
+
+      unless ico_info.nil?
+        ico_info.yesterday_price = price_1d.close
+        ico_info.save!
+      end
+    end
+
     # 30m
     def get_data_chart_30m(currency_pair, period = 1800)
       puts "#{currency_pair.name} - period: #{period} at #{Time.now}"
@@ -35,6 +55,18 @@ module ChartData
 
       data.each do |item|
         insert_or_update(currency_pair, item, ChartData30m)
+      end
+    end
+
+    # 1d
+    def get_data_chart_1d(currency_pair, period = 86400)
+      puts "#{currency_pair.name} - period: #{period} at #{Time.now}"
+
+      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
+      data = JSON.parse(response.body)
+
+      data.each do |item|
+        insert_or_update(currency_pair, item, ChartData1d)
       end
     end
 
