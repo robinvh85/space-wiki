@@ -13,7 +13,7 @@ div class="modal fade" id="modalOrder" tabindex="-1" role="dialog" aria-hidden="
             tr
               th Pair Name
               th Current: {{ selected_ico.current_price }} <br/> Amount
-              th Sup: {{ selected_ico.support_price }} ({{ calculate_percent(selected_ico.support_price, selected_ico.current_price) }}%) <br/> Buy at  
+              th Yester: {{ selected_ico.previous_1d_price }} ({{ calculate_percent(selected_ico.previous_1d_price, selected_ico.current_price) }}%) <br/> Buy at  
               th Sell at
               th Trading type
               th Action
@@ -24,12 +24,12 @@ div class="modal fade" id="modalOrder" tabindex="-1" role="dialog" aria-hidden="
                 input type="input" max-length='10' placeholder="Amount $" v-model="order.amount_usd"
               td
                 input type="input" max-length='10' placeholder="buy_price" v-model="order.buy_price"
-                | {{ calculate_percent(order.buy_price, selected_ico.support_price) }}%
+                | {{ calculate_percent(order.buy_price, selected_ico.previous_1d_price) }}%
               td
                 input type="input" placeholder="sell_price" v-model="order.sell_price"
                 | {{ calculate_percent(order.sell_price, order.buy_price) }}%
               td
-                select v-model="order.trading_type"
+                select v-model="order.trading_type" style='width: 70px;'
                   option 
                   option BUYING
               td
@@ -42,12 +42,12 @@ div class="modal fade" id="modalOrder" tabindex="-1" role="dialog" aria-hidden="
               input type="input" max-length='10' placeholder="Amount $" v-model="order_item.amount_usd"
             td
               input type="input" max-length='10' placeholder="buy_price" v-model="order_item.buy_price"
-              | {{ calculate_percent(order_item.buy_price, selected_ico.support_price) }}%
+              | {{ calculate_percent(order_item.buy_price, selected_ico.previous_1d_price) }}%
             td
               input type="input" placeholder="sell_price" v-model="order_item.sell_price"
               | {{ calculate_percent(order_item.sell_price, order_item.buy_price) }}%
             td
-              select v-model="order_item.trading_type"
+              select v-model="order_item.trading_type"  style='width: 70px;'
                 option 
                 option BUYING
                 option SELLING

@@ -42,7 +42,7 @@ module Ajax
 
     def create_order
       order = PoloOrder.create(ico_order_params)
-      
+
       render json: order
     end
 
@@ -122,7 +122,7 @@ module Ajax
     end
 
     def ico_order_params
-      params.require(:order).permit(:pair_name, :trading_type, :amount_usd, :buy_price, :sell_price)
+      params.require(:order).permit(:pair_name, :trading_type, :amount_usd, :buy_price, :sell_price, :ico_info_id)
     end
 
     def create_data(list)

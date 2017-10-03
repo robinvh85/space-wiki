@@ -1,36 +1,56 @@
 div#icos
   table.table.table-bordered
     tr
-      th 
+      th style="width: 80px;"
         | Pair Name
+        <br/>
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
-          | New
-      th Resistance
-      th Support
-      th Current price
-      th Auto
-      th Order
-      th Action      
-    tr v-for="ico in ico_list" :class="{gray:is_trading(ico.polo_order)}"
+          | New      
+      th style="width: 90px;"
+        | Current price
+      th style="width: 150px;"
+        | 1d
+      th style="width: 150px;"
+        | 4h
+      th style="width: 150px;"
+        | 30m
+      th 
+        | Order
+        input type="checkbox" v-model='is_order'
+      th style="width: 120px;"
+        | Action
+    tr v-for="ico in filterItems(ico_list)" :class="{gray:is_trading(ico.polo_order)}"
       td 
         | {{ ico.pair_name }}
       td.right
-        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price * 100).toFixed(2) }}%) &nbsp;| {{ ico.resistance_price }}
-      td.right
-        label :class="{'green': diff_support_price(ico) < 0}"
-          | ({{ diff_support_price(ico).toFixed(2) }}%) 
-        | &nbsp; | {{ ico.support_price }}
-      td.right
         | {{ ico.current_price }} 
-      td.center 
-        input type='checkbox' v-model='ico.is_auto' disabled='disabled'
+      td.right
+        | {{ ico.previous_1d_price }} 
+        label :class="{'green': calculate_percent(ico.current_price, ico.previous_1d_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_1d_price) < 0}"
+          | ({{ calculate_percent(ico.current_price, ico.previous_1d_price) }}%) 
+      td.right
+        | {{ ico.previous_4h_price }} 
+        label :class="{'green': calculate_percent(ico.current_price, ico.previous_4h_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_4h_price) < 0}"
+          | ({{ calculate_percent(ico.current_price, ico.previous_4h_price) }}%) 
+      td.right
+        | {{ ico.previous_30m_price }} 
+        label :class="{'green': calculate_percent(ico.current_price, ico.previous_30m_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_30m_price) < 0}"
+          | ({{ calculate_percent(ico.current_price, ico.previous_30m_price) }}%) 
       td
-        | {{ ico.polo_order_id }} - {{ ico.polo_order ? ico.polo_order.trading_type : '' }}
+        div v-for="item_order in ico.polo_orders" style="font-size: 10px;"
+          | {{ item_order.id }} - {{ item_order.trading_type }} 
+          label :class="{'green': calculate_percent(ico.current_price, item_order.buy_price) > 0, 'red': calculate_percent(ico.current_price, item_order.buy_price) < 0}"
+            |  ({{ calculate_percent(ico.current_price, item_order.buy_price) }}%)
       td.right
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
           | Edit
+        | &nbsp;
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#modalOrder" @click="get_orders(ico)"
           | Orders
+
+  = render 'modal_new_ico'
+  = render 'modal_edit_ico'
+  = render 'modal_order'
 
 javascript:
   $(function(){
@@ -50,12 +70,22 @@ javascript:
       selected_ico: {},
       new_ico: {},
       order: {},
-      order_list: []
+      order_list: [],
+      is_order: false
     },
     computed: {
       
     },
     methods: {
+      filterItems: function(ico_list) {
+        if(this.is_order){
+          return ico_list.filter(function(item) {
+            return item.polo_orders.length > 0;
+          })
+        } else {
+          return ico_list;
+        }
+      },
       init_new_ico: function(){
         this.new_ico = {
           pair_name: '',
@@ -71,11 +101,18 @@ javascript:
         this.$http.get('/ajax/trades/get_ico_list', { params: {}} ).then(function (res){
           console.log('get_ico_list')
           self.ico_list = res.data;
+
+          for(var i=0; i<self.ico_list.length; i++){
+            self.ico_list[i].current_price = parseFloat(self.ico_list[i].current_price);
+            self.ico_list[i].previous_30m_price = parseFloat(self.ico_list[i].previous_30m_price);
+            self.ico_list[i].previous_4h_price = parseFloat(self.ico_list[i].previous_4h_price);
+            self.ico_list[i].previous_1d_price = parseFloat(self.ico_list[i].previous_1d_price);
+          }
+
         });
       },
       edit_ico: function(ico){
         this.selected_ico = ico;
-        this.get_chart_data(ico);
       },
       update_ico_info: function(ico){
         var self = this;
@@ -102,16 +139,17 @@ javascript:
           }            
         });
         
+        console.log(ico);
+
         this.order = {
           pair_name: ico.pair_name,
-          amount_usd: 0,
-          buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
-          sell_price: ico.support_price,
+          amount_usd: 10,
+          buy_price: ico.previous_1d_price,
+          sell_price: parseFloat((ico.previous_1d_price + (ico.previous_1d_price / 100)).toFixed(8)),
           trading_type: '',
-          level: 1
+          level: 1,
+          ico_info_id: ico.id
         };
-        
-        console.log(this.order);
       },
       create_order: function(order){
         this.$http.post('/ajax/trades/create_order', {order: order}).then(function (res){
@@ -137,14 +175,6 @@ javascript:
           return false;
         }        
       },
-      get_chart_data: function(ico){
-        var self = this;
-        this.$http.get('/ajax/trades/get_chart_data', {params: { pair_name: ico.pair_name }}).then(function (res){
-          createChart30m(res.data, ico);
-          addPlotHover();
-          addClick(ico);
-        });
-      },
       init: function(){
         console.log("INIT");
         this.get_ico_list();
@@ -152,7 +182,9 @@ javascript:
       }    
     },
     watch: {
-      
+      is_order: function(value){
+        console.log(value);
+      }
     },
     created: function() {
       console.log("created");

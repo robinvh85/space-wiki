@@ -23,7 +23,8 @@ namespace :chart_data_init do
 
     currency_pairs.each do |currency_pair|
       # ChartDataYear.get_data_chart_30m(currency_pair)
-      ChartDataYear.get_data_chart_1d(currency_pair)
+      ChartDataYear.get_data_chart_4h(currency_pair)
+      # ChartDataYear.get_data_chart_1d(currency_pair)
     end
   end
 end
@@ -40,6 +41,17 @@ module ChartDataYear
 
       data.each do |item|
         ChartData30m.create(build_data(currency_pair, item))
+      end
+    end
+
+    def get_data_chart_4h(currency_pair, period = 14400)
+      puts "#{currency_pair.name} - period: #{period} at #{Time.now}"
+
+      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
+      data = JSON.parse(response.body)
+
+      data.each do |item|
+        ChartData4h.create(build_data(currency_pair, item))
       end
     end
 

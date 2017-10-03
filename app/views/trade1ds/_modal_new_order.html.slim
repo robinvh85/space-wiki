@@ -19,7 +19,7 @@ div class="modal fade" id="modalNewOrder" tabindex="-1" role="dialog" aria-hidde
             input type="input" id="order_amount_usd" max-length='10' class="form-control" placeholder="Amount $" v-model="order.amount_usd"
           div class="form-group"
             label for="order_buy_price"
-              | Buy at ({{ calculate_percent(order.buy_price, selected_ico.support_price) }}%) &nbsp;|&nbsp; Support at {{ selected_ico.support_price }}
+              | Buy at ({{ calculate_percent(order.buy_price, selected_ico.previous_1d_price) }}%) &nbsp;|&nbsp; Yesterday {{ selected_ico.previous_1d_price }}
             input type="input" id="order_buy_price" max-length='5' class="form-control" placeholder="buy_price" v-model="order.buy_price" style='width: 200px;'
           div class="form-group"
             label for="order_sell_price"
@@ -28,7 +28,7 @@ div class="modal fade" id="modalNewOrder" tabindex="-1" role="dialog" aria-hidde
           div class="form-group"
             label for="order_trading_type"
               | Trading type
-            select v-model="order.trading_type" class="form-control"
+            select v-model="order.trading_type" class="form-control" style='width: 70px;'
               option 
               option BUYING
               option SELLING

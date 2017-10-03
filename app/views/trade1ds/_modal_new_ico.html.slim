@@ -14,25 +14,9 @@ div class="modal fade" id="newIco" tabindex="-1" role="dialog" aria-labelledby="
               | Pair name
             input type="input" id="frm_pair_name" max-length='10' class="form-control" placeholder="Pair name" v-model="new_ico.pair_name"
           div class="form-group"
-            label for="resistance_price"
-              | Resistance price
-            input type="input" id="resistance_price" max-length='5' class="form-control" placeholder="resistance_price" v-model="new_ico.resistance_price"
-          div class="form-group"
             label for="support_price"
               | Support price
             input type="input" id="support_price" max-length='5' class="form-control"placeholder="support_price" v-model="new_ico.support_price"
-          div class="form-group"
-            label for="resistance_profit"
-              | Resistance profit
-            input type="input" id="resistance_profit" class="form-control" placeholder="Percent" v-model="new_ico.resistance_profit"
-          div class="form-group"
-            label for="support_profit"
-              | Support profit
-            input type="input" id="support_profit" class="form-control" placeholder="Percent" v-model="new_ico.support_profit"
-          div class="form-group"
-            label for="is_auto"
-              | Auto
-            input type="checkbox" id="is_auto" class="" style="margin-left: 10px;" v-model="new_ico.is_auto"
       div class="modal-footer"
         button type="button" class="btn btn-primary" @click="create_ico()"
           | Create

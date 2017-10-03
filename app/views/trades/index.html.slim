@@ -1,6 +1,7 @@
 div#icos
   table.table.table-bordered
     tr
+      th
       th 
         | Pair Name
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
@@ -11,7 +12,9 @@ div#icos
       th Auto
       th Order
       th Action      
-    tr v-for="ico in ico_list" :class="{gray:is_trading(ico.polo_order)}"
+    tr v-for="(ico, index) in ico_list" :class="{gray:is_trading(ico.polo_order)}"
+      td 
+        | {{ index + 1}}
       td 
         | {{ ico.pair_name }}
       td.right
@@ -25,7 +28,7 @@ div#icos
       td.center 
         input type='checkbox' v-model='ico.is_auto' disabled='disabled'
       td
-        | {{ ico.polo_order_id }} - {{ ico.polo_order ? ico.polo_order.trading_type : '' }}
+        | {{ ico.polo_orders.length }} - {{ ico.polo_orders.length > 0 ? ico.polo_orders[0].trading_type : '' }}
       td.right
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
           | Edit
@@ -108,6 +111,7 @@ javascript:
         
         this.order = {
           pair_name: ico.pair_name,
+          ico_info_id: ico.id,
           amount_usd: 0,
           buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
           sell_price: ico.support_price,
