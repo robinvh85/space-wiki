@@ -39,6 +39,7 @@ Rails.application.routes.draw do
 
   # Trades
   get 'trades' => 'trades#index'
+  get 'trade1ds' => 'trade1ds#index'
 
   # Tracking price
   get 'trackings' => 'trackings#index'
