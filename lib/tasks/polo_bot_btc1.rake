@@ -204,6 +204,8 @@ class PoloBotRun1
 
     obj_sell = @api_obj.sell(@order.pair_name, amount, @order.sell_price)
 
+    return if obj_sell.nil?
+
     @order.sell_order_id = obj_sell['order_id']
     @order.trading_type = "CHECKING_ORDER_SELL"
     @order.save
