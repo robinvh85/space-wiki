@@ -70,6 +70,7 @@ namespace :polo_bot_btc1 do
               })
   
               ico.current_price = data_price[:buy_price]
+              ico.current_sell_price = data_price[:sell_price]
               ico.save
   
               sleep(0.1)
@@ -135,6 +136,8 @@ class PoloBotRun1
       check_set_order_sell()
     elsif @order.trading_type == "CHECKING_ORDER_SELL"
       check_finish_order_sell()
+    elsif @order.trading_type == "FORCE_SELL"
+      force_order_sell()
     end
   end
 
@@ -216,7 +219,7 @@ class PoloBotRun1
     current_profit = (@current_buy_price - @order.buy_price) / @order.buy_price * 100
     puts "##{@thread_id} - #{@order.pair_name} - check_finish_order_sell() with price #{'%.8f' % @current_buy_price}(#{'%.2f' % current_profit}%) at #{Time.now}"
 
-    if current_profit < -2
+    if current_profit < -@order.limit_sell_percent
       cancel_order_sell()
       return
     end
@@ -228,6 +231,25 @@ class PoloBotRun1
       @order.trading_type = "DONE"
       @order.profit = (@order.sell_price - @order.buy_price) / @order.buy_price * 100
       @order.save!
+    end
+  end
+
+  def force_order_sell
+    puts "##{@thread_id} - #{@order.pair_name} - force_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
+
+    status = @api_obj.cancel_order(@order.sell_order_id)
+
+    if status == 1
+      ico_name = @order.pair_name.split('_')[1]
+      amount = @api_obj.get_balances(ico_name)
+
+      obj_sell = @api_obj.sell(@order.pair_name, amount, @current_buy_price)
+
+      return if obj_sell.nil?
+
+      @order.sell_order_id = obj_sell['order_id']
+      @order.trading_type = "CHECKING_ORDER_SELL"
+      @order.save
     end
   end
 

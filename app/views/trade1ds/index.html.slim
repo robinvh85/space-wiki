@@ -6,14 +6,17 @@ div#icos
         <br/>
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
           | New      
-      th style="width: 90px;"
+      th style="width: 130px;"
         | Current price
       th style="width: 150px;"
         | 1d
+        input type="checkbox" v-model='is_1d'
       th style="width: 150px;"
         | 4h
+        input type="checkbox" v-model='is_4h'
       th style="width: 150px;"
         | 30m
+        input type="checkbox" v-model='is_30m'
       th 
         | Order
         input type="checkbox" v-model='is_order'
@@ -23,7 +26,7 @@ div#icos
       td 
         | {{ ico.pair_name }}
       td.right
-        | {{ ico.current_price }} 
+        | {{ ico.current_price }} <br/> ({{ calculate_percent(ico.current_sell_price, ico.current_price) }}%) {{ ico.current_sell_price }} 
       td.right
         | {{ ico.previous_1d_price }} 
         label :class="{'green': calculate_percent(ico.current_price, ico.previous_1d_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_1d_price) < 0}"
@@ -71,20 +74,42 @@ javascript:
       new_ico: {},
       order: {},
       order_list: [],
-      is_order: false
+      is_order: false,
+      is_1d: false,
+      is_4h: false,
+      is_30m: false
     },
     computed: {
       
     },
     methods: {
       filterItems: function(ico_list) {
+        self = this;
         if(this.is_order){
           return ico_list.filter(function(item) {
             return item.polo_orders.length > 0;
           })
-        } else {
-          return ico_list;
+        } 
+        
+        if(this.is_1d){
+          return ico_list.filter(function(item) {
+            return self.calculate_percent(item.current_price, item.previous_1d_price) > 0.2
+          })
         }
+
+        if(this.is_4h){
+          return ico_list.filter(function(item) {
+            return self.calculate_percent(item.current_price, item.previous_4h_price) > 0.2
+          })
+        }
+
+        if(this.is_30m){
+          return ico_list.filter(function(item) {
+            return self.calculate_percent(item.current_price, item.previous_30m_price) > 0.2
+          })
+        }
+
+        return ico_list;
       },
       init_new_ico: function(){
         this.new_ico = {
@@ -145,6 +170,7 @@ javascript:
           pair_name: ico.pair_name,
           amount_usd: 10,
           buy_price: ico.previous_1d_price,
+          limit_sell_percent: 2,
           sell_price: parseFloat((ico.previous_1d_price + (ico.previous_1d_price / 100)).toFixed(8)),
           trading_type: '',
           level: 1,
@@ -152,6 +178,8 @@ javascript:
         };
       },
       create_order: function(order){
+        order.limit_sell_percent = 2;
+
         this.$http.post('/ajax/trades/create_order', {order: order}).then(function (res){
           $('#modalOrder').modal('hide');
         });
