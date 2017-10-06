@@ -42,7 +42,7 @@ div#icos
       td
         div v-for="item_order in ico.polo_orders" style="font-size: 10px;"
           | {{ item_order.id }} - {{ item_order.trading_type }} 
-          label :class="{'green': calculate_percent(ico.current_price, item_order.buy_price) > 0, 'red': calculate_percent(ico.current_price, item_order.buy_price) < 0}"
+          label v-show="item_order.trading_type != ''" :class="{'green': calculate_percent(ico.current_price, item_order.buy_price) > 0, 'red': calculate_percent(ico.current_price, item_order.buy_price) < 0}"
             |  ({{ calculate_percent(ico.current_price, item_order.buy_price) }}%)
       td.right
         button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"

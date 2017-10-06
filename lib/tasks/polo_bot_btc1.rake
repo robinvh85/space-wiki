@@ -194,7 +194,11 @@ class PoloBotRun1
   end
 
   def check_set_order_sell
-    puts "##{@thread_id} - #{@order.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price} at #{Time.now}"
+    current_profit = (@current_buy_price - @order.buy_price) / @order.buy_price * 100
+    puts "##{@thread_id} - #{@order.pair_name} - check_set_order_sell() with price #{'%.8f' % @current_buy_price}(#{'%.2f' % current_profit}%) at #{Time.now}"
+
+    return if @order.sell_price == -1
+
     ico_name = @order.pair_name.split('_')[1]
     amount = @api_obj.get_balances(ico_name)
 
@@ -205,13 +209,14 @@ class PoloBotRun1
       return if @order.sell_price <= @order.buy_price
     end
 
+    @order.sell_price = @current_buy_price if @order.sell_price == 0
     obj_sell = @api_obj.sell(@order.pair_name, amount, @order.sell_price)
 
     return if obj_sell.nil?
 
     @order.sell_order_id = obj_sell['order_id']
     @order.trading_type = "CHECKING_ORDER_SELL"
-    @order.save
+    @order.save!
   end
 
   def check_finish_order_sell
@@ -262,7 +267,7 @@ class PoloBotRun1
       @is_lose = true
       @order.sell_order_id = nil
       @order.trading_type = "SELLING"
-      @order.save
+      @order.save!
     end
   end
 

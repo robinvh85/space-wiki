@@ -26,7 +26,8 @@ div class="modal fade" id="modalOrder" tabindex="-1" role="dialog" aria-hidden="
                 input type="input" max-length='10' placeholder="Amount $" v-model="order.amount_usd" style="width:90px;"
               td
                 input type="input" max-length='10' placeholder="buy_price" v-model="order.buy_price" style="width:90px;"
-                | {{ calculate_percent(order.buy_price, selected_ico.previous_1d_price) }}% <br> 
+                | {{ calculate_percent(order.buy_price, selected_ico.previous_1d_price) }}%
+                br
                 input type="input" max-length='10' placeholder="buy_price" v-model="order.limit_sell_percent" style="width:90px;"
                 | (limit)
               td
@@ -43,14 +44,15 @@ div class="modal fade" id="modalOrder" tabindex="-1" role="dialog" aria-hidden="
             td 
               | {{ order_item.pair_name }}
             td
-              input type="input" max-length='10' placeholder="Amount $" v-model="order_item.amount_usd"
+              input type="input" max-length='10' placeholder="Amount $" v-model="order_item.amount_usd" style="width:90px;"
             td
-              input type="input" max-length='10' placeholder="buy_price" v-model="order_item.buy_price"
+              input type="input" max-length='10' placeholder="buy_price" v-model="order_item.buy_price" style="width:90px;"
               | {{ calculate_percent(order_item.buy_price, selected_ico.previous_1d_price) }}%
+              br
               input type="input" max-length='10' placeholder="limit_sell_percent" v-model="order_item.limit_sell_percent" style="width:90px;"
               | (% limit)
             td
-              input type="input" placeholder="sell_price" v-model="order_item.sell_price"
+              input type="input" placeholder="sell_price" v-model="order_item.sell_price" style="width:90px;"
               | {{ calculate_percent(order_item.sell_price, order_item.buy_price) }}%
             td
               select v-model="order_item.trading_type"  style='width: 70px;'
