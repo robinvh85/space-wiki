@@ -176,20 +176,21 @@ class PoloBotRun1
       @order.trading_type = "SELLING"
       @order.save
 
-      # return if @order.level == 3
+      return if @order.level == 3
 
-      # new_buy_price = @order.buy_price - ( @order.buy_price / 100 * 1 )
-      # new_sell_price = @order.sell_price - ( @order.sell_price / 100 * 0.5 )
+      new_buy_price = @order.buy_price - ( @order.buy_price / 100 * 1.25 )
+      new_sell_price = @order.sell_price - ( @order.sell_price / 100 * 1 )
+      # new_sell_price = new_buy_price + ( new_buy_price / 100 * 1.5 )
 
-      # PoloOrder.create({
-      #   pair_name: @order.pair_name,
-      #   ico_info_id: @order.ico_info_id,
-      #   trading_type: 'BUYING',
-      #   amount_usd: @order.amount_usd,
-      #   level: @order.level + 1,
-      #   buy_price: new_buy_price,
-      #   sell_price: new_sell_price
-      # })
+      PoloOrder.create({
+        pair_name: @order.pair_name,
+        ico_info_id: @order.ico_info_id,
+        trading_type: 'BUYING',
+        amount_usd: @order.amount_usd,
+        level: @order.level + 1,
+        buy_price: new_buy_price,
+        sell_price: new_sell_price
+      })
     end
   end
 

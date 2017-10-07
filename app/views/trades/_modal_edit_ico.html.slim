@@ -71,14 +71,14 @@ javascript:
           text: ''
         },
         gridLineWidth: 0,
-      },{
+      }/*,{
         title: {
           text: ''
         },
         //height: 300,
         gridLineWidth: 0,
         opposite: false
-      }],
+      }*/],
       tooltip: false,
       plotOptions: {
         series: {
@@ -89,17 +89,20 @@ javascript:
           upColor: 'white'
         }
       },
+      navigator: {
+        enabled: false
+      },
       series: [{
         type: 'candlestick',
         name: '30m candle',
         data: data.candle_data,
         pointWidth: 10
-      },{
+      }/*,{
         name: 'BTC',
         data: data.btc_value,
         yAxis: 1,
         visible: true
-      }],
+      }*/],
       chart: {
         events: {
           render: function(e){

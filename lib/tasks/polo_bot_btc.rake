@@ -21,42 +21,13 @@ namespace :polo_bot_btc do
       if index == 0
         thread = Thread.new{
           thread_id = index + 1
-
-          while true
-            start_time = Time.now
-
-            order_list = PoloOrder.where("trading_type <> 'DONE'")
-            order_list.each do |order|
-              puts "\nStart trading for #{order.pair_name} at #{Time.now}"
-              next if order.trading_type.empty?
-
-              ico_info = IcoInfo.find_by(polo_order_id: order.id)
-              polo_bot.set_config(order, ico_info)
-
-              polo_bot.update_current_price()
-              polo_bot.analysis()
-
-              sleep(0.2)
-            end
-
-            end_time = Time.now
-            inteval = (end_time - start_time).to_i
-
-            sleep(cycle_time - inteval) if cycle_time - inteval > 0
-          end # while
-        }
-      elsif index == 1
-        thread = Thread.new{
-          thread_id = index + 1
           polo_obj = PoloObj.new
   
           while true
             start_time = Time.now
             puts "\n#{thread_id} run at #{Time.now}"
   
-            # pair_list = CurrencyPair.where(thread_id: thread_id, is_disabled: 0)
             ico_list = IcoInfo.all
-  
             ico_list.each do |ico|
               puts "#{thread_id} - #{ico.pair_name}"
               data_price = polo_obj.get_current_trading_price(ico.pair_name, 0)
@@ -71,12 +42,8 @@ namespace :polo_bot_btc do
                 time_at: Time.now.to_i
               })
   
-              # ico = IcoInfo.find_by(pair_name: pair.pair_name)
-  
-              # unless ico.nil?
               ico.current_price = data_price[:buy_price]
               ico.save
-              # end
   
               sleep(0.1)
             end
@@ -84,6 +51,33 @@ namespace :polo_bot_btc do
             end_time = Time.now
             inteval = (end_time - start_time).to_i
   
+            sleep(cycle_time - inteval) if cycle_time - inteval > 0
+          end # while
+        }
+      elsif index == 1
+        thread = Thread.new{
+          thread_id = index + 1
+
+          while true
+            start_time = Time.now
+
+            order_list = PoloOrder.where("trading_type <> 'DONE'")
+            order_list.each do |order|
+              puts "\nStart trading for #{order.pair_name} at #{Time.now}"
+              next if order.trading_type.empty?
+
+              ico_info = IcoInfo.find(order.ico_info_id)
+              polo_bot.set_config(order, ico_info)
+
+              polo_bot.update_current_price()
+              polo_bot.analysis()
+
+              sleep(0.2)
+            end
+
+            end_time = Time.now
+            inteval = (end_time - start_time).to_i
+
             sleep(cycle_time - inteval) if cycle_time - inteval > 0
           end # while
         }
@@ -148,7 +142,7 @@ class PoloBotRun
 
     diff_percent = (@current_buy_price - @order.buy_price) / @current_buy_price * 100
     return if diff_percent > 0.5
-    return if @current_buy_price < @order.buy_price
+    # return if @current_buy_price < @order.buy_price
 
     result = @api_obj.buy(@order.pair_name, buy_amount, @order.buy_price)
 
@@ -207,11 +201,7 @@ class PoloBotRun
     if status == 1
       @order.is_sold = 1
       @order.trading_type = "DONE"
-      @order.save
-
-      # Reset order from ico_info
-      @ico_info.polo_order_id = nil
-      @ico_info.save
+      @order.save!
     end
   end
 

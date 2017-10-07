@@ -122,7 +122,7 @@ module Ajax
     end
 
     def ico_order_params
-      params.require(:order).permit(:pair_name, :trading_type, :amount_usd, :buy_price, :sell_price, :ico_info_id, :limit_sell_percent)
+      params.require(:order).permit(:pair_name, :trading_type, :amount_usd, :buy_price, :sell_price, :ico_info_id, :limit_sell_percent, :limit)
     end
 
     def create_data(list)
