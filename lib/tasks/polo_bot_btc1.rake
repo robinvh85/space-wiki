@@ -189,7 +189,8 @@ class PoloBotRun1
         amount_usd: @order.amount_usd,
         level: @order.level + 1,
         buy_price: new_buy_price,
-        sell_price: new_sell_price
+        sell_price: new_sell_price,
+        limit_sell_percent: @order.limit_sell_percent
       })
     end
   end
