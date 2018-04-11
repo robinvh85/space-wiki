@@ -1,0 +1,2 @@
+class IcoOrder < ApplicationRecord
+end

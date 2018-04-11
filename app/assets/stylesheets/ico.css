@@ -1,0 +1,36 @@
+/*
+*= require bootstrap.min
+*= require bootstrap-grid.min
+*= require bootstrap-reboot.min
+*= require font-awesome.min
+*/
+
+[v-cloak] {display: none}
+
+html {
+  font-size: 12px;
+}
+
+body {
+  padding-top: 5rem;
+}
+.starter-template {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+td.right {
+  text-align: right;
+}
+
+.green {
+  color: #00d1b2;
+}
+
+.gray {
+  background: #F0F0F0;
+}
+
+.red {
+  color: #EE0000;
+}

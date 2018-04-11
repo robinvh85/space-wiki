@@ -145,6 +145,94 @@ module Ajax
       render json: list
     end
 
-    private    
+    def get_open_order_btc
+      list = OrderBtc.where(bought_order_id: nil).order(id: "desc")
+      
+      render json: list
+    end
+
+    def call_sell_btc
+      price = params[:price]
+      amount = params[:amount]
+      pair = "USDT_BTC"
+
+      result = JSON.parse(`python script/python/sell.py #{pair} #{'%.8f' % price} #{amount}`)
+      order_btc = nil
+
+      if result.present?
+        order_btc = OrderBtc.create({
+          sell_price: price,
+          amount: amount,
+          sell_order_id: result["orderNumber"]
+        })
+      end
+
+      render json: order_btc
+    end
+
+    def call_cancel_sell_btc
+      order = OrderBtc.find_by(sell_order_id: params['sell_order_id'])
+      bot = BotBtc.find_by(order_btc_id: order.id)
+      bot.trading_type = 'CANCEL_SELL'
+      bot.save
+
+      render json: {
+        success: 'OK'
+      }
+    end
+
+    def call_buy_btc
+      pair = "USDT_BTC"      
+      order_btc = OrderBtc.find(params[:id])
+      order_btc.buy_price = params[:buy_price]
+      new_amount = order_btc.amount * (order_btc.sell_price.to_f / order_btc.buy_price)
+      new_amount = new_amount - new_amount * 0.0021
+      
+      result = JSON.parse(`python script/python/buy.py #{pair} #{'%.8f' % order_btc.buy_price} #{new_amount}`)
+
+      order_btc.buy_order_id = result["orderNumber"] if result.present?
+      order_btc.save
+      render json: order_btc
+    end
+
+    def call_cancel_buy_btc
+      order = OrderBtc.find_by(buy_order_id: params['buy_order_id'])
+      bot = BotBtc.find_by(order_btc_id: order.id)
+      bot.trading_type = 'CANCEL_BUY'
+      bot.save
+
+      render json: {
+        success: 'OK'
+      }
+    end
+
+    def get_bot_info
+      bot_list = BotBtc.where('status <> -1')
+
+      bot_list.each do |bot|
+        if bot.order_btc.nil?
+          bot.order_btc = OrderBtc.new
+        end
+      end
+
+      render json: bot_list.to_json(
+        :include => :order_btc
+      )
+    end
+
+    def update_bot_info
+      bot = BotBtc.find(params[:bot][:id])
+      bot.update(bot_info_params)
+
+      render json: {
+        status: 'OK'
+      }
+    end
+
+    private
+
+    def bot_info_params
+      params.require(:bot).permit(:amount, :sell_price, :buy_price, :status)
+    end
   end
 end

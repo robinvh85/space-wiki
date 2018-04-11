@@ -9,22 +9,17 @@ namespace :chart_data do
   task get: :environment do
     puts "Run rake chart_data:get at #{Time.now}"
 
-    sleep(5)
-    ChartData.start = (Time.now - 10.minutes).to_i
-    ChartData.end = Time.now.to_i
+    sleep(2)
+    # ChartData.start = (Time.now - 1.hours).to_i
+    # ChartData.end = Time.now.to_i
 
-    currency_pairs = CurrencyPair.where(is_init: 1)
+    currency_pairs = CurrencyPair.where(is_disabled: 0)
     currency_pairs.each do |currency_pair|
-      ChartData.get_data_chart_5m(currency_pair)
-      ChartData.get_percent_min_24h(currency_pair)
-      
-      ChartData.get_data_chart_15m(currency_pair)
-      ChartData.get_percent_min_15m_24h(currency_pair)
+      ChartData.update_previous_price(currency_pair.name)
 
       ChartData.get_data_chart_30m(currency_pair)
-      ChartData.get_percent_min_30m_24h(currency_pair)
-      
-      ChartData.get_data_chart_2h(currency_pair)
+      ChartData.get_data_chart_4h(currency_pair)
+      ChartData.get_data_chart_1d(currency_pair)
     end
 
     puts "End rake chart_data:get at #{Time.now}"
@@ -35,35 +30,48 @@ module ChartData
   class << self
     attr_accessor :start, :end
 
-    # 5m
-    def get_data_chart_5m(currency_pair, period = 300)  
-      puts "#{currency_pair.name} - period: #{period}"
+    def update_previous_price(pair_name)
+      puts "update_previous_price() #{pair_name} at #{Time.now}"      
 
-      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
-      data = JSON.parse(response.body)
+      ico_info = IcoInfo.find_by(pair_name: pair_name)
+      return if ico_info.nil?
 
-      data.each do |item|
-        insert_or_update(currency_pair, item, ChartData5m)
-      end
-    end
+      # price_1d
+      yesterday = Time.now - 1.days
+      yesterday_time = Time.new(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0)
+      price_1d = ChartData1d.find_by(pair_name: pair_name, time_at: yesterday_time)
 
-    # 15m
-    def get_data_chart_15m(currency_pair, period = 900)  
-      puts "#{currency_pair.name} - period: #{period}"
+      # price 4h
+      previous_4h = Time.now - 4.hours
+      arr_hours = [0,4,8,12,16,20]
+      hour = arr_hours[previous_4h.hour / 4]
 
-      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
-      data = JSON.parse(response.body)
+      previous_4h_time = Time.new(previous_4h.year, previous_4h.month, previous_4h.day, hour, 0, 0)
+      price_4h = ChartData4h.find_by(pair_name: pair_name, time_at: previous_4h_time)
 
-      data.each do |item|
-        insert_or_update(currency_pair, item, ChartData15m)
-      end
+      # price 30m
+      previous_30m = Time.now - 30.minutes
+
+      arr_minutes = [0,30]
+      minute = arr_minutes[previous_30m.min / 30]
+
+      previous_30m_time = Time.new(previous_30m.year, previous_30m.month, previous_30m.day, previous_30m.hour, minute, 0)
+      price_30m = ChartData30m.find_by(pair_name: pair_name, time_at: previous_30m_time)
+
+      ico_info.previous_30m_price = price_30m.close if !price_30m.nil? && price_30m['date'] != 0
+      ico_info.previous_4h_price = price_4h.close if !price_4h.nil? && price_4h['date'] != 0
+      ico_info.previous_1d_price = price_1d.close if !price_1d.nil? && price_1d['date'] != 0
+      ico_info.save
     end
 
     # 30m
-    def get_data_chart_30m(currency_pair, period = 1800)  
-      puts "#{currency_pair.name} - period: #{period}"
+    def get_data_chart_30m(currency_pair, period = 1800)
+      puts "#{currency_pair.name} - period: #{period} at #{Time.now}"
 
-      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
+      start_time = (Time.now - 1.hours).to_i
+      end_time = Time.now.to_i
+
+      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, start_time, end_time)
       data = JSON.parse(response.body)
 
       data.each do |item|
@@ -71,102 +79,38 @@ module ChartData
       end
     end
 
-    # 2h
-    def get_data_chart_2h(currency_pair, period = 7200)  
+    # 4h
+    def get_data_chart_4h(currency_pair, period = 14400)
       puts "#{currency_pair.name} - period: #{period}"
 
-      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, @start, @end)
+      start_time = (Time.now - 4.hours).to_i
+      end_time = Time.now.to_i
+
+      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, start_time, end_time)
       data = JSON.parse(response.body)
 
       data.each do |item|
-        insert_or_update(currency_pair, item, ChartData2h)
+        insert_or_update(currency_pair, item, ChartData4h)
       end
     end
 
-    def get_percent_min_24h(currency_pair)
-      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      index = 0
-      list.each do |item|
-        index += 1
-        if item.close < item.open
-          item.min_value = item.close
-        else
-          item.min_value = item.open
-        end
-        item.save
+    # 1d
+    def get_data_chart_1d(currency_pair, period = 86400)
+      puts "#{currency_pair.name} - period: #{period} at #{Time.now}"
+
+      start_time = (Time.now - 1.days).to_i
+      end_time = Time.now.to_i
+
+      response = PoloniexVh.get_daily_exchange_rates(currency_pair.name, period, start_time, end_time)
+      data = JSON.parse(response.body)
+
+      data.each do |item|
+        insert_or_update(currency_pair, item, ChartData1d)
       end
-
-      list = ChartData5m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      index = 0
-      list.each do |item|
-        index += 1
-        _end = Time.at(item.time_at).to_i
-        start = (_end - 24.hour).to_i
-
-        min = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).minimum(:min_value)
-        max = ChartData5m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).maximum(:min_value)
-
-        currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
-        currency_pair.save
-      end
-    end
-
-    def get_percent_min_15m_24h(currency_pair)
-      list = ChartData15m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      index = 0
-      list.each do |item|
-        index += 1
-        if item.close < item.open
-          item.min_value = item.close
-        else
-          item.min_value = item.open
-        end
-        item.save
-      end
-
-      list = ChartData15m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      index = 0
-      list.each do |item|
-        index += 1
-        _end = Time.at(item.time_at).to_i
-        start = (_end - 24.hour).to_i
-
-        min = ChartData15m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).minimum(:min_value)
-        max = ChartData15m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).maximum(:min_value)
-
-        currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
-        currency_pair.save
-      end
-    end
-
-    def get_percent_min_30m_24h(currency_pair)
-      list = ChartData30m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      list.each do |item|
-        if item.close < item.open
-          item.min_value = item.close
-        else
-          item.min_value = item.open
-        end
-        item.save
-      end
-
-      # list = ChartData30m.where("currency_pair_id = ? AND time_at >= ?", currency_pair.id, @start)
-      # index = 0
-      # list.each do |item|
-      #   index += 1
-      #   _end = Time.at(item.time_at).to_i
-      #   start = (_end - 24.hour).to_i
-
-      #   min = ChartData30m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).minimum(:min_value)
-      #   max = ChartData30m.where("currency_pair_id = ? AND time_at > ? AND time_at <= ?", currency_pair.id, start, _end).maximum(:min_value)
-
-      #   currency_pair.percent_min_24h = (item.min_value - min) / (max - min) * 100
-      #   currency_pair.save
-      # end
     end
 
     def insert_or_update(currency_pair, data_item, chart_data_class)
-      chart_data_obj = chart_data_class.find_by("currency_pair_id = ? AND time_at = ?", currency_pair.id, data_item['date'])
+      chart_data_obj = chart_data_class.find_by("pair_name = ? AND time_at = ?", currency_pair.name, data_item['date'])
       if chart_data_obj.nil?
         chart_data_class.create(build_data(currency_pair, data_item))
       else
@@ -176,7 +120,7 @@ module ChartData
 
     def build_data(currency_pair, item)
       {
-        currency_pair_id: currency_pair.id,
+        pair_name: currency_pair.name,
         date_time: Time.at(item['date']),
         time_at:  item['date'],
         high:     item['high'],

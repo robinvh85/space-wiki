@@ -1,0 +1,430 @@
+div#pair_list.columns.is-multiline style="width: 285px;"
+  - @all_currency_pairs.each do |item|
+    div.column.is-half
+      input id="rdo_#{item.name}" name="rdo_pair" type="radio" pairname="#{item.name}" value=item.id class="rdo" onchange="rdoPairChange(this)"
+        label for="rdo_#{item.name}" =item.name 
+        label 
+          | &nbsp;#{item.percent_min_24h}%
+div#pair_note
+  div
+    textarea#note_item.input style="height: 300px;"
+    button onclick="updateNote()"
+      | Update
+  div style="margin-top: 10px;"
+    textarea#note_polo.input style="height: 300px;"
+    button onclick="updatePoloNote()"
+      | Update
+div.container
+  div.columns style="margin-top: 0px;"
+    div.column.is-half style="padding: 0px 0.5em"
+      select value="#{@base_unit}" onchange="changeBaseUnit(this)" class="input"
+        option value="USDT"
+          | USDT
+        option value="BTC"
+          | BTC
+        option value="ETH"
+          | ETH
+        option value="XMR"
+          | XMR
+    div.column.is-half style="padding: 0px 0.5em"
+      button onclick="get_previous()"
+        | <<
+      button onclick="get_next()"
+        | >>
+      input#date_input.input type="text" style="width: 150px;"
+      button onclick="get_data()"
+        | Submit 
+  div.panel
+    div.panel-heading
+      | Chart
+    div.panel-block      
+      div id='chart' style="width:100%;"
+
+javascript:
+  // create the chart
+
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+
+  var chart_type = '5m';
+  var pairs = #{@currency_pairs.to_json.html_safe};
+  var polo = #{@polo.to_json.html_safe};
+  var pairs_hash = {};
+  var base_unit = '#{@base_unit}';
+  var decimal = 3;
+  var chart = null;
+  var current_pair = null;
+
+  var max_point = {
+    is_changing: false
+  };
+
+  var predict = null;
+
+  var createChart5m = function(data, pair){  
+    return Highcharts.stockChart('chart', {
+      rangeSelector: getRangeSelector(chart_type),
+
+      title: {
+          text: chart_type + ' ' + pair.name
+      },
+      yAxis: [{
+        title: {  // Volume
+          text: null
+        },
+        labels: {
+          enabled: false
+        },
+        lineWidth: 1,
+        opposite: false    
+      },{
+        title: {
+          text: ''
+        },
+        gridLineWidth: 0
+      },{
+        title: {
+          text: ''
+        },
+        //height: 300,
+        gridLineWidth: 0,
+        opposite: false
+      }],
+      tooltip: {
+        valueDecimals: decimal,
+        //xDateFormat: 'Y'
+      },
+
+      series: [{
+        type: 'column',
+        name: 'Volume',
+        data: data.volume_data,
+        yAxis: 0,
+        color: '#DDA',
+        visible: false
+      },{
+        name: 'min',
+        data: data.min_value,
+        yAxis: 1,
+        id: 'data_min'
+      },{
+        type: 'candlestick',
+        name: 'candle',
+        data: data.candle_data,
+        yAxis: 1
+      },{
+        name: 'BTC',
+        data: data.btc_value,
+        yAxis: 2,
+        visible: false
+      },{
+        type: 'flags',
+        name: 'Flags on series',
+        data: [],
+        onSeries: 'data_min',
+        id: 'flag_max',
+        shape: 'squarepin'
+      }],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, pair, 1);
+
+            if(!max_point.is_changing){
+              setTimeout(function(){
+                showMaxFlag();
+              }, 1000);
+            }
+          }
+        },
+        height: 700
+      },
+      legend: {
+        enabled: true
+      }
+    });
+  }
+
+  var get_previous = function(){
+    var date = $("#date_input").val();
+    var dt = moment(date);
+
+    $("#date_input").val(dt.subtract(1, 'days').format("Y/MM/DD"));
+    load_charts_predict(current_pair);
+  }
+
+  var get_next = function(){
+    var date = $("#date_input").val();
+    var dt = moment(date);
+
+    $("#date_input").val(dt.add(1, 'days').format("Y/MM/DD"));
+    load_charts_predict(current_pair);
+  }
+
+  var get_data = function(){
+
+    load_charts_predict(current_pair);
+  }
+
+  var load_charts_predict = function(pair){
+    var url = "/ajax/chartso/get_5m_predict";
+    axios.get(url , {params: { pair_id: pair.id, date: $("#date_input").val() }}).then(function (res){
+      if(chart != null)
+        chart.destroy();
+
+      predict = res.data.predict;
+      chart = createChart5m(res.data.pair_data, pair)
+    });
+  }
+
+  var rdoPairChange = function(obj){
+    current_pair = {
+      id: obj.value,
+      name: $(obj).attr('pairname')
+    };
+
+    $("#note_item").val(pairs_hash[current_pair.id].note);
+    load_charts_predict(current_pair);
+  }
+
+  var drawMinMaxLines = function(chart, pair, index){    
+    axix = chart.yAxis[index];
+    min_value = axix.dataMin;
+    max_value = axix.dataMax;
+    plot_min_id = 'plot_min_' + pair.name;
+    plot_max_id = 'plot_max_' + pair.name;
+    plot_yesterday_avg_id = 'plot_yesterday_avg_' + pair.name;
+    plot_low1_value_id = 'plot_low1_value_id' + pair.name;
+    plot_low2_value_id = 'plot_low2_value_id' + pair.name;
+    plot_high1_value_id = 'plot_high1_value_id' + pair.name;
+    plot_high2_value_id = 'plot_high2_value_id' + pair.name;
+
+    axix.removePlotLine(plot_min_id);
+    axix.removePlotLine(plot_max_id);
+    axix.removePlotLine(plot_yesterday_avg_id);
+    axix.removePlotLine(plot_low1_value_id);
+    axix.removePlotLine(plot_low2_value_id);
+    axix.removePlotLine(plot_high1_value_id);
+    axix.removePlotLine(plot_high2_value_id);
+
+    axix.addPlotLine({
+      value: min_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_min_id
+    });
+
+    axix.addPlotLine({
+      value: max_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_max_id
+    });
+
+    axix.addPlotLine({
+      value: predict.yesterday_avg_value,
+      width: 1,
+      color: 'green',
+      dashStyle: 'longdashdot',              
+      id: plot_yesterday_avg_id
+    }); 
+
+    axix.addPlotLine({
+      value: predict.low1_value,
+      width: 1.5,
+      color: 'black',
+      dashStyle: 'longdashdot',              
+      id: plot_low1_value_id
+    }); 
+
+    axix.addPlotLine({
+      value: predict.low2_value,
+      width: 1.5,
+      color: 'black',
+      dashStyle: 'longdashdot',              
+      id: plot_low2_value_id
+    }); 
+
+    axix.addPlotLine({
+      value: predict.high1_value,
+      width: 1.5,
+      color: 'black',
+      dashStyle: 'longdashdot',              
+      id: plot_high1_value_id
+    }); 
+
+    axix.addPlotLine({
+      value: predict.high2_value,
+      width: 1.5,
+      color: 'black',
+      dashStyle: 'longdashdot',              
+      id: plot_high2_value_id
+    }); 
+  }
+
+  var showMaxFlag = function(){
+    max_point.is_changing = true;
+
+    var yData = chart.yAxis[1].series["0"].processedYData;
+    var axix = chart.yAxis[1];
+    //var max_value = Math.max.apply(Math, yData);
+    var max_value = Math.max.apply(Math, yData);
+    var index = yData.indexOf(Math.max(max_value));
+    var time_max_value = chart.yAxis[1].series["0"].processedXData[index];
+
+    min_value = axix.dataMin;
+    max_percent = ((max_value / min_value) * 100).toFixed(1);
+
+    last_value = yData[yData.length - 1];
+    current_with_max_percent = ((max_value / last_value) * 100).toFixed(1);
+
+    chart.series[4].setData([{
+      x: time_max_value,
+      title: current_with_max_percent + ' / ' + max_percent
+    }]);
+
+    setTimeout(function(){
+      max_point.is_changing = false;
+    }, 100);    
+  }
+
+  var changeBaseUnit = function(obj){
+    document.location = "/poloniex/predict?base_unit=" + obj.value
+  }
+
+  var getRangeSelector = function(chart_type){
+    switch(chart_type){
+      case '5m':
+        return {
+            selected: 1,
+            buttons: [{
+            type: 'hour',
+            count: 12,
+            text: '12h'
+          }, {
+            type: 'hour',
+            count: 24,
+            text: '24h'
+          }, {
+            type: 'hour',
+            count: 48,
+            text: '48h'
+          },{
+            type: 'all',
+            text: 'All'
+          }]
+        };
+        break;
+    }
+  }
+
+  var get_url = function(){
+    switch(chart_type){
+      case '5m':
+        return '/ajax/chartso/get_5m';
+        break;
+    }
+  }
+
+  var array_to_hash = function(arr, key){
+    var hash = {};
+    for(var i=0; i<arr.length; i++){
+      hash[arr[i][key]] = arr[i];
+    }
+
+    return hash;
+  }
+
+  var updateNote = function(){
+    var note = $("#note_item").val();
+    pairs_hash[current_pair.id].note = note;
+
+    axios.post('/ajax/currency_pairs/update_note', {id: current_pair.id, note: note}).then(function (res){
+      console.log('Call: /ajax/currency_pairs/update_note', res.data);
+    });
+  }
+
+  var updatePoloNote = function(){
+    var note = $("#note_polo").val();
+    polo.note = note;
+
+    axios.put('/ajax/polos/update', {polo: polo}).then(function (res){
+      console.log('Call: /ajax/polos/update', res.data);
+    });
+  }
+
+  var addPlotHover = function(){
+    $('#chart').mousemove(function(e){    
+      // var chart = Highcharts.charts[Highcharts.charts.length - 1];
+      //var xaxis = chart.xAxis[0];
+      var yaxis = chart.yAxis[1];
+      //xaxis.removePlotLine('plot-line-x');
+      yaxis.removePlotLine('plot-line-y');
+      //var x = xaxis.toValue(e.offsetX, false);
+      var y = yaxis.toValue(e.offsetY, false);
+
+      var y_current = chart.yAxis[1].toValue(e.offsetY, false);
+
+      var yData = chart.yAxis[1].series["0"].processedYData;
+      var last_value = yData[yData.length - 1];
+      var percent_last_value = ((y_current / last_value) * 100).toFixed(1);
+
+
+      if(y_current > 1000){
+        y_current = y_current.toFixed(1);
+      } else if(y_current > 100) {
+        y_current = y_current.toFixed(2);
+      } else if(y_current > 10){
+        y_current = y_current.toFixed(3);
+      } else if(y_current > 1){
+        y_current = y_current.toFixed(4);
+      } else if(y_current > 0.1) {
+        y_current = y_current.toFixed(5);
+      } else if(y_current > 0.01) {
+        y_current = y_current.toFixed(6);
+      } else if(y_current > 0.001) {
+        y_current = y_current.toFixed(7);
+      } else {
+        y_current = y_current.toFixed(8);
+      }
+
+      /*
+      xaxis.addPlotLine({
+          value: x,
+        color: 'red',
+          width: 1,
+          id: 'plot-line-x'
+      }); */
+      yaxis.addPlotLine({
+        value: y,
+        color: 'green',
+        width: 1,
+        id: 'plot-line-y',
+        label: {
+          text: "(" + percent_last_value + "%) " + y_current,
+          align: 'right',
+          x: -40
+        },
+        zIndex: 99
+      });
+  });
+  }
+
+  $(function(){
+
+    if(base_unit == 'BTC'){
+      decimal = 8;
+    }
+
+    pairs_hash = array_to_hash(pairs, 'id');
+    $('option[value="' + base_unit + '"]')[0].selected = "selected"
+
+    $("#note_polo").val(polo.note);
+    $("#date_input").val(moment().format("Y/MM/DD"));
+    $($('[name="rdo_pair"]')[0]).trigger( "click" );
+
+    addPlotHover();
+  });
+

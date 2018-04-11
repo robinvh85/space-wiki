@@ -1,0 +1,30 @@
+= content_for :javascripts
+  = javascript_include_tag 'trackings/app'
+
+div#trackings.container
+  div.panel style="margin-bottom: 20px;"
+    div.panel-heading
+      | Trading price
+    div.panel-block
+      div
+        table.table style="width: 800px;"
+          thead
+            tr
+              th Pair
+              th Buy Price
+              th Sell Price
+              th Difference Price
+              th Date time
+          tbody
+            tr v-for="item in tracking_list" v-bind:class="{ warn: item.is_high_changed }"
+              td
+                | {{ item.currency_pair_name }}
+              td 
+                | {{ item.current_buy_price }} ({{ item.changed_buy }}%)
+              td 
+                | {{ item.current_sell_price }} ({{ item.changed_sell }}%)
+              td
+                | {{ item.difference_price }}%
+              td 
+                | {{ item.created_at }}
+

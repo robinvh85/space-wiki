@@ -1,0 +1,227 @@
+div#icos
+  table.table.table-bordered
+    tr
+      th style="width: 80px;"
+        | Pair Name
+        <br/>
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
+          | New      
+      th style="width: 130px;"
+        | Current price
+      th style="width: 150px;"
+        | 1d
+        input type="checkbox" v-model='is_1d'
+      th style="width: 150px;"
+        | 4h
+        input type="checkbox" v-model='is_4h'
+      th style="width: 150px;"
+        | 30m
+        input type="checkbox" v-model='is_30m'
+      th 
+        | Order
+        input type="checkbox" v-model='is_order'
+      th style="width: 120px;"
+        | Action
+    tr v-for="ico in filterItems(ico_list)" :class="{gray:is_trading(ico.polo_order)}"
+      td 
+        | {{ ico.pair_name }}
+      td.right
+        | {{ ico.current_price }} <br/> ({{ calculate_percent(ico.current_sell_price, ico.current_price) }}%) {{ ico.current_sell_price }} 
+      td.right
+        | {{ ico.previous_1d_price }} 
+        label :class="{'green': calculate_percent(ico.current_price, ico.previous_1d_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_1d_price) < 0}"
+          | ({{ calculate_percent(ico.current_price, ico.previous_1d_price) }}%) 
+      td.right
+        | {{ ico.previous_4h_price }} 
+        label :class="{'green': calculate_percent(ico.current_price, ico.previous_4h_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_4h_price) < 0}"
+          | ({{ calculate_percent(ico.current_price, ico.previous_4h_price) }}%) 
+      td.right
+        | {{ ico.previous_30m_price }} 
+        label :class="{'green': calculate_percent(ico.current_price, ico.previous_30m_price) > 0.5, 'red': calculate_percent(ico.current_price, ico.previous_30m_price) < 0}"
+          | ({{ calculate_percent(ico.current_price, ico.previous_30m_price) }}%) 
+      td
+        div v-for="item_order in ico.polo_orders" style="font-size: 10px;"
+          | {{ item_order.id }} - {{ item_order.trading_type }} 
+          label v-show="item_order.trading_type != ''" :class="{'green': calculate_percent(ico.current_price, item_order.buy_price) > 0, 'red': calculate_percent(ico.current_price, item_order.buy_price) < 0}"
+            |  ({{ calculate_percent(ico.current_price, item_order.buy_price) }}%)
+      td.right
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
+          | Edit
+        | &nbsp;
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#modalOrder" @click="get_orders(ico)"
+          | Orders
+
+  = render 'modal_new_ico'
+  = render 'modal_edit_ico'
+  = render 'modal_order'
+
+javascript:
+  $(function(){
+    decimal = 8;
+    $("#date_input").val(moment().format("Y/MM/DD"));
+  });
+
+  // Vue
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+  Vue.prototype.$http = axios;
+
+  var app = new Vue({
+    el: '#icos',
+    data: {
+      ico_list: [],
+      selected_ico: {},
+      new_ico: {},
+      order: {},
+      order_list: [],
+      is_order: false,
+      is_1d: false,
+      is_4h: false,
+      is_30m: false
+    },
+    computed: {
+      
+    },
+    methods: {
+      filterItems: function(ico_list) {
+        self = this;
+        if(this.is_order){
+          return ico_list.filter(function(item) {
+            return item.polo_orders.length > 0;
+          })
+        } 
+        
+        if(this.is_1d){
+          return ico_list.filter(function(item) {
+            return self.calculate_percent(item.current_price, item.previous_1d_price) > 0.2
+          })
+        }
+
+        if(this.is_4h){
+          return ico_list.filter(function(item) {
+            return self.calculate_percent(item.current_price, item.previous_4h_price) > 0.2
+          })
+        }
+
+        if(this.is_30m){
+          return ico_list.filter(function(item) {
+            return self.calculate_percent(item.current_price, item.previous_30m_price) > 0.2
+          })
+        }
+
+        return ico_list;
+      },
+      init_new_ico: function(){
+        this.new_ico = {
+          pair_name: '',
+          resistance_price: 0,
+          support_price: 0,
+          is_auto: 0,
+          support_profit: 0,
+          resistance_profit: 0
+        }
+      },
+      get_ico_list: function(){
+        var self = this;
+        this.$http.get('/ajax/trades/get_ico_list', { params: {}} ).then(function (res){
+          console.log('get_ico_list')
+          self.ico_list = res.data;
+
+          for(var i=0; i<self.ico_list.length; i++){
+            self.ico_list[i].current_price = parseFloat(self.ico_list[i].current_price);
+            self.ico_list[i].previous_30m_price = parseFloat(self.ico_list[i].previous_30m_price);
+            self.ico_list[i].previous_4h_price = parseFloat(self.ico_list[i].previous_4h_price);
+            self.ico_list[i].previous_1d_price = parseFloat(self.ico_list[i].previous_1d_price);
+          }
+
+        });
+      },
+      edit_ico: function(ico){
+        this.selected_ico = ico;
+      },
+      update_ico_info: function(ico){
+        var self = this;
+        this.$http.put('/ajax/trades/update_ico_info', { ico: ico } ).then(function (res){
+          self.get_ico_list();
+          $('#editIco').modal('hide');
+        });
+      },
+      create_ico: function(){
+        var self = this;
+        this.$http.post('/ajax/trades/create_ico', {ico: this.new_ico}).then(function (res){
+          if(res.data != null){
+            self.get_ico_list();
+            $('#newIco').modal('hide');
+          }            
+        });
+      },
+      get_orders: function(ico){
+        this.selected_ico = ico;
+        var self = this;
+        this.$http.get('/ajax/trades/get_orders', {params: {ico_info_id: ico.id} }).then(function (res){
+          if(res.data != null){
+            self.order_list = res.data;
+          }            
+        });
+        
+        console.log(ico);
+
+        this.order = {
+          pair_name: ico.pair_name,
+          amount_usd: 10,
+          buy_price: ico.previous_1d_price,
+          limit_sell_percent: 2,
+          sell_price: parseFloat((ico.previous_1d_price + (ico.previous_1d_price / 100)).toFixed(8)),
+          trading_type: '',
+          level: 1,
+          ico_info_id: ico.id
+        };
+      },
+      create_order: function(order){
+        order.limit_sell_percent = 2;
+
+        this.$http.post('/ajax/trades/create_order', {order: order}).then(function (res){
+          $('#modalOrder').modal('hide');
+        });
+      },
+      update_order: function(order){
+        this.$http.put('/ajax/trades/update_order', {order: order}).then(function (res){
+          $('#modalOrder').modal('hide');
+        });
+      },
+      calculate_percent: function(price, compare_price){
+        return ((price - compare_price) / compare_price * 100).toFixed(2);
+      },
+      diff_support_price: function(ico){
+        return (ico.current_price - ico.support_price) / ico.support_price * 100;
+      },
+      is_trading: function(order){
+        if(order){
+          console.log(order.trading_type != '');   
+          return order.trading_type != '';
+        } else {
+          return false;
+        }        
+      },
+      init: function(){
+        console.log("INIT");
+        this.get_ico_list();
+        setInterval(this.get_ico_list, 30000);
+      }    
+    },
+    watch: {
+      is_order: function(value){
+        console.log(value);
+      }
+    },
+    created: function() {
+      console.log("created");
+    },
+    mounted: function() {
+      console.log("mounted");
+      this.init();
+    }
+  });
+
+
+

@@ -1,0 +1,263 @@
+div#icos
+  table.table.table-bordered
+    tr
+      th rowspan="2"
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newBot" @click="init_new_bot()"
+          | New invest        
+        div
+          input type="checkbox" v-model="is_all" 
+            | All
+      th colspan="4"
+        | Invest
+      th colspan="4"
+        | Order
+    tr
+      th 
+        | $ Amount
+      th 
+        | Ico Amount
+      th
+        | Status 
+      th
+        | Action
+      th 
+        | Buy price
+      th 
+        | Sell price
+      th style="width:150px;"
+        | Status
+      th 
+        | Action
+    tr v-for="bot in bot_list"
+      td 
+        | {{ bot.pair_name }}
+      td.right
+        | {{ bot.amount_usd }}
+      td.right
+        | {{ bot.amount_ico }}
+      td
+        | {{ bot.status }} 
+      td
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editBot" @click="edit_bot(bot)"
+          | Detail
+      td.right
+        | {{ bot.buy_price }} 
+        label v-bind:class="{ 'text-primary': difference_buy_price_percent(bot) > 0, 'text-danger': difference_buy_price_percent(bot) < 0 }"
+          | ({{ difference_buy_price_percent(bot) }}%)          
+      td.right
+        | {{ bot.sell_price }} 
+        label class="text-primary"
+          | ({{ difference_sell_and_buy_price_percent(bot) }}%)      
+      td 
+        | {{ bot.trading_type }}
+      td 
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editOrder" @click="edit_order(bot)"
+          | Edit
+
+  = render 'modal_new_bot'    
+  = render 'modal_edit_bot'
+  = render 'modal_order'  
+
+javascript:
+  $(function(){
+    decimal = 8;
+    $("#date_input").val(moment().format("Y/MM/DD"));
+  });
+
+  // Vue
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+  Vue.prototype.$http = axios;
+
+  var app = new Vue({
+    el: '#icos',
+    data: {
+      bot: {
+        ico_order: {}
+      },
+      bot2: {
+        ico_order: {}
+      },
+      current_price: 0,
+      bot_list: [],
+      selected_bot: {},
+      new_bot: {},
+      is_all: false
+    },
+    methods: {
+      init_new_bot: function(){
+        this.new_bot = {
+          limit_amount_check_price: 0,
+          limit_cancel_for_lose_percent: 1.5,
+          force_sell_percent: 2,
+          default_sell_price_percent: 2,
+          ico_account_id: 2,
+          trading_type: 'BUYING'
+        }
+      },
+      edit_bot: function(bot){
+        this.selected_bot = bot;
+      },
+      update_bot_info: function(bot){
+        var self = this;
+        this.$http.put('/ajax/bots/update', { bot: bot } ).then(function (res){
+          self.get_bot_list();
+          $('#editBot').modal('hide');
+        });
+      },
+      edit_order: function(bot){
+        this.selected_bot = bot;
+      },
+      get_bot_list: function(){
+        var self = this;
+        this.$http.get('/ajax/ico_orders/get_bot_list', { params: {is_all: this.is_all}} ).then(function (res){
+          self.bot_list = res.data;
+        });
+      },
+      update_bot: function(bot){
+        var self = this;
+
+        if(confirm("Do you want to update ?"))
+        {
+          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+            alert("Update " + res.data.status);
+          });
+        }
+      },
+      start_sell: function(bot){
+        var self = this;        
+        bot.trading_type = "SELLING";
+
+        if(confirm("Do you want to start sell ?"))
+        {
+          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+            alert("Start " + res.data.status);
+          });
+        }        
+      },
+      start_buy: function(_bot){
+        var self = this;
+
+        bot = JSON.parse(JSON.stringify(_bot));
+
+        bot.trading_type = "BUYING";
+        bot.status = 1;
+
+        this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+          alert("Start " + res.data.status);
+        });
+      },
+      stop_bot: function(_bot){
+        var self = this;
+
+        if(confirm("Do you want to stop bot ?"))
+        {
+          bot = JSON.parse(JSON.stringify(_bot));
+          bot.status = -1;
+          bot.trade_type = "";
+          this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+            alert("Stop " + res.data.status);
+          });
+        }
+      },
+      cancel_sell: function(item){
+        var self = this;
+
+        if(confirm("Do you want to cancel sell order ?")){
+          this.$http.post('/ajax/ico_orders/cancel_sell', item).then(function (res){
+            if(res.data != null){
+              alert("Cancel sell successfully !");
+            } else {
+              alert("Can not cancel sell, please check !!!");
+            }            
+          });
+        }
+      },
+      cancel_buy: function(item){
+        var self = this;
+
+        if(confirm("Do you want to cancel buy order ?")){
+          this.$http.post('/ajax/ico_orders/cancel_buy', item).then(function (res){
+            if(res.data != null){
+              alert("Cancel buy successfully !");
+            } else {
+              alert("Can not cancel buy, please check !!!");
+            }            
+          });
+        }
+      },
+      cancel_order: function(bot){
+        if(bot.trading_type == "CHECKING_ORDER_SELL"){
+          this.cancel_sell(bot.ico_order)
+        } else if (bot.trading_type == "CHECKING_ORDER_BUY"){
+          this.cancel_buy(bot.ico_order)
+        }
+      },
+      change_sell_price: function(bot){
+        bot.buy_price = (bot.sell_price - bot.sell_price * bot.buy_price_percent / 100).toFixed(8);
+      },
+      difference_buy_price_percent: function(bot){
+        return parseFloat(((bot.current_buy_price - bot.buy_price ) / bot.buy_price * 100).toFixed(2));
+      },
+      difference_sell_and_buy_price_percent: function(bot){
+        return parseFloat(((bot.sell_price - bot.buy_price ) / bot.buy_price * 100).toFixed(2));
+      },
+      cal_percent: function(value1, value2){
+        result = (value1 - value2) / value2 * 100;
+        return result.toFixed(2);
+      },
+      create_bot: function(){
+        var self = this;
+        this.$http.post('/ajax/bots/create', {bot: this.new_bot}).then(function (res){
+          if(res.data != null){
+            self.get_bot_list();
+            $('#newBot').modal('hide');
+          }            
+        });
+      },
+      done_order: function(_bot){
+        var self = this;
+        bot = JSON.parse(JSON.stringify(_bot));
+
+        bot.trading_type = "DONE";
+
+        this.$http.put('/ajax/ico_orders/update_bot', { bot: bot } ).then(function (res){
+          alert("DONE " + res.data.status);
+        });
+      },
+      init: function(){
+        console.log("INIT");
+        this.get_bot_list();
+
+        setInterval(function () {
+          this.get_bot_list();
+        }.bind(this), 30000); 
+      }    
+    },
+    watch: {
+      /*
+      bot.sell_price: function (value) {
+        bot.buy_price = value;
+
+      //  this.$forceUpdate();
+      },
+      */
+      is_all: function(value){
+        this.get_bot_list();
+      }
+      /*,
+      selected_bot: function(value){
+        this.selected_bot.sell_price = value.buy_price + value.buy_price * 0.02;
+      }*/
+    },
+    created: function() {
+      console.log("created");
+    },
+    mounted: function() {
+      console.log("mounted");
+      this.init();
+    }
+  });
+
+
+

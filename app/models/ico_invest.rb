@@ -1,0 +1,2 @@
+class IcoInvest < ApplicationRecord
+end

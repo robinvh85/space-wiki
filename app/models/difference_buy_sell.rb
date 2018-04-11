@@ -1,0 +1,2 @@
+class DifferenceBuySell < ApplicationRecord
+end

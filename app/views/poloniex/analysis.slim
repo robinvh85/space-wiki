@@ -113,18 +113,16 @@ javascript:
         yAxis: 0,
         color: '#DDA',
         visible: false
-      }
-      /*,{
-        type: 'candlestick',
-        name: 'candle',
-        data: data.candle_data,
-        yAxis: 1
-      }
-      */,{
+      },{
         name: 'min',
         data: data.min_value,
         yAxis: 1,
         id: 'data_min'
+      },{
+        type: 'candlestick',
+        name: 'candle',
+        data: data.candle_data,
+        yAxis: 1
       },{
         name: 'BTC',
         data: data.btc_value,
@@ -401,7 +399,7 @@ javascript:
     last_value = yData[yData.length - 1];
     current_with_max_percent = ((max_value / last_value) * 100).toFixed(1);
 
-    chart.series[3].setData([{
+    chart.series[4].setData([{
       x: time_max_value,
       title: current_with_max_percent + ' / ' + max_percent
     }]);

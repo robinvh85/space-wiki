@@ -1,0 +1,2 @@
+class BtcPriceLog < ApplicationRecord
+end

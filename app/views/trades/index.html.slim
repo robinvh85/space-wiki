@@ -1,0 +1,175 @@
+div#icos
+  table.table.table-bordered
+    tr
+      th
+      th 
+        | Pair Name
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#newIco" @click="init_new_ico()"
+          | New
+      th Resistance
+      th Support
+      th Current price
+      th Auto
+      th Order
+      th Action      
+    tr v-for="(ico, index) in ico_list" :class="{gray:is_trading(ico.polo_order)}"
+      td 
+        | {{ index + 1}}
+      td 
+        | {{ ico.pair_name }}
+      td.right
+        | ({{ ((ico.current_price - ico.resistance_price) / ico.resistance_price * 100).toFixed(2) }}%) &nbsp;| {{ ico.resistance_price }}
+      td.right
+        label :class="{'green': diff_support_price(ico) < 0}"
+          | ({{ diff_support_price(ico).toFixed(2) }}%) 
+        | &nbsp; | {{ ico.support_price }}
+      td.right
+        | {{ ico.current_price }} 
+      td.center 
+        input type='checkbox' v-model='ico.is_auto' disabled='disabled'
+      td
+        | {{ ico.polo_orders.length }} - {{ ico.polo_orders.length > 0 ? ico.polo_orders[0].trading_type : '' }}
+      td.right
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#editIco" @click="edit_ico(ico)"
+          | Edit
+        button.btn.btn-sm.btn-outline-primary data-toggle="modal" data-target="#modalOrder" @click="get_orders(ico)"
+          | Orders
+
+  = render 'modal_new_ico'
+  = render 'modal_edit_ico'
+  = render 'modal_order'
+
+javascript:
+  $(function(){
+    decimal = 8;
+    $("#date_input").val(moment().format("Y/MM/DD"));
+  });
+
+  // Vue
+  var token = document.querySelector("[name='csrf-token']").content;
+  axios.defaults.headers.common['X-CSRF-Token'] = token;
+  Vue.prototype.$http = axios;
+
+  var app = new Vue({
+    el: '#icos',
+    data: {
+      ico_list: [],
+      selected_ico: {},
+      new_ico: {},
+      order: {},
+      order_list: []
+    },
+    computed: {
+      
+    },
+    methods: {
+      init_new_ico: function(){
+        this.new_ico = {
+          pair_name: '',
+          resistance_price: 0,
+          support_price: 0,
+          is_auto: 0,
+          support_profit: 0,
+          resistance_profit: 0
+        }
+      },
+      get_ico_list: function(){
+        var self = this;
+        this.$http.get('/ajax/trades/get_ico_list', { params: {}} ).then(function (res){
+          console.log('get_ico_list')
+          self.ico_list = res.data;
+        });
+      },
+      edit_ico: function(ico){
+        this.selected_ico = ico;
+        this.get_chart_data(ico);
+      },
+      update_ico_info: function(ico){
+        var self = this;
+        this.$http.put('/ajax/trades/update_ico_info', { ico: ico } ).then(function (res){
+          self.get_ico_list();
+          $('#editIco').modal('hide');
+        });
+      },
+      create_ico: function(){
+        var self = this;
+        this.$http.post('/ajax/trades/create_ico', {ico: this.new_ico}).then(function (res){
+          if(res.data != null){
+            self.get_ico_list();
+            $('#newIco').modal('hide');
+          }            
+        });
+      },
+      get_orders: function(ico){
+        this.selected_ico = ico;
+        var self = this;
+        this.$http.get('/ajax/trades/get_orders', {params: {ico_info_id: ico.id} }).then(function (res){
+          if(res.data != null){
+            self.order_list = res.data;
+          }            
+        });
+        
+        this.order = {
+          pair_name: ico.pair_name,
+          ico_info_id: ico.id,
+          amount_usd: 0,
+          buy_price: parseFloat((ico.support_price - (ico.support_price / 100)).toFixed(8)),
+          sell_price: ico.support_price,
+          trading_type: '',
+          level: 1
+        };
+        
+        console.log(this.order);
+      },
+      create_order: function(order){
+        this.$http.post('/ajax/trades/create_order', {order: order}).then(function (res){
+          $('#modalOrder').modal('hide');
+        });
+      },
+      update_order: function(order){
+        this.$http.put('/ajax/trades/update_order', {order: order}).then(function (res){
+          $('#modalOrder').modal('hide');
+        });
+      },
+      calculate_percent: function(price, compare_price){
+        return ((price - compare_price) / compare_price * 100).toFixed(2);
+      },
+      diff_support_price: function(ico){
+        return (ico.current_price - ico.support_price) / ico.support_price * 100;
+      },
+      is_trading: function(order){
+        if(order){
+          console.log(order.trading_type != '');   
+          return order.trading_type != '';
+        } else {
+          return false;
+        }        
+      },
+      get_chart_data: function(ico){
+        var self = this;
+        this.$http.get('/ajax/trades/get_chart_data', {params: { pair_name: ico.pair_name }}).then(function (res){
+          createChart30m(res.data, ico);
+          addPlotHover();
+          addClick(ico);
+        });
+      },
+      init: function(){
+        console.log("INIT");
+        this.get_ico_list();
+        setInterval(this.get_ico_list, 30000);
+      }    
+    },
+    watch: {
+      
+    },
+    created: function() {
+      console.log("created");
+    },
+    mounted: function() {
+      console.log("mounted");
+      this.init();
+    }
+  });
+
+
+

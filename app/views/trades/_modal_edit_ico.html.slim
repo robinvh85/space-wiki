@@ -1,0 +1,201 @@
+div class="modal fade" id="editIco" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
+  div class="modal-dialog modal-lg" role="document"
+    div class="modal-content"
+      div class="modal-header"
+        h5 class="modal-title" id="exampleModalLabel"
+          | Ico info
+        button type="button" class="close" data-dismiss="modal" aria-label="Close"
+          span aria-hidden="true"
+          | &times;
+      div class="modal-body"
+        form
+          div class="form-group"
+            label for="frm_pair_name"
+              | Pair name
+            input type="input" id="frm_pair_name" max-length='10' class="form-control" placeholder="Pair name" v-model="selected_ico.pair_name"
+          div class="form-group"
+            label for="resistance_price"
+              | Resistance price
+            input type="input" id="resistance_price" max-length='5' class="form-control" placeholder="resistance_price" v-model="selected_ico.resistance_price"
+          div class="form-group"
+            label for="support_price"
+              | Support price
+            input type="input" id="support_price" max-length='5' class="form-control"placeholder="support_price" v-model="selected_ico.support_price"
+          div class="form-group"
+            label for="resistance_profit"
+              | Resistance profit
+            input type="input" id="resistance_profit" class="form-control" placeholder="Percent" v-model="selected_ico.resistance_profit"
+          div class="form-group"
+            label for="support_profit"
+              | Support profit
+            input type="input" id="support_profit" class="form-control" placeholder="Percent" v-model="selected_ico.support_profit"
+          div class="form-group"
+            label for="is_auto"
+              | Auto
+            input type="checkbox" id="is_auto" class="" style="margin-left: 10px;" v-model="selected_ico.is_auto"
+          div class="form-group" style='text-align:right;'
+            button type="button" class="btn btn-primary" @click="update_ico_info(selected_ico)"
+              | Save
+      form        
+        div id='chart_data' style="width:100%;"
+      div class="modal-footer"
+          
+
+javascript:
+  var createChart30m = function(data, ico){  
+    return Highcharts.stockChart('chart_data', {
+      rangeSelector: {
+          selected: 0,
+          buttons: [{
+          type: 'day',
+          count: 1,
+          text: '1d'
+        },{
+          type: 'day',
+          count: 3,
+          text: '3d'
+        }, {
+          type: 'day',
+          count: 7,
+          text: '7d'
+        },{
+          type: 'all',
+          text: 'All'
+        }]
+      },
+      title: {
+          text: ''
+      },
+      yAxis: [{
+        title: {
+          text: ''
+        },
+        gridLineWidth: 0,
+      }/*,{
+        title: {
+          text: ''
+        },
+        //height: 300,
+        gridLineWidth: 0,
+        opposite: false
+      }*/],
+      tooltip: false,
+      plotOptions: {
+        series: {
+          lineWidth: 1
+        },
+        candlestick: {
+          color: 'gray',
+          upColor: 'white'
+        }
+      },
+      navigator: {
+        enabled: false
+      },
+      series: [{
+        type: 'candlestick',
+        name: '30m candle',
+        data: data.candle_data,
+        pointWidth: 10
+      }/*,{
+        name: 'BTC',
+        data: data.btc_value,
+        yAxis: 1,
+        visible: true
+      }*/],
+      chart: {
+        events: {
+          render: function(e){
+            drawMinMaxLines(e.target, ico, 0);       
+          }
+        },
+        height: 400
+      },
+      legend: {
+        enabled: false
+      }
+    });
+  }
+
+  var drawMinMaxLines = function(chart, ico, index){
+    axix = chart.yAxis[index];
+    min_value = axix.dataMin;
+    plot_min_id = 'plot_min_' + ico.pair_name;
+
+    axix.removePlotLine(plot_min_id);
+
+    axix.addPlotLine({
+      value: min_value,
+      width: 1,
+      color: 'red',
+      dashStyle: 'longdashdot',              
+      id: plot_min_id,
+      label: {
+        text: min_value,
+        align: 'right',
+        x: 0,
+        y: 12
+      },
+    });
+  }
+
+  var addPlotHover = function(){
+    $('#chart_data').mousemove(function(e){
+      var chart = Highcharts.charts[Highcharts.charts.length - 1];
+      var yaxis = chart.yAxis[0];
+      yaxis.removePlotLine('plot-line-y');
+      var y = yaxis.toValue(e.offsetY, false);
+      var y_current = chart.yAxis[0].toValue(e.offsetY, false);
+
+      y_current = format_price(y_current)
+
+      yaxis.addPlotLine({
+        value: y,
+        color: 'green',
+        width: 1,
+        id: 'plot-line-y',
+        label: {
+          text: y_current,
+          align: 'right',
+          x: -100
+        },
+        zIndex: 99
+      });
+    });
+  }
+
+  var addClick = function(ico){
+    $('#chart_data').click(function(e){
+      var chart = Highcharts.charts[Highcharts.charts.length - 1];
+      var yaxis = chart.yAxis[0];
+      
+      var y_current = chart.yAxis[0].toValue(e.offsetY, false);
+
+      var yData = chart.yAxis[0].series["0"].processedYData;
+
+      y_current = format_price(y_current)
+      ico.support_price = y_current;
+    });
+  }
+
+  var format_price = function(price){
+    if(price > 1000){
+      price = price.toFixed(1);
+    } else if(price > 100) {
+      price = price.toFixed(2);
+    } else if(price > 10){
+      price = price.toFixed(3);
+    } else if(price > 1){
+      price = price.toFixed(4);
+    } else if(price > 0.1) {
+      price = price.toFixed(5);
+    } else if(price > 0.01) {
+      price = price.toFixed(6);
+    } else if(price > 0.001) {
+      price = price.toFixed(7);
+    } else {
+      price = price.toFixed(8);
+    }
+
+    return price;
+  }
